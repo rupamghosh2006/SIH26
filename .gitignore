@@ -1,0 +1,47 @@
+# dependencies
+/node_modules
+frontend/node_modules
+/.pnp
+.pnp.js
+
+# next.js build outputs
+/.next/
+frontend/.next/
+/out/
+frontend/out/
+
+# production
+/build
+frontend/build
+dist/
+frontend/dist/
+
+# python / virtualenv
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# environment & secrets
+.env*.local
+.env
+
+# vercel & cache
+.vercel
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+*.pem
+.npm-local/
+
+# local test caches
+/coverage
+.pytest_cache/
