@@ -45,3 +45,24 @@ Thumbs.db
 # local test caches
 /coverage
 .pytest_cache/
+
+# ML training runs, weights & caches
+runs/
+backend/runs/
+yolov8n.pt
+*.cache
+
+# Datasets & uploads
+backend/data/
+data/
+uploads/
+
+# Local databases
+backend/seaguard.db
+*.sqlite3
+*.db-journal
+
+# IDE & OS
+.vscode/
+.idea/
+*.log
