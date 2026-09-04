@@ -38,16 +38,21 @@ The platform ingests raw dual-channel side-scan sonar waterfall logs, applies au
 
 ---
 
-## 3. Institutional Attribution and Development Team
+## 3. Institutional Attribution and Project Details
 
-| Entity / Role | Details |
+| Entity / Property | Details |
 | :--- | :--- |
 | **Host Institution** | Netaji Subhash Engineering College (NSEC), Kolkata, West Bengal, India |
 | **Campus Address** | Techno City, Garia, Kolkata, West Bengal 700152, India |
-| **Lead Developer** | **Rupam Ghosh** ([@rupamghosh2006](https://github.com/rupamghosh2006)) &mdash; [rupamgh32@gmail.com](mailto:rupamgh32@gmail.com) |
-| **Lead Developer** | **[BDutta18](https://github.com/BDutta18)** &mdash; [workwithbd18@gmail.com](mailto:workwithbd18@gmail.com) \| `+91 8967722448` |
 | **Sponsoring Body** | Ministry of Earth Sciences (MoES), Government of India |
 | **Problem Statement** | SIH26057: AI-Powered Automated Underwater Marine Debris & Anomaly Detection |
+
+### Development Team
+
+| Name | Role | GitHub Profile | Email Address |
+| :--- | :--- | :--- | :--- |
+| **Bodhisatwa Dutta** | Lead Developer | [@BDutta18](https://github.com/BDutta18) | [workwithbd18@gmail.com](mailto:workwithbd18@gmail.com) |
+| **Rupam Ghosh** | Lead Developer | [@rupamghosh2006](https://github.com/rupamghosh2006) | [rupamgh32@gmail.com](mailto:rupamgh32@gmail.com) |
 
 ---
 
@@ -206,12 +211,12 @@ python -m pytest backend/tests
 
 For technical evaluations, collaborative research, or institutional deployments:
 
-| Contact / Entity | Role / Affiliation | Contact Information |
-| :--- | :--- | :--- |
-| **Rupam Ghosh** | Lead Developer | [rupamgh32@gmail.com](mailto:rupamgh32@gmail.com) &bull; [@rupamghosh2006](https://github.com/rupamghosh2006) |
-| **BDutta18** | Lead Developer | [workwithbd18@gmail.com](mailto:workwithbd18@gmail.com) &bull; `+91 8967722448` &bull; [@BDutta18](https://github.com/BDutta18) |
-| **Netaji Subhash Engineering College** | Academic Host Institution | Techno City, Garia, Kolkata, West Bengal 700152, India |
-| **Ministry of Earth Sciences (MoES)** | Sponsoring Government Body | New Delhi, India &bull; [moes.gov.in](https://www.moes.gov.in/) |
+| Developer / Entity | Role / Affiliation | GitHub Profile | Official Email |
+| :--- | :--- | :--- | :--- |
+| **Bodhisatwa Dutta** | Lead Developer | [@BDutta18](https://github.com/BDutta18) | [workwithbd18@gmail.com](mailto:workwithbd18@gmail.com) |
+| **Rupam Ghosh** | Lead Developer | [@rupamghosh2006](https://github.com/rupamghosh2006) | [rupamgh32@gmail.com](mailto:rupamgh32@gmail.com) |
+| **Netaji Subhash Engineering College** | Academic Host Institution | [nsec.ac.in](https://nsec.ac.in/) | Techno City, Garia, Kolkata, West Bengal 700152 |
+| **Ministry of Earth Sciences (MoES)** | Sponsoring Authority | [moes.gov.in](https://www.moes.gov.in/) | New Delhi, India |
 
 ---
 
