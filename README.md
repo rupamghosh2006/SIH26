@@ -141,7 +141,59 @@ $$\text{Confidence Score} = 0.50 \cdot \mathcal{S}_{\text{YOLO}} + 0.35 \cdot \m
 
 ---
 
-## 7. Technology Stack
+## 7. Model Training, Datasets & Benchmarks
+
+VARUNA AI incorporates two specialized acoustic intelligence models trained and evaluated on real underwater sonar datasets:
+
+### A. YOLOv8 Sonar Marine Debris Detection Model
+Trained on the **Forward-Looking Sonar (FLS) Marine Debris Dataset** ([Valdenegro-Toro / Kaggle](https://www.kaggle.com/datasets/era2730/forward-looking-sonar-marine-debris-dataset)) containing 1,868 acoustic sonar captures across 8 benthic debris classes:
+
+- **Converter Pipeline:** [`convert_fls_dataset.py`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/backend/ai_pipeline/datasets/convert_fls_dataset.py)
+- **Training Script:** [`train_fls_yolo.py`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/backend/ai_pipeline/train_fls_yolo.py)
+- **Validation Split:** 373 held-out real acoustic sonar images (20%)
+
+#### Validation Benchmark Metrics
+| Overall Metric | Validation Score |
+| :--- | :---: |
+| **Box Precision (P)** | **92.12%** |
+| **Box Recall (R)** | **88.35%** |
+| **mAP@50** | **92.17%** |
+| **mAP@50-95** | **65.91%** |
+
+#### Per-Class Detection Performance (mAP@50)
+| Class Category | Instances | mAP@50 | Ecological Priority |
+| :--- | :---: | :---: | :---: |
+| **`chain_or_debris`** | 65 | **99.0%** | 🔴 Critical (Entanglement / ALDFG) |
+| **`hook`** | 22 | **97.5%** | 🟠 High (Longline hazard) |
+| **`bottle_or_container`** | 195 | **97.1%** | 🟡 Medium (Microplastic source) |
+| **`tire`** | 109 | **96.9%** | 🟡 Medium (Rubber benthic debris) |
+| **`wall_boundary`** | 204 | **95.8%** | 🟢 Low (Structural seabed wall) |
+| **`valve`** | 56 | **92.1%** | 🟠 High (Subsea pipeline fittings) |
+| **`propeller`** | 35 | **83.1%** | 🟠 High (Lost propulsion hardware) |
+| **`can`** | 58 | **75.9%** | 🟡 Medium (Metallic debris) |
+
+- **Primary Checkpoints:** [`backend/models/yolov8_varuna.pt`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/backend/models/yolov8_varuna.pt), [`best.pt`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/best.pt), and [`backend/models/yolov8_seaguard.pt`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/backend/models/yolov8_seaguard.pt).
+
+---
+
+### B. Acoustic Signal Target Classifier (Mines vs. Rocks)
+Trained on the **Sonar Mines vs. Rocks Dataset** ([Connectionist Bench / Kaggle](https://www.kaggle.com/datasets/mattcarter865/mines-vs-rocks)) consisting of 208 underwater sonar acoustic ping profiles across 60 frequency energy bands:
+
+- **Training Script:** [`train_acoustic_classifier.py`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/backend/ai_pipeline/train_acoustic_classifier.py)
+- **Inference Module:** [`acoustic_classifier.py`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/backend/ai_pipeline/acoustic_classifier.py)
+
+#### Model Benchmark Comparison
+| Architecture | Test Accuracy | F1-Score | ROC-AUC | Status |
+| :--- | :---: | :---: | :---: | :---: |
+| **PyTorch Deep MLP** | **85.71%** | **0.8696** | **0.9591** | 🏆 **Deployed** |
+| **Logistic Regression** | **83.33%** | 0.8444 | 0.9045 | Benchmark |
+| **Random Forest** | **80.95%** | 0.8261 | 0.9511 | Benchmark |
+
+- **Deployed Checkpoints:** [`backend/models/sonar_mine_rock_classifier.joblib`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/backend/models/sonar_mine_rock_classifier.joblib) and [`backend/models/sonar_mine_rock_mlp.pt`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/backend/models/sonar_mine_rock_mlp.pt).
+
+---
+
+## 8. Technology Stack
 
 - **Frontend Application:** Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS (Sonar Dark Theme), Lucide Icons, Leaflet GIS, Recharts.
 - **Backend API & Microservices:** Python 3.11+, FastAPI, Uvicorn, SQLAlchemy ORM, SQLite / PostgreSQL, Pydantic v2.
@@ -151,7 +203,7 @@ $$\text{Confidence Score} = 0.50 \cdot \mathcal{S}_{\text{YOLO}} + 0.35 \cdot \m
 
 ---
 
-## 8. Installation and Execution Guide
+## 9. Installation and Execution Guide
 
 ### Prerequisites
 - Node.js 18+ (Node 20 recommended)
@@ -185,7 +237,7 @@ docker-compose up --build
 
 ---
 
-## 9. Platform Core Modules
+## 10. Platform Core Modules
 
 1. **Acoustic Sonar Enhancement Lab (`/cnn`)**: Interactive acoustic enhancement utilizing bilateral filtering, CLAHE, and real-time contrast metrics.
 2. **Debris Detection Center (`/detection`)**: Multi-scale YOLOv8 object detection with bounding boxes, confidence score tiers, and shadow length telemetry.
@@ -197,7 +249,7 @@ docker-compose up --build
 
 ---
 
-## 10. Automated Verification Suite
+## 11. Automated Verification Suite
 
 Run the full automated test suite verifying preprocessing, physics confidence filters, coordinate splining, and REST endpoints:
 
@@ -207,7 +259,7 @@ python -m pytest backend/tests
 
 ---
 
-## 11. Research Contact and Inquiries
+## 12. Research Contact and Inquiries
 
 For technical evaluations, collaborative research, or institutional deployments:
 

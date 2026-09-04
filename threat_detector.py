@@ -58,15 +58,30 @@ class ThreatDetector:
                     print("ultralytics YOLO module not installed, running in acoustic shadow mode.")
                 return False
             if not os.path.exists(self.model_path):
-                if self.verbose:
-                    print(f"Model file not found: {self.model_path}")
-                return False
+                candidates = [
+                    self.model_path,
+                    "best.pt",
+                    "backend/models/yolov8_varuna.pt",
+                    "backend/models/yolov8_seaguard.pt",
+                    os.path.join(os.path.dirname(__file__), "best.pt"),
+                    os.path.join(os.path.dirname(__file__), "backend", "models", "yolov8_varuna.pt")
+                ]
+                found = False
+                for cand in candidates:
+                    if os.path.exists(cand):
+                        self.model_path = cand
+                        found = True
+                        break
+                if not found:
+                    if self.verbose:
+                        print(f"Model file not found: {self.model_path}")
+                    return False
             
             self.model = YOLO(self.model_path)
             self.class_names = self.model.names
             
             if self.verbose:
-                print(f"Threat detector initialized successfully")
+                print(f"Threat detector initialized successfully using {self.model_path}")
                 print(f"Model classes: {self.class_names}")
                 print(f"Confidence threshold: {self.confidence_threshold}")
             
@@ -294,14 +309,22 @@ class ThreatDetector:
         Calculate ecological severity / hazard level based on debris type & confidence
         """
         debris_priorities = {
-            'ghost_net': 4,       # Entanglement hazard to marine life & reefs
-            'fishing_gear': 4,    # ALDFG risk
-            'container_drum': 3,  # Toxic / industrial hazard
-            'metal_object': 3,    # Pipeline / navigation obstruction
-            'shipwreck': 3,       # Major structural wreck
-            'tires': 2,           # Rubber / microplastic pollution
-            'unknown_anomaly': 2, # Unclassified
-            'rock_cluster': 1     # Natural seabed geology
+            'ghost_net': 4,              # Entanglement hazard to marine life & reefs
+            'fishing_gear': 4,           # ALDFG risk
+            'chain_or_debris': 4,        # Entanglement / cable hazard
+            'container_drum': 3,         # Toxic / industrial hazard
+            'metal_object': 3,           # Pipeline / navigation obstruction
+            'propeller': 3,              # Metal propulsion debris
+            'valve': 3,                  # Subsea pipe fitting
+            'hook': 3,                   # Longline / marine hook
+            'shipwreck': 3,              # Major structural wreck
+            'tires': 2,                  # Rubber / microplastic pollution
+            'tire': 2,                   # Rubber tire debris
+            'bottle_or_container': 2,    # Synthetic plastic/glass debris
+            'can': 2,                    # Metallic beverage container
+            'unknown_anomaly': 2,        # Unclassified anomaly
+            'rock_cluster': 1,           # Natural seabed geology
+            'wall_boundary': 1           # Tank or seabed boundary wall
         }
         
         priority = debris_priorities.get(class_name, 2)
