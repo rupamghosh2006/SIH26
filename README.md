@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./public/logos/varuna-logo.png" alt="Varuna AI Logo" width="170" style="border-radius: 50%; box-shadow: 0 0 30px rgba(0, 240, 255, 0.45); margin-bottom: 12px;" />
+<img src="./public/logos/varuna-logo.png" alt="Varuna AI Logo" width="180" style="background-color: #ffffff; padding: 10px; border-radius: 50%; border: 3px solid #00F0FF; box-shadow: 0 0 35px rgba(0, 240, 255, 0.5); margin-bottom: 14px;" />
 
 # 🌊 VARUNA AI
 ### **AI-Powered Automated Underwater Marine Debris and Anomaly Detection System using Side-Scan Sonar Imagery**
