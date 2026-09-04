@@ -40,13 +40,14 @@ The platform ingests raw dual-channel side-scan sonar waterfall logs, applies au
 
 ## 3. Institutional Attribution and Development Team
 
-- **Institution:** Netaji Subhash Engineering College (NSEC), Kolkata, West Bengal, India
-- **Address:** Techno City, Garia, Kolkata, West Bengal 700152, India
-- **Lead Developers:**
-  - **Rupam Ghosh** ([@rupamghosh2006](https://github.com/rupamghosh2006)) | Email: [rupamgh32@gmail.com](mailto:rupamgh32@gmail.com)
-  - **[BDutta18](https://github.com/BDutta18)** | Email: [workwithbd18@gmail.com](mailto:workwithbd18@gmail.com) | Phone: `+91 8967722448`
-- **Target Agency:** Ministry of Earth Sciences (MoES), Government of India
-- **Problem Statement ID:** SIH26057
+| Entity / Role | Details |
+| :--- | :--- |
+| **Host Institution** | Netaji Subhash Engineering College (NSEC), Kolkata, West Bengal, India |
+| **Campus Address** | Techno City, Garia, Kolkata, West Bengal 700152, India |
+| **Lead Developer** | **Rupam Ghosh** ([@rupamghosh2006](https://github.com/rupamghosh2006)) &mdash; [rupamgh32@gmail.com](mailto:rupamgh32@gmail.com) |
+| **Lead Developer** | **[BDutta18](https://github.com/BDutta18)** &mdash; [workwithbd18@gmail.com](mailto:workwithbd18@gmail.com) \| `+91 8967722448` |
+| **Sponsoring Body** | Ministry of Earth Sciences (MoES), Government of India |
+| **Problem Statement** | SIH26057: AI-Powered Automated Underwater Marine Debris & Anomaly Detection |
 
 ---
 
@@ -104,16 +105,16 @@ The platform ingests raw dual-channel side-scan sonar waterfall logs, applies au
 
 VARUNA AI classifies acoustic echoes into 8 benthic hazard categories:
 
-| Class ID | Category Name | Acoustic Characteristics | Ecological Risk Level |
+| Class ID | Category Name | Acoustic Characteristics | Ecological / Economic Risk |
 | :---: | :--- | :--- | :---: |
-| `0` | **Ghost Net (ALDFG)** | High acoustic backscatter with entangled, diffuse cast shadows | Critical Risk |
-| `1` | **Fishing Gear and Lines** | Linear cordage, longlines, buoy ropes, anchor cables | High Risk |
-| `2` | **Rubber Tires** | Circular specular highlight with central void acoustic shadow | Medium Risk |
-| `3` | **Containers and Drums** | Rectangular hard edges with elongated geometric cast shadows | Critical Risk |
-| `4` | **Metal Debris** | Strong specular reflectance with sharp acoustic blockage | High Risk |
-| `5` | **Shipwreck Fragments** | Multi-structural acoustic scatter and extensive shadow fields | Moderate Risk |
-| `6` | **Rock Clusters** | Natural geological formations (Shadow-filtered to suppress false triggers) | Non-Hazardous |
-| `7` | **Unknown Anomalies** | Unidentified acoustic targets flagged for human operator review | Review Required |
+| `0` | **Ghost Net (ALDFG)** | High acoustic backscatter with entangled, diffuse cast shadows | 🔴 Critical Risk |
+| `1` | **Fishing Gear and Lines** | Linear cordage, longlines, buoy ropes, anchor cables | 🟠 High Risk |
+| `2` | **Rubber Tires** | Circular specular highlight with central void acoustic shadow | 🟡 Medium Risk |
+| `3` | **Containers and Drums** | Rectangular hard edges with elongated geometric cast shadows | 🔴 Critical Risk |
+| `4` | **Metal Debris** | Strong specular reflectance with sharp acoustic blockage | 🟠 High Risk |
+| `5` | **Shipwreck Fragments** | Multi-structural acoustic scatter and extensive shadow fields | 🟡 Moderate Risk |
+| `6` | **Rock Clusters** | Natural geological formations (Shadow-filtered to suppress false triggers) | 🟢 Non-Hazardous |
+| `7` | **Unknown Anomalies** | Unidentified acoustic targets flagged for human operator review | 🟡 Review Required |
 
 ---
 
@@ -205,11 +206,12 @@ python -m pytest backend/tests
 
 For technical evaluations, collaborative research, or institutional deployments:
 
-- **Institutional Base:** Netaji Subhash Engineering College (NSEC), Kolkata, India
-- **Lead Developers:**
-  - **Rupam Ghosh:** [rupamgh32@gmail.com](mailto:rupamgh32@gmail.com) | GitHub: [@rupamghosh2006](https://github.com/rupamghosh2006)
-  - **BDutta18:** [workwithbd18@gmail.com](mailto:workwithbd18@gmail.com) | Phone: `+91 8967722448` | GitHub: [@BDutta18](https://github.com/BDutta18)
-- **Sponsoring Agency:** Ministry of Earth Sciences (MoES), Government of India
+| Contact / Entity | Role / Affiliation | Contact Information |
+| :--- | :--- | :--- |
+| **Rupam Ghosh** | Lead Developer | [rupamgh32@gmail.com](mailto:rupamgh32@gmail.com) &bull; [@rupamghosh2006](https://github.com/rupamghosh2006) |
+| **BDutta18** | Lead Developer | [workwithbd18@gmail.com](mailto:workwithbd18@gmail.com) &bull; `+91 8967722448` &bull; [@BDutta18](https://github.com/BDutta18) |
+| **Netaji Subhash Engineering College** | Academic Host Institution | Techno City, Garia, Kolkata, West Bengal 700152, India |
+| **Ministry of Earth Sciences (MoES)** | Sponsoring Government Body | New Delhi, India &bull; [moes.gov.in](https://www.moes.gov.in/) |
 
 ---
 
