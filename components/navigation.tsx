@@ -40,9 +40,6 @@ export function Navigation() {
     { href: "/detection", label: "Debris AI", icon: Target },
     { href: "/command-center", label: "GIS Ops", icon: Radar },
     { href: "/watchlist", label: "Debris Registry", icon: Activity },
-    { href: "/intelligence", label: "Eco-Intel", icon: Globe },
-    { href: "/mission-planner", label: "AUV Swath", icon: Map },
-    { href: "/threat-prediction", label: "Risk Forecast", icon: Activity },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
   ];
 

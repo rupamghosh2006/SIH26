@@ -11,9 +11,6 @@ export function middleware(request: NextRequest) {
     "/detection",
     "/cnn",
     "/analytics",
-    "/intelligence",
-    "/mission-planner",
-    "/threat-prediction",
     "/watchlist",
   ];
   const authPages = ["/auth/login", "/auth/register"];
