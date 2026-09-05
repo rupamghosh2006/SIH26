@@ -177,6 +177,18 @@ Trained on the **Forward-Looking Sonar (FLS) Marine Debris Dataset** ([Valdenegr
 | **mAP@50** | **92.17%** |
 | **mAP@50-95** | **65.91%** |
 
+#### Per-Class Detection Performance (mAP@50)
+| Class Category | Instances | mAP@50 | Ecological Priority |
+| :--- | :---: | :---: | :---: |
+| **`chain_or_debris`** | 65 | **99.0%** | 🔴 Critical (Entanglement / ALDFG) |
+| **`hook`** | 22 | **97.5%** | 🟠 High (Longline hazard) |
+| **`bottle_or_container`** | 195 | **97.1%** | 🟡 Medium (Microplastic source) |
+| **`tire`** | 109 | **96.9%** | 🟡 Medium (Rubber benthic debris) |
+| **`wall_boundary`** | 204 | **95.8%** | 🟢 Low (Structural seabed wall) |
+| **`valve`** | 56 | **92.1%** | 🟠 High (Subsea pipeline fittings) |
+| **`propeller`** | 35 | **83.1%** | 🟠 High (Lost propulsion hardware) |
+| **`can`** | 58 | **75.9%** | 🟡 Medium (Metallic debris) |
+
 - **Primary Checkpoints:** `backend/models/yolov8_varuna.pt`, `best.pt`, and `backend/models/yolov8_seaguard.pt`.
 
 ---
@@ -208,7 +220,32 @@ Trained on the **Sonar Mines vs. Rocks Dataset** ([Connectionist Bench / Kaggle]
 
 ---
 
-## 9. Installation and Execution Guide
+## 8. Explainable Sonar Forensic Analysis
+
+When human operators inspect underwater anomalies, understanding **WHY** a target was classified is essential. VARUNA AI features **Explainable Sonar**:
+
+- **7-Section Forensic Breakdown:** YOLO detector confidence, physics acoustic shadow contrast, morphological shape metrics, composite math calculation, nadir acoustic propagation vector, and physical dimensions.
+- **Dynamic Visual Overlay:** Direct visual demarcation of highlight reflection (cyan), expected cast shadow (orange), and nadir propagation beam on the raw sonar crop.
+- **Auditable Formula:** Complete transparent display of the weighted acoustic confidence equation with individual component contributions.
+
+---
+
+## 9. Active Verification ("Verify Detection") & Adaptive Rescan
+
+VARUNA AI does not blindly accept single-pass classifications when detections are uncertain. The **Active Verification** feature allows operators to request secondary acoustic evidence:
+
+- **Uncertainty Trigger:** Automatically prompts verification on **Medium Tier ($45\% - 74\%$)** and **Low Tier ($<45\%$)** detections.
+- **Adaptive Survey Geometry:** Calculates suggested cross-track CPA offset ($15\text{m} - 35\text{m}$) and orthogonal observation angle ($+45^\circ / -45^\circ$) with waypoint trajectories.
+- **Tactical Rescan Swath Map:** Visualizes primary survey track vs. secondary adaptive verification swath with waypoint nodes.
+- **Dual Simulation Scenarios:**
+  - **Scenario A (Confirmation Pass):** Simulates orthogonal high-contrast pass confirming persistent acoustic relief $\rightarrow$ `✓ VERIFIED TARGET`.
+  - **Scenario B (False Alarm Pass):** Simulates secondary pass revealing flat seabed ripple with reduced confidence $\rightarrow$ `⚠ DETECTION NOT CONFIRMED`.
+- **Truth-Based Association & Evidence Comparison:** Reuses the existing detector and confidence filter without artificial confidence boosting ($\Delta \text{Conf} = \text{Secondary} - \text{Primary}$).
+- **Human-in-the-Loop Actions:** Operator controls for `[ Confirm Detection ]`, `[ False Alarm ]`, and `[ Mark For ROV Review ]`.
+
+---
+
+## 10. Installation and Execution Guide
 
 ### Prerequisites
 - Node.js 18+ (Node 20 recommended)
@@ -242,10 +279,10 @@ docker-compose up --build
 
 ---
 
-## 10. Platform Core Modules
+## 11. Platform Core Modules
 
 1. **Acoustic Sonar Enhancement Lab (`/cnn`)**: Interactive acoustic enhancement utilizing bilateral speckle filtering, CLAHE gain equalization, and real-time contrast metrics.
-2. **Debris Detection Center (`/detection`)**: Multi-scale YOLOv8 object detection with bounding boxes, confidence score tiers, and physics-based acoustic shadow validation.
+2. **Debris Detection Center (`/detection`)**: Multi-scale YOLOv8 object detection with bounding boxes, confidence score tiers, Explainable Sonar, and Active Verification.
 3. **GIS Operations Command Center (`/command-center`)**: Real-time Leaflet GIS swath mapping, GPS anomaly markers, and bathymetric depth profiles.
 4. **Debris Registry & Watchlist (`/watchlist`)**: Catalog of detected marine anomalies, geolocation tracking, and ecological risk logs.
 5. **Analytics Dashboard (`/analytics`)**: Statistical breakdown of debris distributions, benthic classification metrics, and survey audit summaries.
@@ -253,7 +290,7 @@ docker-compose up --build
 
 ---
 
-## 10. Automated Verification Suite
+## 11. Automated Verification Suite
 
 Run the full automated test suite verifying preprocessing, physics confidence filters, coordinate splining, and REST endpoints:
 
@@ -263,7 +300,7 @@ python -m pytest backend/tests
 
 ---
 
-## 11. Research Contact and Inquiries
+## 12. Research Contact and Inquiries
 
 For technical evaluations, collaborative research, or institutional deployments:
 
