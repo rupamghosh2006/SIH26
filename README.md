@@ -210,16 +210,6 @@ Trained on the **Sonar Mines vs. Rocks Dataset** ([Connectionist Bench / Kaggle]
 
 ---
 
-## 8. Technology Stack
-
-- **Frontend Application:** Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS (Sonar Dark Theme), Lucide Icons, Leaflet GIS, Recharts.
-- **Backend API & Microservices:** Python 3.11+, FastAPI, Uvicorn, SQLAlchemy ORM, SQLite / PostgreSQL, Pydantic v2.
-- **AI and Computer Vision:** Ultralytics YOLOv8, PyTorch, Torchvision, ONNX Runtime, OpenCV, SciPy, NumPy, scikit-image.
-- **Hardware Integration Support:** NVIDIA Jetson Orin / Nano edge deployment modules, ESP32-CAM telemetry stream emulation.
-- **Packaging & Deployment:** Docker, Docker Compose, Gunicorn, Uvicorn.
-
----
-
 ## 8. Explainable Sonar Forensic Analysis
 
 When human operators inspect underwater anomalies, understanding **WHY** a target was classified is essential. VARUNA AI features **Explainable Sonar**:
@@ -245,7 +235,28 @@ VARUNA AI does not blindly accept single-pass classifications when detections ar
 
 ---
 
-## 10. Installation and Execution Guide
+## 10. Technology Stack
+
+- **Frontend Application:** Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS (Sonar Dark Theme), Lucide Icons, Leaflet GIS, Recharts.
+- **Backend API & Microservices:** Python 3.11+, FastAPI, Uvicorn, SQLAlchemy ORM, SQLite / PostgreSQL, Pydantic v2.
+- **AI and Computer Vision:** Ultralytics YOLOv8, PyTorch, Torchvision, ONNX Runtime, OpenCV, SciPy, NumPy, scikit-learn, joblib.
+- **Hardware Integration Support:** NVIDIA Jetson Orin / Nano edge deployment modules, ESP32-CAM telemetry stream emulation.
+- **Packaging & Deployment:** Docker, Docker Compose, Gunicorn, Uvicorn.
+
+---
+
+## 11. Platform Core Modules & Capabilities
+
+1. **Acoustic Sonar Enhancement Lab (`/cnn`)**: Interactive acoustic enhancement utilizing bilateral speckle filtering, CLAHE gain equalization, and persistent analytical reporting.
+2. **Debris Detection Center (`/detection`)**: Multi-scale YOLOv8 object detection with bounding boxes, confidence score tiers, Explainable Sonar forensic popups, and Active Verification modals.
+3. **GIS Operations Command Center (`/command-center`)**: Real-time Leaflet GIS swath mapping, GPS anomaly markers, and bathymetric depth profiles with VARUNA security badge.
+4. **Debris Registry & Watchlist (`/watchlist`)**: Catalog of detected marine anomalies, geolocation tracking, and ecological risk logs.
+5. **Analytics Dashboard (`/analytics`)**: Statistical breakdown of debris distributions, benthic classification metrics, and survey audit summaries.
+6. **Audit & Report Export**: Automated structured GeoJSON, CSV, and hydrographic PDF report compilation for maritime authorities.
+
+---
+
+## 12. Installation and Execution Guide
 
 ### Prerequisites
 - Node.js 18+ (Node 20 recommended)
@@ -268,9 +279,9 @@ The client portal will be accessible at `http://localhost:3000`.
 ### 3. Backend Launch
 ```bash
 pip install -r backend/requirements.txt
-python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 5000 --reload
+python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
-Interactive Swagger documentation is available at `http://localhost:5000/docs`.
+Interactive Swagger documentation is available at `http://localhost:8000/docs`.
 
 ### 4. Containerized Execution via Docker Compose
 ```bash
@@ -279,28 +290,32 @@ docker-compose up --build
 
 ---
 
-## 11. Platform Core Modules
+## 13. Automated Test Suite (46 Tests)
 
-1. **Acoustic Sonar Enhancement Lab (`/cnn`)**: Interactive acoustic enhancement utilizing bilateral speckle filtering, CLAHE gain equalization, and real-time contrast metrics.
-2. **Debris Detection Center (`/detection`)**: Multi-scale YOLOv8 object detection with bounding boxes, confidence score tiers, Explainable Sonar, and Active Verification.
-3. **GIS Operations Command Center (`/command-center`)**: Real-time Leaflet GIS swath mapping, GPS anomaly markers, and bathymetric depth profiles.
-4. **Debris Registry & Watchlist (`/watchlist`)**: Catalog of detected marine anomalies, geolocation tracking, and ecological risk logs.
-5. **Analytics Dashboard (`/analytics`)**: Statistical breakdown of debris distributions, benthic classification metrics, and survey audit summaries.
-6. **Audit & Report Export**: Automated structured GeoJSON, CSV, and PDF report compilation for maritime authorities.
-
----
-
-## 11. Automated Verification Suite
-
-Run the full automated test suite verifying preprocessing, physics confidence filters, coordinate splining, and REST endpoints:
+Run the full automated test suite verifying preprocessing, physics confidence filters, coordinate splining, explainability overlays, and active verification:
 
 ```bash
-python -m pytest backend/tests
+python -m pytest backend/tests -p no:cacheprovider
+```
+
+```
+backend\tests\test_active_verification.py ............                   [ 26%]
+backend\tests\test_api.py ..                                             [ 30%]
+backend\tests\test_confidence_filter.py ...                              [ 36%]
+backend\tests\test_crab_pot_dataset.py .....                             [ 47%]
+backend\tests\test_dataset_conversion.py ..                              [ 52%]
+backend\tests\test_explainability.py ..........                          [ 73%]
+backend\tests\test_fls_and_acoustic.py ...                               [ 80%]
+backend\tests\test_geotagging.py ...                                     [ 86%]
+backend\tests\test_preprocessing.py ....                                 [ 95%]
+backend\tests\test_reporting.py ..                                       [100%]
+
+======================= 46 passed in 8.21s =======================
 ```
 
 ---
 
-## 12. Research Contact and Inquiries
+## 14. Research Contact and Inquiries
 
 For technical evaluations, collaborative research, or institutional deployments:
 
