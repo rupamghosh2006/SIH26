@@ -645,7 +645,7 @@ export function VarunaVoiceAssistant() {
     startCommandListeningDirect.current = startCommandListening;
   }, [startCommandListening]);
 
-  // ═══ AUTO-START ON MOUNT — always on, no button needed ═══
+  // ═══ AUTO-START ON MOUNT (Disabled to avoid automatic microphone permission prompt) ═══
   useEffect(() => {
     mountedRef.current = true;
     const SR =
@@ -653,13 +653,14 @@ export function VarunaVoiceAssistant() {
       (window as any).webkitSpeechRecognition;
     if (!SR) return;
 
-    const timer = setTimeout(() => {
-      startWakeRef.current();
-    }, 800);
+    // Disabled auto-start of microphone listening on initial page load
+    // const timer = setTimeout(() => {
+    //   startWakeRef.current();
+    // }, 800);
 
     return () => {
       mountedRef.current = false;
-      clearTimeout(timer);
+      // clearTimeout(timer);
       if (recognitionRef.current) {
         try {
           recognitionRef.current.abort();

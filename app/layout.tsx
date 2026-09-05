@@ -68,7 +68,7 @@ export default function RootLayout({
         </Suspense>
 
         <Chatbot />
-        <VarunaVoiceAssistant />
+        {/* <VarunaVoiceAssistant /> */}
         <Toaster richColors position="top-right" theme="dark" />
 
         <Analytics />
