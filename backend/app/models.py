@@ -70,6 +70,7 @@ class Detection(Base):
     thumbnail_url = Column(String(512), nullable=True)
     timestamp = Column(String(64), nullable=False)
     filter_details_json = Column(Text, nullable=True)
+    verification_json = Column(Text, nullable=True)
     
     created_at = Column(DateTime, default=utc_now)
 
@@ -91,6 +92,15 @@ class Detection(Base):
             except Exception:
                 return {}
         return {}
+
+    @property
+    def verification_record(self):
+        if self.verification_json:
+            try:
+                return json.loads(self.verification_json)
+            except Exception:
+                return None
+        return None
 
 
 class PingRecord(Base):

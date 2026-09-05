@@ -23,6 +23,14 @@ from ..config import settings
 from .. import crud, schemas, models
 from ..service import run_survey_pipeline, create_sample_demo_survey
 from ai_pipeline.reporting import build_detection_report
+from ai_pipeline.active_verification import (
+    plan_secondary_rescan,
+    match_secondary_detection,
+    compare_observations,
+    generate_synthetic_rescan_image
+)
+import json
+from datetime import datetime, timezone
 
 router = APIRouter(prefix="/surveys", tags=["Surveys"])
 
@@ -550,4 +558,255 @@ def get_detection_explainability_image(
         raise HTTPException(status_code=500, detail="Failed to encode explainability image.")
 
     return Response(content=buffer.tobytes(), media_type="image/png")
+
+
+@router.post("/{survey_id}/detections/{detection_id}/verify", response_model=schemas.VerificationPlanResponse)
+def plan_detection_verification(
+    survey_id: str,
+    detection_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Evaluates verification need and generates an adaptive secondary survey
+    observation plan and waypoint trajectory for a given sonar detection.
+    """
+    survey = crud.get_survey(db, survey_id)
+    if not survey:
+        raise HTTPException(status_code=404, detail="Survey not found.")
+
+    detection = db.query(models.Detection).filter(
+        models.Detection.id == detection_id,
+        models.Detection.survey_id == survey_id
+    ).first()
+
+    if not detection:
+        raise HTTPException(status_code=404, detail="Detection not found.")
+
+    det_dict = {
+        "id": detection.id,
+        "bbox": detection.bbox,
+        "class": detection.predicted_class,
+        "predicted_class": detection.predicted_class,
+        "confidence_score": detection.confidence_score,
+        "confidence_tier": detection.confidence_tier,
+        "latitude": detection.latitude,
+        "longitude": detection.longitude,
+        "detector_score": detection.detector_score,
+        "shadow_score": detection.shadow_score,
+        "shape_score": detection.shape_score,
+        "shadow_detected": detection.shadow_detected
+    }
+
+    nadir_x = survey.nadir_x if survey.nadir_x is not None else (survey.image_width // 2 if survey.image_width else 512)
+    image_width = survey.image_width if survey.image_width else 1024
+    slant_range_m = survey.slant_range_m if survey.slant_range_m else 75.0
+
+    plan = plan_secondary_rescan(
+        detection=det_dict,
+        nadir_x=nadir_x,
+        image_width=image_width,
+        slant_range_m=slant_range_m
+    )
+
+    return {
+        "survey_id": survey_id,
+        "detection_id": detection_id,
+        "target_info": plan["target_info"],
+        "verification_need": plan["verification_need"],
+        "recommended_observation": plan["recommended_observation"],
+        "simulation_mode": plan["simulation_mode"],
+        "geospatial_routes": plan["geospatial_routes"]
+    }
+
+
+@router.post("/{survey_id}/detections/{detection_id}/verify/rescan", response_model=schemas.VerificationResultResponse)
+async def execute_detection_rescan(
+    survey_id: str,
+    detection_id: str,
+    mode: str = Form("simulation"),
+    scenario: str = Form("confirm"),
+    rescan_image: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Executes a virtual rescan by either processing an uploaded secondary sonar image
+    or running a deterministic acoustic simulation scenario (Scenario A Confirm / Scenario B Reject).
+    Passes secondary image through the AI & physics pipeline, matches target, and compares evidence.
+    """
+    survey = crud.get_survey(db, survey_id)
+    if not survey:
+        raise HTTPException(status_code=404, detail="Survey not found.")
+
+    detection = db.query(models.Detection).filter(
+        models.Detection.id == detection_id,
+        models.Detection.survey_id == survey_id
+    ).first()
+
+    if not detection:
+        raise HTTPException(status_code=404, detail="Detection not found.")
+
+    primary_dict = {
+        "id": detection.id,
+        "class": detection.predicted_class,
+        "predicted_class": detection.predicted_class,
+        "confidence_score": detection.confidence_score,
+        "confidence_tier": detection.confidence_tier,
+        "detector_score": detection.detector_score,
+        "shadow_score": detection.shadow_score,
+        "shape_score": detection.shape_score,
+        "shadow_detected": detection.shadow_detected,
+        "bbox": detection.bbox
+    }
+
+    # Prepare rescan image and detections
+    secondary_img = None
+    secondary_detections = []
+
+    if mode == "upload" and rescan_image and rescan_image.filename:
+        # User uploaded a custom secondary sonar image
+        content = await rescan_image.read()
+        nparr = np.frombuffer(content, np.uint8)
+        secondary_img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        if secondary_img is None:
+            raise HTTPException(status_code=400, detail="Invalid secondary sonar image.")
+        
+        # Process through detection & confidence filter pipeline
+        try:
+            from ai_pipeline.detection import SonarDetector
+            detector = SonarDetector(confidence_threshold=0.20)
+            raw_dets = detector.detect(secondary_img)
+        except Exception:
+            raw_dets = []
+        
+        sec_h, sec_w = secondary_img.shape[:2]
+        sec_nadir_x = sec_w // 2
+        
+        for d in raw_dets:
+            conf_eval = evaluate_detection_confidence(
+                image=secondary_img,
+                bbox=d["bbox"],
+                yolo_confidence=d.get("confidence", 0.5),
+                nadir_x=sec_nadir_x
+            )
+            secondary_detections.append({
+                "class": d["class"],
+                "predicted_class": d["class"],
+                "confidence": round(conf_eval.final_score / 100.0, 3),
+                "confidence_score": conf_eval.final_score,
+                "confidence_tier": conf_eval.tier,
+                "detector_score": conf_eval.detector_score,
+                "shadow_score": conf_eval.shadow_score,
+                "shape_score": conf_eval.shape_score,
+                "shadow_detected": conf_eval.shadow_detected,
+                "bbox": d["bbox"]
+            })
+    else:
+        # Simulation Mode (Scenario A: Confirm, Scenario B: Reject / False Alarm)
+        secondary_img, secondary_detections = generate_synthetic_rescan_image(
+            scenario=scenario,
+            target_class=detection.predicted_class,
+            primary_bbox=detection.bbox
+        )
+
+    # Save secondary rescan image to disk
+    sec_filename = f"{survey_id}_{detection_id}_rescan.png"
+    sec_save_path = settings.UPLOADS_DIR / sec_filename
+    cv2.imwrite(str(sec_save_path), secondary_img)
+
+    # Associate target deterministically
+    matched_sec, match_score = match_secondary_detection(
+        primary_bbox=detection.bbox,
+        primary_class=detection.predicted_class,
+        secondary_detections=secondary_detections,
+        image_shape=secondary_img.shape[:2]
+    )
+
+    # Compare evidence
+    comparison = compare_observations(
+        primary_evidence=primary_dict,
+        secondary_evidence=matched_sec,
+        match_score=match_score
+    )
+
+    # Build full result
+    now_iso = datetime.now(timezone.utc).isoformat()
+    result = {
+        "survey_id": survey_id,
+        "detection_id": detection_id,
+        "status": comparison["status"],
+        "verdict_title": comparison["verdict_title"],
+        "verdict_badge": comparison["verdict_badge"],
+        "verdict_color": comparison["verdict_color"],
+        "summary_text": comparison["summary_text"],
+        "target_associated": comparison["target_associated"],
+        "match_score": comparison["match_score"],
+        "class_consistent": comparison["class_consistent"],
+        "confidence_delta": comparison["confidence_delta"],
+        "shadow_delta": comparison["shadow_delta"],
+        "shape_delta": comparison["shape_delta"],
+        "detector_delta": comparison["detector_delta"],
+        "evidence_strengthened": comparison["evidence_strengthened"],
+        "primary": comparison["primary"],
+        "secondary": comparison["secondary"],
+        "scientific_notes": comparison["scientific_notes"],
+        "recommended_action": comparison["recommended_action"],
+        "secondary_image_url": f"/api/surveys/{survey_id}/detections/{detection_id}/verification-image",
+        "created_at": now_iso
+    }
+
+    # Persist verification record in Detection model
+    detection.verification_json = json.dumps(result)
+    db.commit()
+
+    return result
+
+
+@router.get("/{survey_id}/detections/{detection_id}/verification", response_model=schemas.VerificationResultResponse)
+def get_detection_verification(
+    survey_id: str,
+    detection_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieves stored active verification record for a given detection.
+    """
+    detection = db.query(models.Detection).filter(
+        models.Detection.id == detection_id,
+        models.Detection.survey_id == survey_id
+    ).first()
+
+    if not detection:
+        raise HTTPException(status_code=404, detail="Detection not found.")
+
+    if not detection.verification_record:
+        raise HTTPException(status_code=404, detail="No active verification record found for this detection.")
+
+    return detection.verification_record
+
+
+@router.get("/{survey_id}/detections/{detection_id}/verification-image")
+def get_detection_verification_image(
+    survey_id: str,
+    detection_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Serves the secondary rescan sonar image.
+    """
+    sec_filename = f"{survey_id}_{detection_id}_rescan.png"
+    sec_save_path = settings.UPLOADS_DIR / sec_filename
+
+    if not os.path.exists(sec_save_path):
+        raise HTTPException(status_code=404, detail="Secondary rescan image not found on disk.")
+
+    img = cv2.imread(str(sec_save_path))
+    if img is None:
+        raise HTTPException(status_code=500, detail="Failed to load secondary rescan image.")
+
+    success, buffer = cv2.imencode(".png", img)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to encode secondary rescan image.")
+
+    return Response(content=buffer.tobytes(), media_type="image/png")
+
 
