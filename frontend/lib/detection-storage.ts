@@ -11,6 +11,14 @@ interface StoredDetection {
     threat_level?: string
     bbox: [number, number, number, number]
     color: string
+    verification_status?: string
+    operator_notes?: string
+    confidence_tier?: string
+    detector_score?: number
+    shadow_score?: number
+    shape_score?: number
+    shadow_detected?: boolean
+    verification_record?: any
   }>
   processingTime: number
   totalObjects: number

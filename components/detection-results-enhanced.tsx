@@ -15,11 +15,16 @@ import {
   ShieldCheck,
   LifeBuoy,
   FileText,
-  HelpCircle
+  HelpCircle,
+  Crosshair,
+  Compass,
+  ShieldAlert,
+  Search
 } from "lucide-react";
 import HolographicCard from "./holographic-card";
 import { normalizeOverallThreatScore } from "@/lib/detection-storage";
 import { ExplainableSonarPanel } from "./explainable-sonar-panel";
+import { ActiveVerificationModal } from "./active-verification-modal";
 
 interface Detection {
   class: string;
@@ -41,6 +46,7 @@ interface Detection {
   longitude?: number;
   thumbnail_url?: string;
   filter_details?: any;
+  verification_record?: any;
 }
 
 interface DetectionResultProps {
@@ -155,11 +161,28 @@ export default function DetectionResultsEnhanced({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [notesDraft, setNotesDraft] = useState<string>("");
   const [expandedExplainIndex, setExpandedExplainIndex] = useState<number | null>(null);
+  const [activeVerifyIndex, setActiveVerifyIndex] = useState<number | null>(null);
 
   const handleVerify = (idx: number, status: "confirmed" | "rejected") => {
     setItems((prev) =>
       prev.map((it, i) => (i === idx ? { ...it, verification_status: status } : it))
     );
+  };
+
+  const handleConfirmVerification = (status: "confirmed" | "rejected" | "review", verificationData: any) => {
+    if (activeVerifyIndex !== null) {
+      setItems((prev) =>
+        prev.map((it, i) =>
+          i === activeVerifyIndex
+            ? {
+                ...it,
+                verification_status: status === "review" ? "pending" : status,
+                verification_record: verificationData,
+              }
+            : it
+        )
+      );
+    }
   };
 
   const handleChangeClass = (idx: number, newClass: string) => {
@@ -204,6 +227,7 @@ export default function DetectionResultsEnhanced({
         operator_notes: d.operator_notes || "None",
         bounding_box_xywh: d.bbox,
         acoustic_shadow_verified: true,
+        verification_record: d.verification_record || null,
       })),
     };
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
@@ -318,33 +342,37 @@ export default function DetectionResultsEnhanced({
     <HolographicCard className="mb-6" animated>
       <div className="space-y-6">
         {/* Result header */}
-        <div className="flex items-start justify-between border-b border-cyan-500/20 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cyan-500/20 pb-4">
           <div>
-            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-              <span>Sonar Survey Result #{index + 1}</span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-space-mono">
-                SSS WATERFALL LOG
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono text-cyan-400 font-bold tracking-wider">
+                DEBRIS RECONNAISSANCE #{index + 1}
               </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                ACTIVE
+              </span>
+            </div>
+            <h3 className="text-xl font-bold font-orbitron text-foreground tracking-wide mt-1">
+              Side-Scan Sonar Telemetry Log
             </h3>
-            {originalFileName && (
-              <p className="text-xs text-slate-400 mt-1">
-                Survey Source: {originalFileName}
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground font-mono">
+              {originalFileName || `survey_capture_${index + 1}.png`} • 900 kHz High-Res CHIRP
+            </p>
           </div>
+
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={downloadHtmlPdfReport}
-              className="px-2.5 py-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/25 transition-colors text-xs font-space-mono flex items-center gap-1.5 cursor-pointer"
-              title="Print or Export PDF Survey Report"
+              className="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25 transition-colors text-xs font-space-mono flex items-center gap-1.5 cursor-pointer"
+              title="Print Formal Hydrographic PDF Report"
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>PDF Report</span>
+              <span>Report PDF</span>
             </button>
             <button
               onClick={downloadJsonReport}
-              className="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25 transition-colors text-xs font-space-mono flex items-center gap-1.5 cursor-pointer"
-              title="Export JSON Debris Report"
+              className="px-2.5 py-1.5 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-300 hover:bg-blue-500/25 transition-colors text-xs font-space-mono flex items-center gap-1.5 cursor-pointer"
+              title="Export JSON Telemetry"
             >
               <FileJson className="w-3.5 h-3.5" />
               <span>JSON</span>
@@ -475,6 +503,11 @@ export default function DetectionResultsEnhanced({
                     badgeBg: "bg-cyan-500/30",
                   };
 
+                const confPercent = Math.round(detection.confidence * 100);
+                const isHighConf = confPercent >= 75;
+                const isMedConf = confPercent >= 45 && confPercent < 75;
+                const isLowConf = confPercent < 45;
+
                 return (
                   <div
                     key={i}
@@ -489,24 +522,41 @@ export default function DetectionResultsEnhanced({
                           }}
                         />
                         <div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <span className={`text-sm font-bold ${classInfo.textColor}`}>
                               #{i + 1} {classInfo.label}
                             </span>
                             <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
                               {(detection.confidence * 100).toFixed(1)}% Conf
                             </span>
-                            <span
-                              className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase ${
-                                (detection.threat_level || detection.ecological_risk) === "CRITICAL"
-                                  ? "bg-red-500/20 text-red-300 border border-red-500/40"
-                                  : (detection.threat_level || detection.ecological_risk) === "HIGH"
-                                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                                    : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                              }`}
-                            >
-                              {detection.threat_level || detection.ecological_risk || "MEDIUM"}
-                            </span>
+                            
+                            {/* Confidence Tier Badge */}
+                            {isHighConf && (
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
+                                ✓ HIGH CONFIDENCE
+                              </span>
+                            )}
+                            {isMedConf && (
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold animate-pulse">
+                                ⚠ VERIFICATION RECOMMENDED
+                              </span>
+                            )}
+                            {isLowConf && (
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/40 font-bold animate-pulse">
+                                ⚠ LOW-CONFIDENCE ANOMALY
+                              </span>
+                            )}
+
+                            {/* Rescan Completed Verdict Badge */}
+                            {detection.verification_record && (
+                              <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold border ${
+                                detection.verification_record.status === "VERIFIED"
+                                  ? "bg-emerald-500/30 text-emerald-300 border-emerald-400"
+                                  : "bg-amber-500/30 text-amber-300 border-amber-400"
+                              }`}>
+                                {detection.verification_record.verdict_badge}
+                              </span>
+                            )}
                           </div>
                           <p className="text-[11px] text-slate-400 font-mono mt-0.5">
                             Acoustic Shadow: <span className="text-emerald-400">Verified</span> | Box: [{detection.bbox ? detection.bbox.map(n => Math.round(n)).join(", ") : "—"}]
@@ -514,8 +564,23 @@ export default function DetectionResultsEnhanced({
                         </div>
                       </div>
 
-                      {/* Human-in-the-loop and Explainable Sonar action buttons */}
+                      {/* Human-in-the-loop, Explainable Sonar, and Active Verification action buttons */}
                       <div className="flex flex-wrap items-center gap-2 self-end sm:self-center">
+                        
+                        {/* ACTIVE VERIFICATION BUTTON */}
+                        <button
+                          onClick={() => setActiveVerifyIndex(i)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 border transition-all cursor-pointer shadow-md ${
+                            isMedConf || isLowConf
+                              ? "bg-gradient-to-r from-amber-500/30 to-cyan-500/30 border-amber-400/70 text-amber-200 hover:border-cyan-400 hover:text-white animate-pulse"
+                              : "bg-slate-800 border-slate-700 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-500/50"
+                          }`}
+                          title="Trigger Active Verification & Secondary Adaptive Rescan"
+                        >
+                          <Crosshair className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>{detection.verification_record ? "View Rescan Evidence" : "VERIFY DETECTION"}</span>
+                        </button>
+
                         <button
                           onClick={() => setExpandedExplainIndex(expandedExplainIndex === i ? null : i)}
                           className={`px-2.5 py-1 rounded-lg text-xs font-mono flex items-center gap-1.5 border transition-all cursor-pointer ${
@@ -528,6 +593,7 @@ export default function DetectionResultsEnhanced({
                           <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
                           <span>{expandedExplainIndex === i ? "Hide Analysis" : "Why detected?"}</span>
                         </button>
+
                         <button
                           onClick={() => handleVerify(i, "confirmed")}
                           className={`px-2.5 py-1 rounded-lg text-xs font-mono flex items-center gap-1 border transition-all cursor-pointer ${
@@ -540,6 +606,7 @@ export default function DetectionResultsEnhanced({
                           <CheckCircle className="w-3.5 h-3.5" />
                           <span>Confirm</span>
                         </button>
+
                         <button
                           onClick={() => handleVerify(i, "rejected")}
                           className={`px-2.5 py-1 rounded-lg text-xs font-mono flex items-center gap-1 border transition-all cursor-pointer ${
@@ -552,6 +619,7 @@ export default function DetectionResultsEnhanced({
                           <XCircle className="w-3.5 h-3.5" />
                           <span>False Alarm</span>
                         </button>
+
                         <select
                           value={detection.class}
                           onChange={(e) => handleChangeClass(i, e.target.value)}
@@ -625,8 +693,19 @@ export default function DetectionResultsEnhanced({
             </div>
           </div>
         )}
+
+        {/* ACTIVE VERIFICATION MODAL */}
+        {activeVerifyIndex !== null && items[activeVerifyIndex] && (
+          <ActiveVerificationModal
+            isOpen={activeVerifyIndex !== null}
+            onClose={() => setActiveVerifyIndex(null)}
+            detection={items[activeVerifyIndex]}
+            detectionIndex={activeVerifyIndex}
+            originalImage={originalImage}
+            onConfirmVerification={handleConfirmVerification}
+          />
+        )}
       </div>
     </HolographicCard>
   );
 }
-
