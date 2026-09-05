@@ -61,6 +61,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" type="image/png" href="/logos/varuna-logo.png?v=2" />
+        <link rel="shortcut icon" href="/logos/varuna-logo.png?v=2" />
+        <link rel="apple-touch-icon" href="/logos/varuna-logo.png?v=2" />
+      </head>
       <body
         className={`font-body ${GeistSans.variable} ${GeistMono.variable} ${orbitron.variable} ${spaceMono.variable}`}
       >
