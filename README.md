@@ -143,13 +143,30 @@ $$\text{Confidence Score} = 0.50 \cdot \mathcal{S}_{\text{YOLO}} + 0.35 \cdot \m
 
 ## 7. Model Training, Datasets & Benchmarks
 
-VARUNA AI incorporates two specialized acoustic intelligence models trained and evaluated on real underwater sonar datasets:
+VARUNA AI incorporates specialized acoustic intelligence models trained and evaluated on real underwater sonar datasets:
 
-### A. YOLOv8 Sonar Marine Debris Detection Model
+### A. YOLOv8 Side-Scan Sonar (SSS) Crab Pot & Derelict Gear Model
+Trained on the **PING Ecosystem SSS Crab Pot Dataset** ([Hugging Face: `PINGEcosystem/sss-crab-pot-detection-ds`](https://huggingface.co/datasets/PINGEcosystem/sss-crab-pot-detection-ds)) containing 6,674 Side-Scan Sonar acoustic captures with axis-aligned bounding box annotations for derelict crab pots ("ghost pots" / ALDFG):
+
+- **Ingestion & Normalizer:** [`backend/ai_pipeline/datasets/download_crab_pot_dataset.py`](backend/ai_pipeline/datasets/download_crab_pot_dataset.py)
+- **Training Script:** [`backend/ai_pipeline/train_crab_pot_yolo.py`](backend/ai_pipeline/train_crab_pot_yolo.py)
+- **Primary Checkpoints:** `backend/models/yolov8_crab_pot.pt`, `backend/models/yolov8_varuna.pt`, `best.pt`
+
+```bash
+# Ingest and convert Hugging Face dataset to YOLO format
+python backend/ai_pipeline/datasets/download_crab_pot_dataset.py
+
+# Launch YOLOv8 fine-tuning on real SSS imagery
+python backend/ai_pipeline/train_crab_pot_yolo.py --epochs 10 --batch 16 --imgsz 640
+```
+
+---
+
+### B. YOLOv8 Sonar Marine Debris Detection Model
 Trained on the **Forward-Looking Sonar (FLS) Marine Debris Dataset** ([Valdenegro-Toro / Kaggle](https://www.kaggle.com/datasets/era2730/forward-looking-sonar-marine-debris-dataset)) containing 1,868 acoustic sonar captures across 8 benthic debris classes:
 
-- **Converter Pipeline:** [`convert_fls_dataset.py`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/backend/ai_pipeline/datasets/convert_fls_dataset.py)
-- **Training Script:** [`train_fls_yolo.py`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/backend/ai_pipeline/train_fls_yolo.py)
+- **Converter Pipeline:** [`backend/ai_pipeline/datasets/convert_fls_dataset.py`](backend/ai_pipeline/datasets/convert_fls_dataset.py)
+- **Training Script:** [`backend/ai_pipeline/train_fls_yolo.py`](backend/ai_pipeline/train_fls_yolo.py)
 - **Validation Split:** 373 held-out real acoustic sonar images (20%)
 
 #### Validation Benchmark Metrics
@@ -172,15 +189,15 @@ Trained on the **Forward-Looking Sonar (FLS) Marine Debris Dataset** ([Valdenegr
 | **`propeller`** | 35 | **83.1%** | 🟠 High (Lost propulsion hardware) |
 | **`can`** | 58 | **75.9%** | 🟡 Medium (Metallic debris) |
 
-- **Primary Checkpoints:** [`backend/models/yolov8_varuna.pt`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/backend/models/yolov8_varuna.pt), [`best.pt`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/best.pt), and [`backend/models/yolov8_seaguard.pt`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/backend/models/yolov8_seaguard.pt).
+- **Primary Checkpoints:** `backend/models/yolov8_varuna.pt`, `best.pt`, and `backend/models/yolov8_seaguard.pt`.
 
 ---
 
-### B. Acoustic Signal Target Classifier (Mines vs. Rocks)
+### C. Acoustic Signal Target Classifier (Mines vs. Rocks)
 Trained on the **Sonar Mines vs. Rocks Dataset** ([Connectionist Bench / Kaggle](https://www.kaggle.com/datasets/mattcarter865/mines-vs-rocks)) consisting of 208 underwater sonar acoustic ping profiles across 60 frequency energy bands:
 
-- **Training Script:** [`train_acoustic_classifier.py`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/backend/ai_pipeline/train_acoustic_classifier.py)
-- **Inference Module:** [`acoustic_classifier.py`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/backend/ai_pipeline/acoustic_classifier.py)
+- **Training Script:** [`backend/ai_pipeline/train_acoustic_classifier.py`](backend/ai_pipeline/train_acoustic_classifier.py)
+- **Inference Module:** [`backend/ai_pipeline/acoustic_classifier.py`](backend/ai_pipeline/acoustic_classifier.py)
 
 #### Model Benchmark Comparison
 | Architecture | Test Accuracy | F1-Score | ROC-AUC | Status |
@@ -189,7 +206,7 @@ Trained on the **Sonar Mines vs. Rocks Dataset** ([Connectionist Bench / Kaggle]
 | **Logistic Regression** | **83.33%** | 0.8444 | 0.9045 | Benchmark |
 | **Random Forest** | **80.95%** | 0.8261 | 0.9511 | Benchmark |
 
-- **Deployed Checkpoints:** [`backend/models/sonar_mine_rock_classifier.joblib`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/backend/models/sonar_mine_rock_classifier.joblib) and [`backend/models/sonar_mine_rock_mlp.pt`](file:///c:/Users/Rupam%20Ghosh/OneDrive/Desktop/SIH26/backend/models/sonar_mine_rock_mlp.pt).
+- **Deployed Checkpoints:** `backend/models/sonar_mine_rock_classifier.joblib` and `backend/models/sonar_mine_rock_mlp.pt`.
 
 ---
 
@@ -239,13 +256,12 @@ docker-compose up --build
 
 ## 10. Platform Core Modules
 
-1. **Acoustic Sonar Enhancement Lab (`/cnn`)**: Interactive acoustic enhancement utilizing bilateral filtering, CLAHE, and real-time contrast metrics.
-2. **Debris Detection Center (`/detection`)**: Multi-scale YOLOv8 object detection with bounding boxes, confidence score tiers, and shadow length telemetry.
+1. **Acoustic Sonar Enhancement Lab (`/cnn`)**: Interactive acoustic enhancement utilizing bilateral speckle filtering, CLAHE gain equalization, and real-time contrast metrics.
+2. **Debris Detection Center (`/detection`)**: Multi-scale YOLOv8 object detection with bounding boxes, confidence score tiers, and physics-based acoustic shadow validation.
 3. **GIS Operations Command Center (`/command-center`)**: Real-time Leaflet GIS swath mapping, GPS anomaly markers, and bathymetric depth profiles.
-4. **AUV Swath Mission Planner (`/mission-planner`)**: Autonomous swath survey path optimization, grid sweeps, and telemetry waypoint routing.
-5. **Ecological Risk & Drift Predictor (`/threat-prediction`)**: Hydrodynamic dispersion modeling and benthic ecosystem vulnerability index calculations.
-6. **Telemetry and Hydrophone Feeds (`/comm-intercept`)**: Real-time acoustic frequency spectrum and subsea telemetry logs.
-7. **Audit & Report Export**: Automated structured GeoJSON, CSV, and PDF report compilation for maritime authorities.
+4. **Debris Registry & Watchlist (`/watchlist`)**: Catalog of detected marine anomalies, geolocation tracking, and ecological risk logs.
+5. **Analytics Dashboard (`/analytics`)**: Statistical breakdown of debris distributions, benthic classification metrics, and survey audit summaries.
+6. **Audit & Report Export**: Automated structured GeoJSON, CSV, and PDF report compilation for maritime authorities.
 
 ---
 
