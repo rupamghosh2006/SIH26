@@ -211,8 +211,11 @@ def test_explainability_overlay_endpoint_functional(client, test_db, tmp_path):
     cv2.imwrite(str(img_file), img)
 
     # 2. Add survey and detection record to test_db
+    import uuid
+    sid = f"srv_exp_{uuid.uuid4().hex[:6]}"
+    did = f"det_exp_{uuid.uuid4().hex[:6]}"
     survey = models.Survey(
-        id="srv_exp_test",
+        id=sid,
         title="Test Survey",
         filename="test_sonar_swath.png",
         image_path=str(img_file),
@@ -222,8 +225,8 @@ def test_explainability_overlay_endpoint_functional(client, test_db, tmp_path):
     test_db.add(survey)
 
     det = models.Detection(
-        id="det_exp_001",
-        survey_id="srv_exp_test",
+        id=did,
+        survey_id=sid,
         latitude=12.9716,
         longitude=77.5946,
         depth_m=15.0,
@@ -243,7 +246,7 @@ def test_explainability_overlay_endpoint_functional(client, test_db, tmp_path):
     test_db.add(det)
     test_db.commit()
     # 3. Request explainability image
-    response = client.get(f"/api/surveys/{survey.id}/detections/{det.id}/explainability-image")
+    response = client.get(f"/api/surveys/{sid}/detections/{did}/explainability-image")
     assert response.status_code == 200
     assert response.headers["content-type"] == "image/png"
     assert len(response.content) > 100

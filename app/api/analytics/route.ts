@@ -11,8 +11,10 @@ export async function GET(request: NextRequest) {
     
     if (!existsSync(analyticsDir)) {
       return NextResponse.json({ 
-        error: "Analytics directory not found" 
-      }, { status: 404 })
+        success: true,
+        analyses: [],
+        totalAnalyses: 0
+      })
     }
 
     // Get all analysis directories

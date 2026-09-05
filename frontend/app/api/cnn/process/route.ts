@@ -806,13 +806,27 @@ async function generateAnalytics(inputPath: string, outputPath: string, metrics:
     // Create directory
     await import("fs").then(fs => fs.promises.mkdir(analysisPath, { recursive: true }))
     
+    // Copy original and enhanced images to persistent analysis folder
+    const persistentOriginalPath = join(analysisPath, "original.jpg")
+    const persistentEnhancedPath = join(analysisPath, "enhanced.jpg")
+    try {
+      if (existsSync(inputPath)) {
+        await import("fs").then(fs => fs.promises.copyFile(inputPath, persistentOriginalPath))
+      }
+      if (existsSync(outputPath)) {
+        await import("fs").then(fs => fs.promises.copyFile(outputPath, persistentEnhancedPath))
+      }
+    } catch (copyErr) {
+      console.warn("Failed to copy persistent images for analytics:", copyErr)
+    }
+
     // Create analytics report
     const reportData = {
       image_name: baseName,
       timestamp: new Date().toISOString(),
       file_paths: {
-        original: inputPath,
-        enhanced: outputPath
+        original: persistentOriginalPath,
+        enhanced: persistentEnhancedPath
       },
       basic_metrics: {
         psnr: metrics.psnr || 0,

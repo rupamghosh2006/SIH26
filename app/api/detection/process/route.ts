@@ -68,11 +68,13 @@ def run_threat_detection(input_path, output_path):
         
         # Search for available side-scan sonar model weights
         candidate_paths = [
+            "backend/models/yolov8_varuna.pt",
+            "../backend/models/yolov8_varuna.pt",
             "backend/models/yolov8_seaguard.pt",
             "../backend/models/yolov8_seaguard.pt",
+            "best.pt",
             "backend/models/yolov8n.pt",
-            "../backend/models/yolov8n.pt",
-            "best.pt"
+            "../backend/models/yolov8n.pt"
         ]
         model_path = next((p for p in candidate_paths if os.path.exists(p)), None)
         

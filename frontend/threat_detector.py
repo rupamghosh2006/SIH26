@@ -60,9 +60,11 @@ class ThreatDetector:
             if not self.model_path or not os.path.exists(self.model_path):
                 candidates = [
                     self.model_path,
+                    "backend/models/yolov8_varuna.pt",
+                    os.path.join(os.path.dirname(__file__), "backend", "models", "yolov8_varuna.pt"),
                     "backend/models/yolov8_seaguard.pt",
                     os.path.join(os.path.dirname(__file__), "backend", "models", "yolov8_seaguard.pt"),
-                    "backend/models/yolov8_varuna.pt",
+                    "yolov8_varuna.pt",
                     "yolov8_seaguard.pt",
                     "best.pt",
                     "yolov8n.pt",
@@ -464,7 +466,7 @@ def main():
     detector = ThreatDetector(confidence_threshold=0.3)  # Lower threshold for better detection
     
     if not detector.model:
-        print("❌ Failed to initialize threat detector")
+        print("[ERROR] Failed to initialize threat detector")
         return
     
     # Find test images
@@ -478,29 +480,29 @@ def main():
                    f != 'best.pt']
     
     if not test_images:
-        print("❌ No test images found")
+        print("[INFO] No test images found")
         return
     
-    print(f"📷 Found {len(test_images)} test image(s)")
+    print(f"[INFO] Found {len(test_images)} test image(s)")
     
     # Process each image
     for i, image_path in enumerate(test_images, 1):
-        print(f"\n🔍 Processing image {i}: {Path(image_path).name}")
+        print(f"\n[+] Processing image {i}: {Path(image_path).name}")
         print("-" * 50)
         
         # Detect threats
         result = detector.detect_threats(image_path)
         
         if result['success']:
-            print(f"✅ Detection successful")
-            print(f"🎯 Threats found: {result['threat_count']}")
-            print(f"⚠️  Overall threat level: {result['overall_threat_level']}")
-            print(f"📊 Threat score: {result['overall_threat_score']}%")
+            print(f"[SUCCESS] Detection successful")
+            print(f"[*] Threats found: {result['threat_count']}")
+            print(f"[*] Overall threat level: {result['overall_threat_level']}")
+            print(f"[*] Threat score: {result['overall_threat_score']}%")
             
             if result['threats']:
-                print(f"\n🚨 DETECTED THREATS:")
+                print(f"\n[!] DETECTED THREATS:")
                 for threat in result['threats']:
-                    print(f"   • {threat['class']} - {threat['threat_level']} threat")
+                    print(f"   * {threat['class']} - {threat['threat_level']} threat")
                     print(f"     Confidence: {threat['confidence_percentage']:.1f}%")
                     print(f"     Size: {threat['relative_size']:.1f}% of image")
             
@@ -509,7 +511,7 @@ def main():
             detector.create_annotated_image(image_path, result)
             
         else:
-            print(f"❌ Detection failed: {result['error']}")
+            print(f"[ERROR] Detection failed: {result['error']}")
     
     print(f"\n{'='*60}")
     print("DEBRIS DETECTION COMPLETED")

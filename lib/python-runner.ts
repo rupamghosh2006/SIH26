@@ -12,7 +12,14 @@ export async function runPythonCommand(
 ): Promise<PythonResult> {
   return new Promise<PythonResult>((resolve) => {
     const py = process.env.PYTHON_EXEC || (process.platform === "win32" ? "python" : "python3")
-    const child = spawn(py, args, { cwd })
+    const child = spawn(py, args, { 
+      cwd,
+      env: {
+        ...process.env,
+        PYTHONIOENCODING: "utf-8",
+        PYTHONUTF8: "1"
+      }
+    })
     
     let stdout = ""
     let stderr = ""
