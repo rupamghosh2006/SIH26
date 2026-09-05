@@ -35,7 +35,7 @@ class NumberedCanvas(canvas.Canvas):
 
         # Header (Pages 2+)
         if self._pageNumber > 1:
-            self.drawString(54, 750, "VARUNA AI  |  SIH 2026 OFFICIAL PITCH DECK & TECHNICAL DOSSIER")
+            self.drawString(54, 750, "VARUNA AI  |  SIH 2026 PITCH DECK & TECHNICAL DOSSIER")
             self.drawRightString(558, 750, "PROBLEM ID: SIH26057  •  MoES / INCOIS")
             self.setStrokeColor(colors.HexColor("#0f2438"))
             self.setLineWidth(0.75)
@@ -73,7 +73,6 @@ def build_pitching_pdf(output_filename="VARUNA_AI_Pitching_Report.pdf"):
     SLATE_MUTED = colors.HexColor("#475569") # Subtitle & Muted Text
     LIGHT_BG = colors.HexColor("#f8fafc")    # Off-white panel
     BORDER_COL = colors.HexColor("#cbd5e1")  # Border Slate
-    ACCENT_CYAN = colors.HexColor("#0ea5e9") # Vibrant Cyan Accent
 
     # Typography Styles
     title_style = ParagraphStyle(
@@ -111,23 +110,11 @@ def build_pitching_pdf(output_filename="VARUNA_AI_Pitching_Report.pdf"):
         'PitchH1',
         parent=styles['Normal'],
         fontName='Helvetica-Bold',
-        fontSize=13,
-        leading=17,
+        fontSize=12,
+        leading=16,
         textColor=DARK_NAVY,
         spaceBefore=2,
-        spaceAfter=6,
-        keepWithNext=True
-    )
-
-    h2_style = ParagraphStyle(
-        'PitchH2',
-        parent=styles['Normal'],
-        fontName='Helvetica-Bold',
-        fontSize=9.5,
-        leading=13,
-        textColor=colors.HexColor("#0369a1"),
-        spaceBefore=5,
-        spaceAfter=2,
+        spaceAfter=5,
         keepWithNext=True
     )
 
@@ -136,9 +123,20 @@ def build_pitching_pdf(output_filename="VARUNA_AI_Pitching_Report.pdf"):
         parent=styles['Normal'],
         fontName='Helvetica',
         fontSize=8.5,
-        leading=12.2,
+        leading=12,
         textColor=SLATE_DARK,
         spaceAfter=5
+    )
+
+    bullet_style = ParagraphStyle(
+        'PitchBullet',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=8,
+        leading=11.5,
+        textColor=SLATE_DARK,
+        leftIndent=10,
+        spaceAfter=3
     )
 
     callout_style = ParagraphStyle(
@@ -155,7 +153,7 @@ def build_pitching_pdf(output_filename="VARUNA_AI_Pitching_Report.pdf"):
     # ==========================================
     # HEADER / TITLE BLOCK
     # ==========================================
-    story.append(Paragraph("VARUNA AI : WINNING PITCH DOSSIER", title_style))
+    story.append(Paragraph("VARUNA AI : OFFICIAL PITCH DECK & TECHNICAL DOSSIER", title_style))
     story.append(Paragraph("Automated Underwater Marine Debris & Ghost Net Detection System using Side-Scan Sonar Imagery | Smart India Hackathon (SIH 2026)", subtitle_style))
     story.append(HRFlowable(width="100%", thickness=1.5, color=PRIMARY, spaceBefore=0, spaceAfter=8))
 
@@ -187,27 +185,27 @@ def build_pitching_pdf(output_filename="VARUNA_AI_Pitching_Report.pdf"):
     # SLIDE 1: IDEA / SOLUTION
     # ==========================================
     story.append(Paragraph("SLIDE 1: IDEA & SOLUTION", slide_badge_style))
-    story.append(Paragraph("1. The Core Problem & Our Breakthrough Solution", h1_style))
+    story.append(Paragraph("1. The Core Problem & Our End-to-End Solution", h1_style))
     
     p_s1_prob = (
-        "<b>The Problem:</b> Over 640,000 metric tons of Abandoned, Lost, or Discarded Fishing Gear (ALDFG), commonly "
-        "termed 'Ghost Nets', and synthetic anthropogenic debris choke global oceans annually. Ghost nets remain lethal "
-        "traps for 600+ years, killing over 136,000 marine mammals every year and posing grave entanglement hazards to naval "
-        "submarines, commercial propellers, and subsea infrastructure. Modern hydrographic surveys generate massive continuous "
-        "streams of Side-Scan Sonar (SSS) acoustic waterfall logs (>500 MB per nautical mile). Hydrographic operators face "
-        "severe inspection fatigue and cognitive overload, resulting in 12 to 48 hours of post-mission analysis delay per survey "
-        "leg, missed critical targets, and expensive false alarm diver deployments costing upwards of $15,000 per dive."
+        "<b>The Problem:</b> Over 640,000 metric tons of Abandoned, Lost, or Discarded Fishing Gear (ALDFG / 'Ghost Nets') "
+        "and synthetic anthropogenic debris choke global oceans annually. Ghost nets remain lethal traps for 600+ years, killing "
+        "over 136,000 marine mammals every year and posing grave entanglement hazards to naval submarines, commercial propellers, "
+        "and subsea infrastructure. Modern hydrographic surveys generate massive continuous streams of Side-Scan Sonar (SSS) acoustic "
+        "waterfall logs (>500 MB per nautical mile). Hydrographic operators face severe inspection fatigue and cognitive overload, "
+        "resulting in 12 to 48 hours of post-mission analysis delay per survey leg, missed critical targets, and expensive false alarm "
+        "diver deployments costing upwards of $15,000 per dive."
     )
     story.append(Paragraph(p_s1_prob, body_style))
 
     p_s1_sol = (
-        "<b>Our Winning Idea & Solution:</b> VARUNA AI is India's first end-to-end, physics-validated, and fully explainable "
-        "underwater acoustic intelligence platform. We replace slow, error-prone manual screening with an automated, sub-second "
-        "multi-stage pipeline. The platform ingests raw dual-channel SSS waterfalls, applies real-time CLAHE and bilateral despeckling, "
-        "detects 8 discrete benthic debris classes with fine-tuned YOLOv8 neural networks, validates targets using acoustic cast shadow physics, "
-        "provides forensic Grad-CAM and backscatter waveform explainability, and autonomously recommends secondary adaptive AUV re-scans "
-        "('Active Verification') when detections are ambiguous. Detections are instantly projected onto an interactive military-grade Leaflet GIS "
-        "swath map with full GPS georeferencing and automated hydrographic PDF reporting."
+        "<b>Our Solution:</b> VARUNA AI is India's first end-to-end, physics-validated, and fully explainable underwater acoustic "
+        "intelligence platform. We replace slow, error-prone manual screening with an automated, sub-second multi-stage pipeline. "
+        "The platform ingests raw dual-channel SSS waterfalls, applies real-time CLAHE and bilateral despeckling, detects 8 discrete "
+        "benthic debris classes with fine-tuned YOLOv8 neural networks, validates targets using acoustic cast shadow physics, provides "
+        "forensic Grad-CAM and backscatter waveform explainability, and autonomously recommends secondary adaptive AUV re-scans "
+        "('Active Verification') when detections are ambiguous. Detections are instantly projected onto an interactive military-grade "
+        "Leaflet GIS swath map with full GPS georeferencing and automated hydrographic PDF reporting."
     )
     story.append(Paragraph(p_s1_sol, body_style))
     story.append(Spacer(1, 4))
@@ -216,33 +214,35 @@ def build_pitching_pdf(output_filename="VARUNA_AI_Pitching_Report.pdf"):
     # SLIDE 2: TECHNICAL APPROACH
     # ==========================================
     story.append(Paragraph("SLIDE 2: TECHNICAL APPROACH", slide_badge_style))
-    story.append(Paragraph("2. Full-Stack Architecture, Deep AI & Physics Engine", h1_style))
+    story.append(Paragraph("2. AI/ML Models, Physics Engine & Technical Stack", h1_style))
 
-    p_s2_arch = (
-        "<b>Multi-Stage Processing Pipeline:</b> Raw acoustic waterfall imagery first passes through the Acoustic Preprocessing Lab, "
-        "where Contrast Limited Adaptive Histogram Equalization (CLAHE) normalizes slant-range acoustic transmission loss and Bilateral "
-        "Speckle Filtering removes high-frequency acoustic reverberation while preserving sharp debris edges. Next, the deep neural detector "
-        "(YOLOv8 Nano/Medium fine-tuned on real side-scan and forward-looking sonar datasets) extracts multi-scale bounding boxes and semantic "
-        "class probabilities across the 640x640 tiled waterfall stream."
+    p_s2_models = (
+        "<b>AI / ML Models & Architecture Requirements:</b>"
     )
-    story.append(Paragraph(p_s2_arch, body_style))
+    story.append(Paragraph(p_s2_models, body_style))
 
-    p_s2_physics = (
-        "<b>Hybrid Physics-Guided Confidence Fusion:</b> To eradicate false alarms caused by natural rocky terrain and seabed ripples, "
-        "VARUNA AI couples neural predictions with deterministic acoustic ray-tracing. We compute highlight specular reflectance, cast acoustic "
-        "shadow length along the radial sonar propagation beam, highlight-to-shadow contrast differential, and morphological Hu moments. "
-        "The unified confidence formula weights neural and physics evidence: Confidence = 0.40(YOLO) + 0.25(Highlight) + 0.20(Shadow) + 0.15(Contrast). "
-        "Targets lacking a physical acoustic shadow are demoted with a 0.48x multiplier."
-    )
-    story.append(Paragraph(p_s2_physics, body_style))
+    model_bullets = [
+        "• <b>YOLOv8 Debris AI (Object Detection):</b> Multi-scale anchor-free detector trained on 8,500+ real sonar captures (PING SSS Crab Pot + FLS Debris) for sub-second bounding box localization across 8 debris classes.",
+        "• <b>CNN Sonar Enhancement Lab:</b> Bilateral speckle filter and CLAHE normalization engine required for slant-range gain equalization and pixel backscatter restoration.",
+        "• <b>Deep MLP Acoustic Classifier:</b> PyTorch neural classifier trained on 60-band sonar frequency energy profiles for distinguishing metallic targets/mines from natural seabed rocks (85.71% accuracy, 0.9591 ROC-AUC).",
+        "• <b>Physics-Guided Shadow Filter:</b> Deterministic acoustic ray-tracing module computing highlight specular intensity, cast shadow length, and Hu moments: Confidence = 0.40(YOLO) + 0.25(Highlight) + 0.20(Shadow) + 0.15(Contrast).",
+        "• <b>Grad-CAM & Waveform Engine:</b> Explainable AI module providing feature attribution heatmaps and 1D cross-sectional backscatter profiles for transparent operator audit.",
+        "• <b>Bayesian Active Verification:</b> Autonomous multi-look fusion engine calculating adaptive secondary AUV trajectories (+/-45°, 15-35m CPA) to resolve ambiguous detections."
+    ]
+    for b in model_bullets:
+        story.append(Paragraph(b, bullet_style))
 
-    p_s2_active = (
-        "<b>Explainable Sonar & Active Verification ('Verify Detection'):</b> For mission transparency, VARUNA renders Grad-CAM visual heatmaps, "
-        "cross-sectional acoustic backscatter waveforms, and dynamic radar charts explaining exactly why an object was classified. If an anomaly falls "
-        "in the uncertain confidence tier (0.40–0.65), VARUNA triggers Active Verification: the system computes an adaptive orthogonal re-scan trajectory "
-        "(+/-45° angle, 15–35m cross-track CPA), ingests secondary acoustic evidence, and performs Bayesian multi-look fusion to confirm or dismiss the target."
-    )
-    story.append(Paragraph(p_s2_active, body_style))
+    p_s2_tech = "<b>Point-Short Technical Stack:</b>"
+    story.append(Paragraph(p_s2_tech, body_style))
+
+    tech_bullets = [
+        "• <b>Frontend:</b> Next.js 14 App Router • React 18 • TypeScript • Tailwind CSS • Leaflet.js GIS • Recharts",
+        "• <b>Backend API:</b> FastAPI (Async) • Python 3.11 • Uvicorn • Pydantic v2 • SQLAlchemy ORM • SQLite / PostgreSQL",
+        "• <b>AI / Computer Vision:</b> PyTorch 2.6 • Ultralytics YOLOv8 • OpenCV • ONNX Runtime • Albumentations • Scikit-learn",
+        "• <b>Reporting & Simulation:</b> ReportLab PDF Engine • NumPy 1.26 • Joblib • MAVLink / ROS2 Telemetry Bridge"
+    ]
+    for tb in tech_bullets:
+        story.append(Paragraph(tb, bullet_style))
 
     story.append(PageBreak()) # Clean page break for Slides 3, 4, 5
 
@@ -320,7 +320,7 @@ def build_pitching_pdf(output_filename="VARUNA_AI_Pitching_Report.pdf"):
     # Closing Executive Callout Panel
     story.append(HRFlowable(width="100%", thickness=1, color=PRIMARY, spaceBefore=4, spaceAfter=6))
     closing_p = (
-        "<b>Winning Pitch Summary:</b> VARUNA AI combines state-of-the-art computer vision with acoustic physics, "
+        "<b>Executive Summary:</b> VARUNA AI combines state-of-the-art computer vision with acoustic physics, "
         "delivering a robust, explainable, and production-ready solution that transforms maritime debris clearance "
         "from a slow manual bottleneck into an autonomous, scalable national capability."
     )
@@ -328,7 +328,7 @@ def build_pitching_pdf(output_filename="VARUNA_AI_Pitching_Report.pdf"):
 
     # Build PDF
     doc.build(story, canvasmaker=NumberedCanvas)
-    print(f"Successfully generated 5-slide winning PDF: {output_filename}")
+    print(f"Successfully generated 5-slide PDF: {output_filename}")
 
     # Copy to public directories
     pub_dir = os.path.join("public", "docs")
