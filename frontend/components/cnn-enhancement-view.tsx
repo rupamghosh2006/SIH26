@@ -910,7 +910,7 @@ export function CNNEnhancementView() {
                             <div className="text-center p-4 bg-slate-900/70 rounded-lg border-2 border-emerald-500/30 relative z-10">
                               <TrendingUp className="w-6 h-6 text-emerald-400 mx-auto mb-2" />
                               <p className="text-xs text-emerald-300/60 mb-2 font-space-mono uppercase tracking-wider">
-                                UIQM
+                                CIR Gain
                               </p>
                               <p className="text-3xl font-black text-emerald-300 font-orbitron">
                                 +{result.metrics.uiqm_improvement.toFixed(2)}
@@ -1247,7 +1247,7 @@ export function CNNEnhancementView() {
                             <div className="text-center p-4 bg-slate-900/70 rounded-lg border-2 border-emerald-500/30 relative z-10">
                               <TrendingUp className="w-6 h-6 text-emerald-400 mx-auto mb-2" />
                               <p className="text-xs text-emerald-300/60 mb-2 font-space-mono uppercase tracking-wider">
-                                UIQM
+                                CIR Gain
                               </p>
                               <p className="text-3xl font-black text-emerald-300 font-orbitron">
                                 +{result.metrics.uiqm_improvement.toFixed(2)}

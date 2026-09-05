@@ -122,7 +122,7 @@ const ZONE_INTEL: Record<string, {
     chokepointProximity: 18, // Malacca & Sunda Strait proximity
     trafficDensity: 24,
     elintBaseline: 12,
-    geopoliticalDetail: "SIGINT: Multiple encrypted transmissions from unidentified submarine contact 180nm south of Campbell Bay. Malacca chokepoint — 25% global trade passes within 200nm.",
+    geopoliticalDetail: "Acoustic survey: Sonar swath mapping ongoing 180nm south of Campbell Bay. High shipping traffic corridor — ALDFG risk elevated.",
     piracyDetail: "IMB 2024: 8 incidents Malacca/Andaman corridor. Armed robberies reported in Singapore Strait approaches.",
   },
   "laccadive-sea": {
@@ -140,7 +140,7 @@ const ZONE_INTEL: Record<string, {
     chokepointProximity: 5,
     trafficDensity: 10,
     elintBaseline: 4,
-    geopoliticalDetail: "Far sea operations. Chinese nuclear submarine SSBN patrol area estimated 800-1200nm south. Diego Garcia B-52H deployments active — US strategic presence confirmed.",
+    geopoliticalDetail: "Far sea deep ocean operations. Deep-sea benthic current survey active across 800-1200nm south. Oceanic research vessel and AUV survey deployments active.",
     piracyDetail: "IMB 2024: Remote area — 4 piracy incidents reported far southern Indian Ocean. Humanitarian route monitoring active.",
   },
   "gulf-of-mannar": {
@@ -149,8 +149,8 @@ const ZONE_INTEL: Record<string, {
     chokepointProximity: 9,
     trafficDensity: 12,
     elintBaseline: 6,
-    geopoliticalDetail: "Legacy LTTE maritime networks assessment ongoing. SL Navy-IN joint patrol DOSTI active. Tamil Nadu fishermen incursion incidents — 6 apprehensions this week.",
-    piracyDetail: "IMB 2024: Low piracy. Colombo port smuggling routes monitored. Shallow water mine threat legacy assessment GREEN.",
+    geopoliticalDetail: "Legacy maritime networks assessment ongoing. SL Navy-IN joint patrol DOSTI active. Tamil Nadu fishermen incursion incidents — 6 apprehensions this week.",
+    piracyDetail: "IMB 2024: Low piracy. Colombo port smuggling routes monitored. Shallow water benthic debris risk assessment LOW.",
   },
 };
 

@@ -1227,10 +1227,10 @@ export function TacticalMissionPlanner() {
                 {[
                   { l: "Vessel", v: missionProfile.vessel },
                   { l: "Speed", v: `${missionProfile.speed} kn` },
-                  { l: "Max Range", v: missionProfile.maxRange >= 999999 ? "UNLIMITED (Nuclear)" : `${missionProfile.maxRange} nm` },
+                  { l: "Max Range", v: `${missionProfile.maxRange} nm` },
                   { l: "Displacement", v: missionProfile.displacement },
                   { l: "Crew", v: missionProfile.crew.toString() },
-                  { l: "Armament", v: missionProfile.armament },
+                  { l: "Payload", v: missionProfile.armament },
                 ].map(r => (
                   <div key={r.l} className="flex justify-between items-start">
                     <span className="text-slate-600">{r.l}:</span>
@@ -1943,7 +1943,7 @@ export function TacticalMissionPlanner() {
                         <div className="space-y-0.5 text-[7px] font-space-mono">
                           <div className="flex justify-between"><span className="text-slate-500">Vessel</span><span className="text-slate-300">{missionProfile.vessel}</span></div>
                           <div className="flex justify-between"><span className="text-slate-500">Type</span><span className="text-emerald-300 uppercase">{missionProfile.type}</span></div>
-                          <div className="flex justify-between"><span className="text-slate-500">Arms</span><span className="text-slate-400 text-right max-w-[60%]">{missionProfile.armament}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-500">Payload</span><span className="text-slate-400 text-right max-w-[60%]">{missionProfile.armament}</span></div>
                         </div>
                       </div>
 

@@ -3,12 +3,6 @@ import { verifyOTP } from "@/lib/otp-service";
 import { getUserCollection } from "@/dbCollections";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import {
-  createHoneypotAdminSessionToken,
-  honeypotAdminCookieName,
-  honeypotAdminCookieOptions,
-  isConfiguredHoneypotAdminEmail,
-} from "@/lib/honeypot-admin";
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 function dbConfigError(err: unknown) {
@@ -81,8 +75,7 @@ export async function POST(req: NextRequest) {
           lastName: userData.lastName || "",
           dob: userData.dob || "",
           avatar: userData.avatar || "",
-          isEmailVerified: true,
-          isHoneypotAdmin: false
+          isEmailVerified: true
         }
       }, { status: 201 });
 
@@ -94,12 +87,6 @@ export async function POST(req: NextRequest) {
         maxAge: 60 * 60 * 24 * 30, // 30 days
         path: "/",
         expires: new Date(Date.now() + 60 * 60 * 24 * 30 * 1000)
-      });
-
-      response.cookies.set(honeypotAdminCookieName(), "", {
-        ...honeypotAdminCookieOptions(),
-        maxAge: 0,
-        expires: new Date(0),
       });
 
       return response;
@@ -126,8 +113,6 @@ export async function POST(req: NextRequest) {
         { expiresIn: "30d" } // 30 days
       );
 
-      const isHoneypotAdmin = isConfiguredHoneypotAdminEmail(user.email);
-
       // Create response and set cookie
       const response = NextResponse.json({ 
         message: "Login successful",
@@ -139,8 +124,7 @@ export async function POST(req: NextRequest) {
           lastName: user.lastName || "",
           dob: user.dob || "",
           avatar: user.avatar || "",
-          isEmailVerified: user.isEmailVerified || false,
-          isHoneypotAdmin
+          isEmailVerified: user.isEmailVerified || false
         }
       }, { status: 200 });
 
@@ -153,17 +137,6 @@ export async function POST(req: NextRequest) {
         path: "/",
         expires: new Date(Date.now() + 60 * 60 * 24 * 30 * 1000)
       });
-
-      if (isHoneypotAdmin) {
-        const adminSessionToken = createHoneypotAdminSessionToken(user.email)
-        response.cookies.set(honeypotAdminCookieName(), adminSessionToken, honeypotAdminCookieOptions())
-      } else {
-        response.cookies.set(honeypotAdminCookieName(), "", {
-          ...honeypotAdminCookieOptions(),
-          maxAge: 0,
-          expires: new Date(0),
-        });
-      }
 
       return response;
     }

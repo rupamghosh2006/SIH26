@@ -139,29 +139,14 @@ def enhance_image_onnx(input_path, output_path, model_path):
     # Calculate SSIM
     ssim_value = ssim(original_gray, enhanced_gray)
     
-    # Calculate UIQM (Underwater Image Quality Measure)
+    # Calculate Acoustic Contrast & Highlight Quality Measure (CIR)
     def calculate_uiqm(img):
-        # Convert to float
-        img_float = img.astype(np.float32) / 255.0
-        
-        # Calculate contrast (standard deviation)
-        contrast = np.std(img_float)
-        
-        # Calculate saturation
-        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        saturation = np.mean(hsv[:,:,1]) / 255.0
-        
-        # Calculate sharpness (using Laplacian variance)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        sharpness = cv2.Laplacian(gray, cv2.CV_64F).var()
-        
-        # Calculate colorfulness
-        b, g, r = cv2.split(img)
-        colorfulness = np.sqrt(np.var(r) + np.var(g) + np.var(b)) / 255.0
-        
-        # Combine metrics (simplified UIQM)
-        uiqm = (contrast * 100) + (saturation * 50) + (sharpness / 100) + (colorfulness * 25)
-        return uiqm
+        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) if len(img.shape) == 3 else img
+        img_float = img_gray.astype(np.float32) / 255.0
+        contrast = float(np.std(img_float))
+        sharpness = float(cv2.Laplacian(img_gray, cv2.CV_64F).var())
+        mean_intensity = float(np.mean(img_float))
+        return float((contrast / (mean_intensity + 1e-5)) * 10.0 + (sharpness / 150.0))
     
     uiqm_original = calculate_uiqm(original)
     uiqm_enhanced = calculate_uiqm(enhanced)
@@ -177,23 +162,22 @@ def enhance_image_onnx(input_path, output_path, model_path):
     }
 
 def enhance_image_opencv_fallback(img):
-    """Fallback OpenCV enhancement if ONNX fails"""
-    # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization)
-    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
-    l, a, b = cv2.split(lab)
-    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
-    l = clahe.apply(l)
-    enhanced_lab = cv2.merge([l, a, b])
-    enhanced = cv2.cvtColor(enhanced_lab, cv2.COLOR_LAB2BGR)
+    """Fallback acoustic backscatter enhancement (CLAHE + speckle suppression)"""
+    is_color = len(img.shape) == 3
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) if is_color else img.copy()
     
-    # Apply bilateral filter for noise reduction
-    enhanced = cv2.bilateralFilter(enhanced, 9, 75, 75)
+    # Rayleigh speckle noise reduction via bilateral filtering
+    denoised = cv2.bilateralFilter(gray, d=7, sigmaColor=50, sigmaSpace=50)
     
-    # Apply unsharp masking for sharpening
-    gaussian = cv2.GaussianBlur(enhanced, (0, 0), 2.0)
-    enhanced = cv2.addWeighted(enhanced, 1.5, gaussian, -0.5, 0)
+    # CLAHE for seabed acoustic shadow and highlight contrast equalization
+    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
+    equalized = clahe.apply(denoised)
     
-    return enhanced
+    # High-reflectivity highlight boosting via unsharp mask
+    gaussian = cv2.GaussianBlur(equalized, (0, 0), 2.0)
+    sharpened = cv2.addWeighted(equalized, 1.4, gaussian, -0.4, 0)
+    
+    return cv2.cvtColor(sharpened, cv2.COLOR_GRAY2BGR) if is_color else sharpened
 
 if __name__ == "__main__":
     import sys
@@ -452,23 +436,19 @@ def enhance_frame_onnx(frame, session, input_name, output_name):
         return enhance_frame_opencv(frame)
 
 def enhance_frame_opencv(frame):
-    """Fallback OpenCV enhancement"""
-    # Apply CLAHE
-    lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
-    l, a, b = cv2.split(lab)
+    """Fallback acoustic backscatter video frame enhancement"""
+    is_color = len(frame.shape) == 3
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if is_color else frame.copy()
+    
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-    l = clahe.apply(l)
-    enhanced_lab = cv2.merge([l, a, b])
-    enhanced = cv2.cvtColor(enhanced_lab, cv2.COLOR_LAB2BGR)
+    equalized = clahe.apply(gray)
     
-    # Apply sharpening
+    # Sharpen acoustic highlight edges
     kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
-    sharpened = cv2.filter2D(enhanced, -1, kernel)
+    sharpened = cv2.filter2D(equalized, -1, kernel)
+    result_gray = cv2.addWeighted(equalized, 0.75, sharpened, 0.25, 0)
     
-    # Blend original and sharpened
-    result = cv2.addWeighted(enhanced, 0.7, sharpened, 0.3, 0)
-    
-    return result
+    return cv2.cvtColor(result_gray, cv2.COLOR_GRAY2BGR) if is_color else result_gray
 
 def calculate_ssim(img1, img2):
     """Simple SSIM calculation"""
@@ -491,17 +471,13 @@ def calculate_ssim(img1, img2):
     return max(0.0, min(1.0, ssim_value))
 
 def calculate_uiqm(img):
-    """Calculate UIQM metric"""
-    img_float = img.astype(np.float32) / 255.0
-    contrast = np.std(img_float)
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    saturation = np.mean(hsv[:,:,1]) / 255.0
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    sharpness = cv2.Laplacian(gray, cv2.CV_64F).var()
-    b, g, r = cv2.split(img)
-    colorfulness = np.sqrt(np.var(r) + np.var(g) + np.var(b)) / 255.0
-    uiqm = (contrast * 100) + (saturation * 50) + (sharpness / 100) + (colorfulness * 25)
-    return uiqm
+    """Calculate Acoustic Contrast Improvement Index"""
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) if len(img.shape) == 3 else img
+    img_float = img_gray.astype(np.float32) / 255.0
+    contrast = float(np.std(img_float))
+    sharpness = float(cv2.Laplacian(img_gray, cv2.CV_64F).var())
+    mean_intensity = float(np.mean(img_float))
+    return float((contrast / (mean_intensity + 1e-5)) * 10.0 + (sharpness / 150.0))
 
 if __name__ == "__main__":
     import sys

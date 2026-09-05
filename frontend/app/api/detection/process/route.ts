@@ -66,19 +66,18 @@ def run_threat_detection(input_path, output_path):
             print(f"ERROR: Input file not found: {input_path}", file=sys.stderr)
             return None
         
-        # Initialize threat detector with the model from current folder
-        model_path = "best.pt"
+        # Search for available side-scan sonar model weights
+        candidate_paths = [
+            "backend/models/yolov8_seaguard.pt",
+            "../backend/models/yolov8_seaguard.pt",
+            "backend/models/yolov8n.pt",
+            "../backend/models/yolov8n.pt",
+            "best.pt"
+        ]
+        model_path = next((p for p in candidate_paths if os.path.exists(p)), None)
         
-        if not os.path.exists(model_path):
-            print(f"ERROR: Model file not found: {model_path}", file=sys.stderr)
-            return None
-        
-        # Initialize detector with optimized confidence threshold for production
+        # Initialize detector with side-scan sonar weights or classical acoustic shadow pipeline
         detector = ThreatDetector(model_path=model_path, confidence_threshold=0.25, verbose=False)
-        
-        if not detector.model:
-            print("ERROR: Failed to load model", file=sys.stderr)
-            return None
         
         # Run debris detection
         result = detector.detect_threats(input_path)

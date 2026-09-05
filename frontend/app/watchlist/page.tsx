@@ -21,11 +21,11 @@ import {
   Trash2,
 } from "lucide-react";
 
-type ItemType = "gene_sequence" | "image_recognition";
+type ItemType = "sonar_detection" | "acoustic_anomaly";
 
 interface WatchlistItem {
   _id: string;
-  itemType: ItemType;
+  itemType: ItemType | "image_recognition";
   referenceId?: string | null;
   title?: string | null;
   summary?: string | null;
@@ -41,10 +41,10 @@ export default function WatchlistPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [activeType, setActiveType] = useState<ItemType | "all">("all");
+  const [activeType, setActiveType] = useState<string>("all");
   const [query, setQuery] = useState("");
 
-  const [formType, setFormType] = useState<ItemType>("image_recognition");
+  const [formType, setFormType] = useState<ItemType>("sonar_detection");
   const [formTitle, setFormTitle] = useState("");
   const [formSummary, setFormSummary] = useState("");
   const [formScore, setFormScore] = useState<string>("");
@@ -79,7 +79,15 @@ export default function WatchlistPage() {
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
-      if (activeType !== "all" && item.itemType !== activeType) return false;
+      if (activeType !== "all") {
+        if (activeType === "sonar_detection") {
+          if (item.itemType !== "sonar_detection" && item.itemType !== "image_recognition") return false;
+        } else if (activeType === "acoustic_anomaly") {
+          if (item.itemType !== "acoustic_anomaly") return false;
+        } else if (item.itemType !== activeType) {
+          return false;
+        }
+      }
       if (!query.trim()) return true;
       const text = query.toLowerCase();
       const joined = [
@@ -149,8 +157,8 @@ export default function WatchlistPage() {
 
   const totalByType = useMemo(
     () => ({
-      gene: items.filter((i) => i.itemType === "gene_sequence").length,
-      vision: items.filter((i) => i.itemType === "image_recognition").length,
+      detection: items.filter((i) => i.itemType === "sonar_detection" || i.itemType === "image_recognition").length,
+      anomaly: items.filter((i) => i.itemType === "acoustic_anomaly").length,
     }),
     [items],
   );
@@ -224,18 +232,18 @@ export default function WatchlistPage() {
                     >
                       <TabsList className="w-full grid grid-cols-2 bg-slate-900/60 border border-cyan-500/30">
                         <TabsTrigger
-                          value="image_recognition"
+                          value="sonar_detection"
                           className="text-[10px] font-space-mono"
                         >
                           <Brain className="w-3 h-3 mr-1" />
-                          Vision
+                          Sonar AI
                         </TabsTrigger>
                         <TabsTrigger
-                          value="gene_sequence"
+                          value="acoustic_anomaly"
                           className="text-[10px] font-space-mono"
                         >
-                          <Database className="w-3 h-3 mr-1" />
-                          Sequence
+                          <Target className="w-3 h-3 mr-1" />
+                          Anomaly
                         </TabsTrigger>
                       </TabsList>
                     </Tabs>
@@ -247,7 +255,7 @@ export default function WatchlistPage() {
                     <Input
                       value={formTitle}
                       onChange={(e) => setFormTitle(e.target.value)}
-                      placeholder="e.g. Submerged contact near choke point BRAVO"
+                      placeholder="e.g. Submerged Ghost Net Cluster - Port Swath Ping #412"
                       className="bg-slate-950 border-cyan-500/40 text-cyan-100 placeholder:text-slate-500"
                     />
                   </div>
@@ -351,16 +359,16 @@ export default function WatchlistPage() {
                       All ({items.length})
                     </TabsTrigger>
                     <TabsTrigger
-                      value="image_recognition"
+                      value="sonar_detection"
                       className="text-[10px] font-space-mono"
                     >
-                      Vision ({totalByType.vision})
+                      Sonar AI ({totalByType.detection})
                     </TabsTrigger>
                     <TabsTrigger
-                      value="gene_sequence"
+                      value="acoustic_anomaly"
                       className="text-[10px] font-space-mono"
                     >
-                      Sequence ({totalByType.gene})
+                      Anomalies ({totalByType.anomaly})
                     </TabsTrigger>
                   </TabsList>
 
@@ -379,7 +387,7 @@ export default function WatchlistPage() {
                     ) : (
                       <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
                         {filteredItems.map((item) => {
-                          const isVision = item.itemType === "image_recognition";
+                          const isSonar = item.itemType === "sonar_detection" || item.itemType === "image_recognition";
                           const score = item.score ?? undefined;
                           const tone =
                             typeof score === "number" && score >= 80
@@ -396,15 +404,15 @@ export default function WatchlistPage() {
                               <div className="mt-1">
                                 <div
                                   className={`w-6 h-6 rounded-full flex items-center justify-center border ${
-                                    isVision
+                                    isSonar
                                       ? "border-cyan-400/60 bg-cyan-500/10"
-                                      : "border-emerald-400/60 bg-emerald-500/10"
+                                      : "border-amber-400/60 bg-amber-500/10"
                                   }`}
                                 >
-                                  {isVision ? (
+                                  {isSonar ? (
                                     <Brain className="w-3 h-3 text-cyan-300" />
                                   ) : (
-                                    <Database className="w-3 h-3 text-emerald-300" />
+                                    <Target className="w-3 h-3 text-amber-300" />
                                   )}
                                 </div>
                               </div>
@@ -477,15 +485,15 @@ export default function WatchlistPage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Vision Targets</span>
+                  <span>Sonar Detections</span>
                   <span className="font-orbitron text-cyan-300">
-                    {totalByType.vision}
+                    {totalByType.detection}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Sequence Intel</span>
+                  <span>Acoustic Anomalies</span>
                   <span className="font-orbitron text-cyan-300">
-                    {totalByType.gene}
+                    {totalByType.anomaly}
                   </span>
                 </div>
                 <div className="mt-2 h-1 bg-slate-800 rounded-full overflow-hidden">

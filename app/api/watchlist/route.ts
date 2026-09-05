@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
 import { getUserFromCookies, getUserFromAuthHeader } from "@/lib/auth";
 
-type ItemType = "gene_sequence" | "image_recognition";
+type ItemType = "sonar_detection" | "acoustic_anomaly";
 
 export async function GET(request: NextRequest) {
   try {

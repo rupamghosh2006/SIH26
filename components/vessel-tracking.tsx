@@ -176,8 +176,8 @@ export default function VesselTracking({
             ) : (
               threatObjects.map((threat) => {
                 const classInfo =
-                  DETECTION_CLASSES[
-                    threat.class as keyof typeof DETECTION_CLASSES
+                  DEBRIS_CLASSES[
+                    threat.class as keyof typeof DEBRIS_CLASSES
                   ];
                 const isSelected = selectedThreatId === threat.id;
 

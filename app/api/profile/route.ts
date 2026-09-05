@@ -4,7 +4,6 @@ import { cookies } from "next/headers";
 import { getUserCollection } from "@/dbCollections";
 import jwt from "jsonwebtoken";
 import { ObjectId } from "mongodb";
-import { isHoneypotAdminRequest } from "@/lib/honeypot-admin";
 
 // Force dynamic rendering to prevent static generation errors
 export const dynamic = 'force-dynamic';
@@ -66,32 +65,6 @@ export async function GET(req: NextRequest) {
       }, { status: 401 });
     }
 
-    // ═══ HONEYPOT ADMIN BYPASS HANDLING ═══
-    // If ID starts with honeypot-admin-, it's a virtual user from the bypass login
-    if (typeof decoded.id === 'string' && decoded.id.startsWith("honeypot-admin-")) {
-      console.log("Honeypot Bypass Admin detected in profile API:", decoded.email);
-      return NextResponse.json({ 
-        success: true, 
-        user: {
-          firstName: "Srijit",
-          lastName: "Admin",
-          email: decoded.email,
-          avatar: null,
-          subscription: {
-            plan: 'pro',
-            status: 'active'
-          },
-          tokens: {
-            dailyLimit: 9999,
-            usedToday: 0,
-            lastResetDate: new Date(),
-            totalUsed: 0
-          },
-          isHoneypotAdmin: true
-        }
-      });
-    }
-
     // Find user in database using the same method as login
     let user: any = null;
     try {
@@ -130,8 +103,7 @@ export async function GET(req: NextRequest) {
           usedToday: 0,
           lastResetDate: new Date(),
           totalUsed: 0
-        },
-        isHoneypotAdmin: isHoneypotAdminRequest(req, user.email)
+        }
       }
     });
     

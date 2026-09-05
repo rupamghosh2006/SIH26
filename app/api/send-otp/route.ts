@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateOTP, storeOTP } from "@/lib/otp-service";
 import { sendOTPEmail } from "@/lib/email-service";
 import { getUserCollection } from "@/dbCollections";
-import { findDecoyCredentialHits } from "@/lib/honeypot-decoy";
-import { logHoneypotEvent, maybeSendHoneypotAlert } from "@/lib/honeypot";
-import { blockIp } from "@/lib/ip-blocklist";
-import { memoryBlockIp } from "@/lib/blocked-ips-memory";
 
 function dbConfigError(err: unknown) {
   const msg = err instanceof Error ? err.message : String(err)
@@ -18,26 +14,6 @@ export async function POST(req: NextRequest) {
 
     if (!email) {
       return NextResponse.json({ message: "Email is required" }, { status: 400 });
-    }
-
-    const decoyHits = findDecoyCredentialHits(String(email));
-    if (decoyHits.length > 0) {
-      const event = await logHoneypotEvent(req, {
-        targetPath: "/api/send-otp",
-        bodySample: `decoy-credential-reuse email=${email} hits=${decoyHits.join(",")}`,
-      });
-      await maybeSendHoneypotAlert(event);
-
-      const autoBlockThreshold = Number(process.env.HONEYPOT_AUTO_BLOCK_THRESHOLD ?? "80");
-      if ((event.riskScore >= autoBlockThreshold || decoyHits.length > 0) && event.ip !== "unknown") {
-        const reason = `Auto-blocked: decoy credential replay on /api/send-otp (${decoyHits.join(",")})`;
-        await blockIp(event.ip, reason, "auto");
-        memoryBlockIp(event.ip);
-      }
-
-      return NextResponse.json({
-        message: "No account found with this email",
-      }, { status: 404 });
     }
 
     // Check if user already exists for registration

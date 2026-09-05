@@ -25,6 +25,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 
 export function Navigation() {
+  const { user: userData, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [avatar, setAvatar] = useState<string>("");
@@ -33,25 +34,19 @@ export function Navigation() {
   const navRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
-  const { user: userData, logout } = useAuth();
-  const isSecurityAdmin = Boolean(userData?.isHoneypotAdmin);
-
   const navItems = [
     { href: "/", label: "Home", icon: Home },
-    { href: "/cnn", label: "Acoustic CNN", icon: Brain },
+    { href: "/cnn", label: "Acoustic Lab", icon: Brain },
     { href: "/detection", label: "Debris AI", icon: Target },
     { href: "/command-center", label: "GIS Ops", icon: Radar },
     { href: "/watchlist", label: "Debris Registry", icon: Activity },
     { href: "/intelligence", label: "Eco-Intel", icon: Globe },
     { href: "/mission-planner", label: "AUV Swath", icon: Map },
-    { href: "/comm-intercept", label: "Telemetry", icon: Radio },
     { href: "/threat-prediction", label: "Risk Forecast", icon: Activity },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
   ];
 
-  const visibleNavItems = isSecurityAdmin
-    ? [...navItems, { href: "/security/honeypot", label: "Honeypot", icon: Shield }]
-    : navItems;
+  const visibleNavItems = navItems;
 
   // Scroll-aware navbar
   useEffect(() => {

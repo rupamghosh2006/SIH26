@@ -128,7 +128,6 @@ export default function LoginPage() {
                   clearance: data.clearance,
                   method: "rfid",
                   uid: data.uid,
-                  isHoneypotAdmin: true,
                 }));
                 setSuccess(`ACCESS GRANTED — Welcome, ${data.name}! (Offline mode)`);
                 setTimeout(() => router.push("/"), 1200);
@@ -142,7 +141,6 @@ export default function LoginPage() {
                 clearance: data.clearance,
                 method: "rfid",
                 uid: data.uid,
-                isHoneypotAdmin: true,
               }));
               setTimeout(() => router.push("/"), 1200);
             }

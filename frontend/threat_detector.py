@@ -57,16 +57,33 @@ class ThreatDetector:
                 if self.verbose:
                     print("ultralytics YOLO module not installed, running in acoustic shadow mode.")
                 return False
-            if not os.path.exists(self.model_path):
-                if self.verbose:
-                    print(f"Model file not found: {self.model_path}")
-                return False
+            if not self.model_path or not os.path.exists(self.model_path):
+                candidates = [
+                    self.model_path,
+                    "backend/models/yolov8_seaguard.pt",
+                    os.path.join(os.path.dirname(__file__), "backend", "models", "yolov8_seaguard.pt"),
+                    "backend/models/yolov8_varuna.pt",
+                    "yolov8_seaguard.pt",
+                    "best.pt",
+                    "yolov8n.pt",
+                    os.path.join(os.path.dirname(__file__), "yolov8n.pt"),
+                ]
+                found = False
+                for cand in candidates:
+                    if cand and os.path.exists(cand):
+                        self.model_path = cand
+                        found = True
+                        break
+                if not found:
+                    if self.verbose:
+                        print(f"No YOLO model checkpoint found, operating in acoustic shadow anomaly mode.")
+                    return False
             
             self.model = YOLO(self.model_path)
             self.class_names = self.model.names
             
             if self.verbose:
-                print(f"Threat detector initialized successfully")
+                print(f"Threat detector initialized successfully using {self.model_path}")
                 print(f"Model classes: {self.class_names}")
                 print(f"Confidence threshold: {self.confidence_threshold}")
             
@@ -140,8 +157,8 @@ class ThreatDetector:
                             }
                             threats.append(threat)
             
-            # Fallback acoustic feature / anomaly detection if no model or no detections
-            if len(threats) == 0:
+            # Fallback acoustic feature / anomaly detection ONLY if no deep learning model is loaded
+            if self.model is None:
                 threats = self._detect_acoustic_anomalies(image, width, height)
             
             overall_threat = self._assess_overall_threat(threats)
@@ -156,7 +173,7 @@ class ThreatDetector:
                     'image_width': width,
                     'image_height': height,
                     'image_size_kb': round(os.path.getsize(image_path) / 1024, 2),
-                    'model_used': self.model_path if self.model else "Varuna AI Acoustic Shadow Pipeline",
+                    'model_used': self.model_path if self.model else "Varuna Acoustic Highlight-Shadow Pipeline",
                     'confidence_threshold': self.confidence_threshold,
                     'detection_timestamp': self._get_timestamp()
                 }
@@ -170,44 +187,22 @@ class ThreatDetector:
             }
 
     def _detect_acoustic_anomalies(self, image, width: int, height: int) -> List[Dict]:
-        """Acoustic highlight & shadow detector for sonar marine debris."""
+        """Physics-based acoustic highlight & shadow detector for Side-Scan Sonar imagery."""
         if cv2 is None or image is None:
-            return [
-                {
-                    'id': 1,
-                    'class': 'ghost_net',
-                    'class_id': 0,
-                    'confidence': 0.91,
-                    'confidence_percentage': 91.0,
-                    'threat_level': 'HIGH',
-                    'bounding_box': {
-                        'x1': float(width * 0.35),
-                        'y1': float(height * 0.4),
-                        'x2': float(width * 0.65),
-                        'y2': float(height * 0.7),
-                        'width': float(width * 0.3),
-                        'height': float(height * 0.3),
-                        'center_x': float(width * 0.5),
-                        'center_y': float(height * 0.55)
-                    },
-                    'area_pixels': float(width * 0.3 * height * 0.3),
-                    'relative_size': 9.0
-                }
-            ]
+            return []
         
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
         blurred = cv2.GaussianBlur(gray, (5, 5), 0)
         
-        # Detect high-intensity acoustic highlights
+        # Detect high-intensity acoustic highlights (strong acoustic backscatter)
         mean_val, std_val = cv2.meanStdDev(blurred)
         thresh_high = float(mean_val[0][0] + 1.8 * std_val[0][0])
         _, high_mask = cv2.threshold(blurred, min(240, max(120, int(thresh_high))), 255, cv2.THRESH_BINARY)
         
         contours, _ = cv2.findContours(high_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        debris_classes = ['ghost_net', 'fishing_gear', 'container_drum', 'metal_object', 'tires', 'shipwreck', 'rock_cluster', 'unknown_anomaly']
         threats = []
         
-        for idx, cnt in enumerate(contours):
+        for cnt in contours:
             area = cv2.contourArea(cnt)
             if area < (width * height * 0.0008) or area > (width * height * 0.35):
                 continue
@@ -215,34 +210,46 @@ class ThreatDetector:
             x, y, w, h = cv2.boundingRect(cnt)
             aspect_ratio = float(w) / max(1, h)
             
-            # Classify based on geometric and acoustic shadow properties
-            if aspect_ratio > 3.0 or aspect_ratio < 0.33:
-                cls_name = 'metal_object' # Pipeline / cylindrical metal
-            elif aspect_ratio > 1.3 and area > (width * height * 0.006):
-                cls_name = 'ghost_net'
-            elif area > (width * height * 0.04):
-                cls_name = 'shipwreck'
-            elif 0.8 <= aspect_ratio <= 1.2 and area < (width * height * 0.015):
-                cls_name = 'container_drum'
-            elif 0.8 <= aspect_ratio <= 1.2 and area < (width * height * 0.005):
-                cls_name = 'tires'
-            else:
-                cls_name = debris_classes[idx % len(debris_classes)]
+            # Physics-based acoustic shadow verification:
+            # In side-scan sonar, an elevated target blocks acoustic waves, casting a dark acoustic shadow
+            # directly behind the highlight.
+            shadow_verified = False
+            sx = min(width - 1, x + w)
+            sw = min(w * 2, width - sx)
+            if sw > 5 and h > 5:
+                shadow_roi = gray[y:min(height, y + h), sx:sx + sw]
+                if shadow_roi.size > 0:
+                    shadow_mean = float(cv2.mean(shadow_roi)[0])
+                    if shadow_mean < mean_val[0][0] * 0.75:
+                        shadow_verified = True
             
-            conf = min(0.97, max(0.60, 0.75 + (area / (width * height * 0.05)) * 0.18))
+            # Physical geometry categorization
+            if aspect_ratio > 3.0 or aspect_ratio < 0.33:
+                cls_name = 'linear_debris'
+            elif aspect_ratio > 1.3 and area > (width * height * 0.006):
+                cls_name = 'ghost_net' if shadow_verified else 'acoustic_anomaly'
+            elif area > (width * height * 0.04):
+                cls_name = 'shipwreck' if shadow_verified else 'seabed_formation'
+            elif 0.8 <= aspect_ratio <= 1.2 and area < (width * height * 0.015):
+                cls_name = 'container_drum' if shadow_verified else 'acoustic_anomaly'
+            else:
+                cls_name = 'acoustic_anomaly'
+            
+            base_conf = 0.72 if shadow_verified else 0.55
+            conf = min(0.88, max(0.45, base_conf + (area / (width * height * 0.05)) * 0.12))
             threat_level = self._calculate_threat_level(conf, cls_name)
             
             threats.append({
                 'id': len(threats) + 1,
                 'class': cls_name,
                 'debris_type': cls_name,
-                'class_id': idx % len(debris_classes),
+                'class_id': 0,
                 'confidence': float(conf),
                 'confidence_percentage': float(round(conf * 100, 1)),
                 'threat_level': threat_level,
                 'ecological_risk': threat_level,
-                'verification_status': 'pending_review',
-                'acoustic_shadow_verified': True,
+                'verification_status': 'shadow_verified' if shadow_verified else 'candidate_anomaly',
+                'acoustic_shadow_verified': shadow_verified,
                 'bounding_box': {
                     'x1': float(x),
                     'y1': float(y),
@@ -256,37 +263,9 @@ class ThreatDetector:
                 'area_pixels': float(w * h),
                 'relative_size': float((w * h) / (width * height) * 100)
             })
-            if len(threats) >= 8:
+            if len(threats) >= 10:
                 break
         
-        # Ensure at least 1-2 realistic detections if sonar image has good size
-        if len(threats) == 0 and width >= 100 and height >= 100:
-            cx, cy = int(width * 0.42), int(height * 0.48)
-            bw, bh = int(width * 0.22), int(height * 0.16)
-            threats.append({
-                'id': 1,
-                'class': 'ghost_net',
-                'debris_type': 'ghost_net',
-                'class_id': 0,
-                'confidence': 0.92,
-                'confidence_percentage': 92.0,
-                'threat_level': 'CRITICAL',
-                'ecological_risk': 'CRITICAL',
-                'verification_status': 'pending_review',
-                'acoustic_shadow_verified': True,
-                'bounding_box': {
-                    'x1': float(cx),
-                    'y1': float(cy),
-                    'x2': float(cx + bw),
-                    'y2': float(cy + bh),
-                    'width': float(bw),
-                    'height': float(bh),
-                    'center_x': float(cx + bw / 2),
-                    'center_y': float(cy + bh / 2)
-                },
-                'area_pixels': float(bw * bh),
-                'relative_size': float((bw * bh) / (width * height) * 100)
-            })
         return threats
     
     def _calculate_threat_level(self, confidence: float, class_name: str) -> str:
@@ -294,14 +273,25 @@ class ThreatDetector:
         Calculate ecological severity / hazard level based on debris type & confidence
         """
         debris_priorities = {
-            'ghost_net': 4,       # Entanglement hazard to marine life & reefs
-            'fishing_gear': 4,    # ALDFG risk
-            'container_drum': 3,  # Toxic / industrial hazard
-            'metal_object': 3,    # Pipeline / navigation obstruction
-            'shipwreck': 3,       # Major structural wreck
-            'tires': 2,           # Rubber / microplastic pollution
-            'unknown_anomaly': 2, # Unclassified
-            'rock_cluster': 1     # Natural seabed geology
+            'ghost_net': 4,              # Entanglement hazard to marine life & reefs
+            'fishing_gear': 4,           # ALDFG risk
+            'chain_or_debris': 4,        # Entanglement / cable hazard
+            'container_drum': 3,         # Toxic / industrial hazard
+            'metal_object': 3,           # Pipeline / navigation obstruction
+            'propeller': 3,              # Metal propulsion debris
+            'valve': 3,                  # Subsea pipe fitting
+            'hook': 3,                   # Longline / marine hook
+            'shipwreck': 3,              # Major structural wreck
+            'tires': 2,                  # Rubber / microplastic pollution
+            'tire': 2,                   # Rubber tire debris
+            'bottle_or_container': 2,    # Synthetic plastic/glass debris
+            'can': 2,                    # Metallic beverage container
+            'linear_debris': 3,          # Cable, chain, or discarded pipe
+            'acoustic_anomaly': 2,       # Unclassified high-backscatter target
+            'unknown_anomaly': 2,        # Unclassified anomaly
+            'rock_cluster': 1,           # Natural seabed geology
+            'seabed_formation': 1,       # Natural geological seabed formation
+            'wall_boundary': 1           # Tank or seabed boundary wall
         }
         
         priority = debris_priorities.get(class_name, 2)
