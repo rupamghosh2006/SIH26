@@ -42,6 +42,15 @@ export const metadata: Metadata = {
       "Revolutionary AI platform for marine conservation and species discovery",
     type: "website",
   },
+  icons: {
+    icon: [
+      { url: "/logos/varuna-logo.png", href: "/logos/varuna-logo.png" },
+      { url: "/favicon.ico", href: "/favicon.ico" },
+      { url: "/icon.png", href: "/icon.png" }
+    ],
+    shortcut: "/logos/varuna-logo.png",
+    apple: "/logos/varuna-logo.png",
+  },
   generator: "v0.app",
 };
 
