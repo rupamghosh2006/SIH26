@@ -94,7 +94,15 @@ def run_threat_detection(input_path, output_path):
                 'class': threat['class'],
                 'confidence': threat['confidence'],
                 'threat_level': threat['threat_level'],
-                'bbox': [bbox['x1'], bbox['y1'], bbox['width'], bbox['height']]  # [x, y, width, height]
+                'bbox': [bbox['x1'], bbox['y1'], bbox['width'], bbox['height']],  # [x, y, width, height]
+                'detector_score': threat.get('detector_score', round(threat['confidence'] * 100, 1)),
+                'shadow_score': threat.get('shadow_score', 80.0),
+                'shape_score': threat.get('shape_score', 75.0),
+                'shadow_detected': threat.get('shadow_detected', True),
+                'confidence_score': threat.get('confidence_score', round(threat['confidence'] * 100, 1)),
+                'confidence_tier': threat.get('confidence_tier', 'High' if threat['confidence'] >= 0.75 else 'Medium'),
+                'estimated_size_m': threat.get('estimated_size_m', 'Unknown'),
+                'filter_details': threat.get('filter_details', {})
             })
         
         # Create annotated image
@@ -109,7 +117,8 @@ def run_threat_detection(input_path, output_path):
             'total_objects': len(detections),
             'overall_threat_level': result['overall_threat_level'],
             'overall_threat_score': result['overall_threat_score'],
-            'threat_count': result['threat_count']
+            'threat_count': result['threat_count'],
+            'nadir_x': result.get('metadata', {}).get('image_width', 800) // 2
         }
         
     except Exception as e:

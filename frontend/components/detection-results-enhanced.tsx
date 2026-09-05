@@ -14,10 +14,12 @@ import {
   MessageSquare,
   ShieldCheck,
   LifeBuoy,
-  FileText
+  FileText,
+  HelpCircle
 } from "lucide-react";
 import HolographicCard from "./holographic-card";
 import { normalizeOverallThreatScore } from "@/lib/detection-storage";
+import { ExplainableSonarPanel } from "./explainable-sonar-panel";
 
 interface Detection {
   class: string;
@@ -28,6 +30,17 @@ interface Detection {
   color: string;
   verification_status?: string;
   operator_notes?: string;
+  detector_score?: number;
+  shadow_score?: number;
+  shape_score?: number;
+  shadow_detected?: boolean;
+  confidence_score?: number;
+  confidence_tier?: string;
+  estimated_size_m?: string;
+  latitude?: number;
+  longitude?: number;
+  thumbnail_url?: string;
+  filter_details?: any;
 }
 
 interface DetectionResultProps {
@@ -141,6 +154,7 @@ export default function DetectionResultsEnhanced({
   );
   const [editingId, setEditingId] = useState<number | null>(null);
   const [notesDraft, setNotesDraft] = useState<string>("");
+  const [expandedExplainIndex, setExpandedExplainIndex] = useState<number | null>(null);
 
   const handleVerify = (idx: number, status: "confirmed" | "rejected") => {
     setItems((prev) =>
@@ -500,8 +514,20 @@ export default function DetectionResultsEnhanced({
                         </div>
                       </div>
 
-                      {/* Human-in-the-loop action buttons */}
-                      <div className="flex items-center gap-2 self-end sm:self-center">
+                      {/* Human-in-the-loop and Explainable Sonar action buttons */}
+                      <div className="flex flex-wrap items-center gap-2 self-end sm:self-center">
+                        <button
+                          onClick={() => setExpandedExplainIndex(expandedExplainIndex === i ? null : i)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-mono flex items-center gap-1.5 border transition-all cursor-pointer ${
+                            expandedExplainIndex === i
+                              ? "bg-cyan-500/30 border-cyan-400 text-cyan-200 font-bold shadow-sm shadow-cyan-500/20"
+                              : "bg-slate-800 border-slate-700 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-500/50"
+                          }`}
+                          title="Inspect AI & Physics Evidence for this Detection"
+                        >
+                          <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>{expandedExplainIndex === i ? "Hide Analysis" : "Why detected?"}</span>
+                        </button>
                         <button
                           onClick={() => handleVerify(i, "confirmed")}
                           className={`px-2.5 py-1 rounded-lg text-xs font-mono flex items-center gap-1 border transition-all cursor-pointer ${
@@ -583,6 +609,16 @@ export default function DetectionResultsEnhanced({
                         </div>
                       )}
                     </div>
+
+                    {/* Expandable Explainable Sonar Panel */}
+                    {expandedExplainIndex === i && (
+                      <ExplainableSonarPanel
+                        detectionIndex={i}
+                        detection={detection}
+                        originalImage={originalImage}
+                        onClose={() => setExpandedExplainIndex(null)}
+                      />
+                    )}
                   </div>
                 );
               })}

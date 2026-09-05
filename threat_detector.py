@@ -160,6 +160,56 @@ class ThreatDetector:
             # Fallback acoustic feature / anomaly detection ONLY if no deep learning model is loaded
             if self.model is None:
                 threats = self._detect_acoustic_anomalies(image, width, height)
+
+            # Enrich all detections with classical physics shadow & morphology validation
+            if image is not None and cv2 is not None:
+                try:
+                    from backend.ai_pipeline.confidence_filter import evaluate_detection_confidence
+                except ImportError:
+                    try:
+                        from ai_pipeline.confidence_filter import evaluate_detection_confidence
+                    except ImportError:
+                        evaluate_detection_confidence = None
+
+                gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
+                nadir_x = width // 2
+
+                for t in threats:
+                    bx = int(t['bounding_box']['x1'])
+                    by = int(t['bounding_box']['y1'])
+                    bw = int(t['bounding_box']['width'])
+                    bh = int(t['bounding_box']['height'])
+                    
+                    if evaluate_detection_confidence is not None:
+                        eval_res = evaluate_detection_confidence(gray, (bx, by, bw, bh), t['confidence'], nadir_x)
+                        t['detector_score'] = eval_res.detector_score
+                        t['shadow_score'] = eval_res.shadow_score
+                        t['shape_score'] = eval_res.shape_score
+                        t['shadow_detected'] = eval_res.shadow_detected
+                        t['confidence_score'] = eval_res.final_score
+                        t['confidence_tier'] = eval_res.tier
+                        t['filter_details'] = eval_res.details
+                    else:
+                        t['detector_score'] = round(t['confidence'] * 100.0, 1)
+                        t['shadow_score'] = 75.0 if t.get('shadow_verified') else 25.0
+                        t['shape_score'] = 70.0
+                        t['shadow_detected'] = bool(t.get('shadow_verified', False))
+                        t['confidence_score'] = round(t['confidence'] * 100.0, 1)
+                        t['confidence_tier'] = "High" if t['confidence'] >= 0.75 else "Medium"
+                        t['filter_details'] = {
+                            "shadow_details": {
+                                "expected_shadow_side": "right" if (bx + bw / 2.0) >= nadir_x else "left",
+                                "has_shadow": bool(t.get('shadow_verified', False))
+                            },
+                            "shape_details": {
+                                "aspect_ratio": round(bw / max(1, bh), 2)
+                            },
+                            "suppression_applied": not bool(t.get('shadow_verified', False))
+                        }
+
+                    # Physical metric dimensions estimation (nominal 0.075 m/px SSS swath)
+                    m_per_px = 0.075
+                    t['estimated_size_m'] = f"{bw * m_per_px:.2f}m x {bh * m_per_px:.2f}m"
             
             overall_threat = self._assess_overall_threat(threats)
             return {

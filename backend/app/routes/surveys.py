@@ -15,6 +15,8 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks, Query, Response
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
+import cv2
+import numpy as np
 
 from ..database import get_db, SessionLocal
 from ..config import settings
@@ -390,3 +392,162 @@ def get_survey_stats(
         "avg_shadow_score": avg_shadow,
         "avg_shape_score": avg_shape,
     }
+
+
+def generate_explainability_overlay(
+    image: np.ndarray,
+    detection: models.Detection,
+    nadir_x: int
+) -> np.ndarray:
+    """
+    Generates a physics explainability visual overlay on the sonar image for a detection:
+    - Marks Nadir track line
+    - Marks Target Bounding Box
+    - Highlights specular reflection region (Inner half facing nadir)
+    - Highlights acoustic shadow region (Outer half / shadow zone facing away from nadir)
+    - Draws acoustic wave propagation directional arrow
+    - Renders tactical HUD labels with physics scores and shadow verification status
+    """
+    h, w = image.shape[:2]
+    img = image.copy()
+    if len(img.shape) == 2:
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+
+    bx, by, bw, bh = detection.bbox_x, detection.bbox_y, detection.bbox_width, detection.bbox_height
+    
+    # Bound crop to image limits
+    bx = max(0, min(bx, w - 1))
+    by = max(0, min(by, h - 1))
+    bw = max(4, min(bw, w - bx))
+    bh = max(4, min(bh, h - by))
+
+    det_cx = bx + bw / 2.0
+    det_cy = by + bh / 2.0
+    is_starboard = det_cx >= nadir_x
+    side_label = "STARBOARD" if is_starboard else "PORT"
+    expected_side = "RIGHT" if is_starboard else "LEFT"
+
+    # Define crop bounding box for focused forensic inspection (+140px context)
+    pad_ctx_x = max(60, int(bw * 1.5))
+    pad_ctx_y = max(60, int(bh * 1.5))
+    crop_x1 = max(0, bx - pad_ctx_x)
+    crop_y1 = max(0, by - pad_ctx_y)
+    crop_x2 = min(w, bx + bw + pad_ctx_x)
+    crop_y2 = min(h, by + bh + pad_ctx_y)
+
+    # Work on crop canvas
+    crop = img[crop_y1:crop_y2, crop_x1:crop_x2].copy()
+    ch, cw = crop.shape[:2]
+
+    # Adjusted coordinates relative to crop
+    rx = bx - crop_x1
+    ry = by - crop_y1
+    rcx = rx + bw // 2
+    rcy = ry + bh // 2
+
+    # Draw semi-transparent overlay layer
+    overlay = crop.copy()
+
+    # Split ROI into Highlight (inner facing nadir) and Shadow (outer facing away)
+    half_w = max(2, bw // 2)
+    if is_starboard:
+        # Inner = left half of bbox, Outer/Shadow = right half + extension
+        hl_x1, hl_y1, hl_x2, hl_y2 = rx, ry, rx + half_w, ry + bh
+        sh_x1, sh_y1, sh_x2, sh_y2 = rx + half_w, ry, min(cw, rx + bw + int(bw * 0.8)), ry + bh
+        arrow_start = (max(0, rx - 30), rcy)
+        arrow_end = (min(cw - 10, rx + bw + int(bw * 0.9)), rcy)
+    else:
+        # Inner = right half of bbox, Outer/Shadow = left half + extension
+        hl_x1, hl_y1, hl_x2, hl_y2 = rx + half_w, ry, rx + bw, ry + bh
+        sh_x1, sh_y1, sh_x2, sh_y2 = max(0, rx - int(bw * 0.8)), ry, rx + half_w, ry + bh
+        arrow_start = (min(cw, rx + bw + 30), rcy)
+        arrow_end = (max(10, rx - int(bw * 0.9)), rcy)
+
+    # Draw Highlight area in Green/Cyan tint
+    cv2.rectangle(overlay, (hl_x1, hl_y1), (hl_x2, hl_y2), (0, 255, 128), -1)
+    # Draw Shadow area in Orange/Red tint
+    cv2.rectangle(overlay, (sh_x1, sh_y1), (sh_x2, sh_y2), (0, 100, 255), -1)
+
+    # Blend overlay with 32% opacity
+    cv2.addWeighted(overlay, 0.32, crop, 0.68, 0, crop)
+
+    # Draw sharp borders
+    cv2.rectangle(crop, (rx, ry), (rx + bw, ry + bh), (0, 240, 255), 2)
+    cv2.rectangle(crop, (hl_x1, hl_y1), (hl_x2, hl_y2), (0, 255, 128), 1)
+    cv2.rectangle(crop, (sh_x1, sh_y1), (sh_x2, sh_y2), (0, 100, 255), 1)
+
+    # Draw acoustic propagation beam arrow
+    cv2.arrowedLine(crop, arrow_start, arrow_end, (0, 240, 255), 2, tipLength=0.2)
+
+    # Draw Nadir track if within crop context
+    rel_nadir_x = nadir_x - crop_x1
+    if 0 <= rel_nadir_x < cw:
+        cv2.line(crop, (rel_nadir_x, 0), (rel_nadir_x, ch), (255, 255, 255), 1, cv2.LINE_AA)
+        cv2.putText(crop, "NADIR TRACKLINE", (rel_nadir_x + 4, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
+
+    # Top HUD Banner
+    hud_h = 42
+    hud_bg = np.zeros((hud_h, cw, 3), dtype=np.uint8)
+    hud_bg[:] = (15, 23, 42)  # Slate-900
+    
+    cls_text = f"TARGET: {detection.predicted_class.upper()} [{detection.confidence_score:.1f}%]"
+    phys_status = "SHADOW VERIFIED" if detection.shadow_detected else "SHADOW SUPPRESSED"
+    phys_color = (0, 255, 128) if detection.shadow_detected else (0, 100, 255)
+    
+    cv2.putText(hud_bg, cls_text, (8, 16), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 240, 255), 1, cv2.LINE_AA)
+    cv2.putText(hud_bg, f"PHYSICS: {phys_status} | {side_label} (PROPAGATION: {expected_side})", (8, 34), cv2.FONT_HERSHEY_SIMPLEX, 0.34, phys_color, 1, cv2.LINE_AA)
+    
+    score_summary = f"DET: {detection.detector_score:.0f}% | SHD: {detection.shadow_score:.0f}% | SHP: {detection.shape_score:.0f}%"
+    text_size = cv2.getTextSize(score_summary, cv2.FONT_HERSHEY_SIMPLEX, 0.34, 1)[0]
+    score_x = max(8, cw - text_size[0] - 10)
+    cv2.putText(hud_bg, score_summary, (score_x, 16), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (200, 200, 200), 1, cv2.LINE_AA)
+
+    # Stack HUD on top of crop
+    final_img = np.vstack([hud_bg, crop])
+    return final_img
+
+
+@router.get("/{survey_id}/detections/{detection_id}/explainability-image")
+def get_detection_explainability_image(
+    survey_id: str,
+    detection_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Generates and returns an Explainable Sonar forensic visual evidence overlay image
+    showing the exact bounding box, highlight region, expected acoustic cast shadow,
+    and nadir trackline propagation vector.
+    """
+    survey = crud.get_survey(db, survey_id)
+    if not survey:
+        raise HTTPException(status_code=404, detail="Survey not found.")
+
+    detection = db.query(models.Detection).filter(
+        models.Detection.id == detection_id,
+        models.Detection.survey_id == survey_id
+    ).first()
+
+    if not detection:
+        raise HTTPException(status_code=404, detail="Detection not found.")
+
+    if not os.path.exists(survey.image_path):
+        raise HTTPException(status_code=404, detail="Survey image file not found on disk.")
+
+    # Load original image
+    img = cv2.imread(survey.image_path)
+    if img is None:
+        raise HTTPException(status_code=500, detail="Failed to load survey sonar image.")
+
+    h, w = img.shape[:2]
+    nadir_x = survey.nadir_x if survey.nadir_x is not None else w // 2
+
+    # Generate explainability overlay
+    overlay_img = generate_explainability_overlay(img, detection, nadir_x)
+
+    # Encode as PNG
+    success, buffer = cv2.imencode(".png", overlay_img)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to encode explainability image.")
+
+    return Response(content=buffer.tobytes(), media_type="image/png")
+
