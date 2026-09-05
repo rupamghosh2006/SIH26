@@ -42,10 +42,8 @@ import cv2
 
 try:
     from fastapi.testclient import TestClient
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
     from app.main import app
-    from app.database import Base, get_db
+    from app.database import Base, engine, SessionLocal, get_db
     from app import models, crud
     from app.routes.surveys import generate_explainability_overlay
 except ImportError:
@@ -53,21 +51,15 @@ except ImportError:
 
 from ai_pipeline.confidence_filter import evaluate_detection_confidence, analyze_acoustic_shadow, ConfidenceResult
 
-# In-memory test DB
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 
 @pytest.fixture(scope="function")
 def test_db():
     Base.metadata.create_all(bind=engine)
-    db = TestingSessionLocal()
+    db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-        Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture(scope="function")
@@ -221,6 +213,7 @@ def test_explainability_overlay_endpoint_functional(client, test_db, tmp_path):
     # 2. Add survey and detection record to test_db
     survey = models.Survey(
         id="srv_exp_test",
+        title="Test Survey",
         filename="test_sonar_swath.png",
         image_path=str(img_file),
         status="completed",
@@ -231,6 +224,10 @@ def test_explainability_overlay_endpoint_functional(client, test_db, tmp_path):
     det = models.Detection(
         id="det_exp_001",
         survey_id="srv_exp_test",
+        latitude=12.9716,
+        longitude=77.5946,
+        depth_m=15.0,
+        timestamp="2026-09-06T00:00:00Z",
         predicted_class="container_drum",
         confidence_score=92.5,
         confidence_tier="High",
@@ -244,6 +241,7 @@ def test_explainability_overlay_endpoint_functional(client, test_db, tmp_path):
         bbox_height=45
     )
     test_db.add(det)
+    test_db.commit()
     # 3. Request explainability image
     response = client.get(f"/api/surveys/{survey.id}/detections/{det.id}/explainability-image")
     assert response.status_code == 200

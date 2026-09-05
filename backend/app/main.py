@@ -19,11 +19,12 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .config import settings
-from .database import engine, Base
+from .database import engine, Base, init_db
+from . import models
 from .routes import surveys, health
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+# Create database tables and perform migrations
+init_db()
 
 
 @asynccontextmanager
