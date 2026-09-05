@@ -57,58 +57,6 @@ The platform ingests raw dual-channel side-scan sonar waterfall logs, applies au
 
 ---
 
-## 📄 Official SIH 2026 Pitching Report & Presentation Dossier (5 Core Slides)
-
-> 📥 **Official Document Download:** [**VARUNA_AI_Pitching_Report.pdf**](./public/docs/VARUNA_AI_Pitching_Report.pdf) *(Compiled high-impact 5-slide technical pitch document)*
-
----
-
-### Slide 1: Idea & Solution
-**The Problem:** Over 640,000 metric tons of Abandoned, Lost, or Discarded Fishing Gear (ALDFG / "Ghost Nets") and synthetic anthropogenic debris choke global oceans annually. Ghost nets remain lethal traps for 600+ years, killing over 136,000 marine mammals every year and posing grave entanglement hazards to naval submarines, commercial propellers, and subsea infrastructure. Modern hydrographic surveys generate massive continuous streams of Side-Scan Sonar (SSS) acoustic waterfall logs (>500 MB per nautical mile). Hydrographic operators face severe inspection fatigue and cognitive overload, resulting in 12 to 48 hours of post-mission analysis delay per survey leg, missed critical targets, and expensive false alarm diver deployments costing upwards of $15,000 per dive.
-
-**Our Solution:** VARUNA AI is India's first end-to-end, physics-validated, and fully explainable underwater acoustic intelligence platform. We replace slow, error-prone manual screening with an automated, sub-second multi-stage pipeline. The platform ingests raw dual-channel SSS waterfalls, applies real-time CLAHE and bilateral despeckling, detects 8 discrete benthic debris classes with fine-tuned YOLOv8 neural networks, validates targets using acoustic cast shadow physics, provides forensic Grad-CAM and backscatter waveform explainability, and autonomously recommends secondary adaptive AUV re-scans ("Active Verification") when detections are ambiguous. Detections are instantly projected onto an interactive military-grade Leaflet GIS swath map with full GPS georeferencing and automated hydrographic PDF reporting.
-
----
-
-### Slide 2: Technical Approach
-
-**Required AI / ML Models & Architectures:**
-- **YOLOv8 Debris AI (Object Detection):** Multi-scale anchor-free detector trained on 8,500+ real sonar captures (PING SSS Crab Pot + FLS Debris) for sub-second bounding box localization across 8 debris classes.
-- **CNN Sonar Enhancement Lab:** Bilateral speckle filter and CLAHE normalization engine required for slant-range gain equalization and pixel backscatter restoration.
-- **Deep MLP Acoustic Classifier:** PyTorch neural classifier trained on 60-band sonar frequency energy profiles for distinguishing metallic targets/mines from natural seabed rocks (85.71% accuracy, 0.9591 ROC-AUC).
-- **Physics-Guided Shadow Filter:** Deterministic acoustic ray-tracing module computing highlight specular intensity, cast shadow length, and Hu moments: $\text{Confidence} = 0.40(\text{YOLO}) + 0.25(\text{Highlight}) + 0.20(\text{Shadow}) + 0.15(\text{Contrast})$.
-- **Grad-CAM & Waveform Engine:** Explainable AI module providing feature attribution heatmaps and 1D cross-sectional backscatter profiles for transparent operator audit.
-- **Bayesian Active Verification:** Autonomous multi-look fusion engine calculating adaptive secondary AUV trajectories ($\pm 45^\circ$, $15-35\text{m}$ CPA) to resolve ambiguous detections.
-
-**Point-Short Technical Stack:**
-- **Frontend:** Next.js 14 App Router • React 18 • TypeScript • Tailwind CSS • Leaflet.js GIS • Recharts
-- **Backend API:** FastAPI (Async) • Python 3.11 • Uvicorn • Pydantic v2 • SQLAlchemy ORM • SQLite / PostgreSQL
-- **AI / Computer Vision:** PyTorch 2.6 • Ultralytics YOLOv8 • OpenCV • ONNX Runtime • Albumentations • Scikit-learn
-- **Reporting & Simulation:** ReportLab PDF Engine • NumPy 1.26 • Joblib • MAVLink / ROS2 Telemetry Bridge
-
----
-
-### Slide 3: Feasibility & Viability
-**Technology Readiness Level (TRL-6):** VARUNA AI is fully engineered and validated. The backend is powered by high-performance FastAPI asynchronous microservices running PyTorch 2.6 and ONNX Runtime, and the frontend is an ultra-fast Next.js 14 App Router portal with military sonar dark-mode aesthetics. The system is 100% hardware-agnostic, supporting standard sonar formats (XTF, GeoTIFF, TIFF, PNG) from EdgeTech, Klein Marine, Lowrance, and Tritech sonar systems.
-
-**Edge Compute & Deployment Viability:** Optimized lightweight YOLOv8 models achieve sub-45ms per-tile inference on edge hardware (NVIDIA Jetson Orin Nano, Xavier NX, and Raspberry Pi 5), enabling direct on-board integration inside AUV and USV payload canisters. Because it operates entirely on open-source frameworks without expensive proprietary GIS software licenses, VARUNA AI can be deployed at a fraction of commercial sonar suite costs, delivering instantaneous operational feasibility to naval fleets, coast guards, and marine research institutes.
-
----
-
-### Slide 4: Impact & Benefits
-**Measurable Operational & Economic Impact:** VARUNA AI slashes acoustic inspection turnaround time by **95%**—compressing 24 to 48 hours of manual video analysis into under 60 seconds of automated waterfall processing. The physics-guided acoustic cast shadow filter delivers an **80% reduction in false alarm triggers**, eliminating unnecessary diver hazard dispatches and saving hundreds of thousands of dollars in recovery mission budgets. Furthermore, every single classification is accompanied by 100% auditable explainability metrics, enabling human hydrographers to make rapid, defensible decisions in high-stakes environments.
-
-**Ecological & National Defense Benefits:** Accelerates the remediation of ghost fishing hotspots to protect marine biodiversity, prevent coral reef asphyxiation, and support Ministry of Earth Sciences (MoES) sustainable blue economy goals. For national maritime security, the system enables rapid clearance of submerged harbor debris, unexploded ordnance anomalies, and navigation channel obstructions, ensuring safe passageways for naval and commercial maritime assets.
-
----
-
-### Slide 5: Research & References
-**Acoustic Datasets & Empirical Benchmarks:** The neural models in VARUNA AI are trained and cross-validated on authoritative underwater sonar datasets: (1) *PING Ecosystem SSS Crab Pot Dataset* (Hugging Face) with 6,674 real SSS captures of derelict fishing gear; (2) *Forward-Looking Sonar (FLS) Marine Debris Dataset* (Valdenegro-Toro / Kaggle) with 1,868 acoustic captures across 8 debris classes, achieving a held-out validation **mAP@50 of 92.17%** (99.0% on ghost chain/entanglements, 97.5% on hooks/longlines, 97.1% on containers); and (3) *Sonar Mines vs. Rocks Dataset* (Connectionist Bench / Kaggle) with an acoustic MLP achieving 85.71% accuracy and 0.9591 ROC-AUC.
-
-**Scientific & Institutional Grounding:** The architecture incorporates peer-reviewed principles from IEEE Journal of Oceanic Engineering (Acoustic shadow modeling for seabed target detection), MTS/IEEE Oceans (Side-scan sonar computer vision and feature attribution), and United Nations FAO Guidelines on ALDFG management. The entire software ecosystem has been verified across **46 automated backend test suites** and 40 production routes with 100% pass rates, fully aligned with the operational guidelines of the Ministry of Earth Sciences (MoES), Government of India.
-
----
-
 ## 4. System Architecture and Processing Pipeline
 
 ```
@@ -309,7 +257,59 @@ VARUNA AI does not blindly accept single-pass classifications when detections ar
 
 ---
 
-## 12. Installation and Execution Guide
+## 12. 📄 Official SIH 2026 Pitching Report & Presentation Dossier (5 Core Slides)
+
+> 📥 **Official Document Download:** [**VARUNA_AI_Pitching_Report.pdf**](./public/docs/VARUNA_AI_Pitching_Report.pdf) *(Compiled high-impact 5-slide technical pitch document)*
+
+---
+
+### Slide 1: Idea & Solution
+**The Problem:** Over 640,000 metric tons of Abandoned, Lost, or Discarded Fishing Gear (ALDFG / "Ghost Nets") and synthetic anthropogenic debris choke global oceans annually. Ghost nets remain lethal traps for 600+ years, killing over 136,000 marine mammals every year and posing grave entanglement hazards to naval submarines, commercial propellers, and subsea infrastructure. Modern hydrographic surveys generate massive continuous streams of Side-Scan Sonar (SSS) acoustic waterfall logs (>500 MB per nautical mile). Hydrographic operators face severe inspection fatigue and cognitive overload, resulting in 12 to 48 hours of post-mission analysis delay per survey leg, missed critical targets, and expensive false alarm diver deployments costing upwards of $15,000 per dive.
+
+**Our Solution:** VARUNA AI is India's first end-to-end, physics-validated, and fully explainable underwater acoustic intelligence platform. We replace slow, error-prone manual screening with an automated, sub-second multi-stage pipeline. The platform ingests raw dual-channel SSS waterfalls, applies real-time CLAHE and bilateral despeckling, detects 8 discrete benthic debris classes with fine-tuned YOLOv8 neural networks, validates targets using acoustic cast shadow physics, provides forensic Grad-CAM and backscatter waveform explainability, and autonomously recommends secondary adaptive AUV re-scans ("Active Verification") when detections are ambiguous. Detections are instantly projected onto an interactive military-grade Leaflet GIS swath map with full GPS georeferencing and automated hydrographic PDF reporting.
+
+---
+
+### Slide 2: Technical Approach
+
+**Required AI / ML Models & Architectures:**
+- **YOLOv8 Debris AI (Object Detection):** Multi-scale anchor-free detector trained on 8,500+ real sonar captures (PING SSS Crab Pot + FLS Debris) for sub-second bounding box localization across 8 debris classes.
+- **CNN Sonar Enhancement Lab:** Bilateral speckle filter and CLAHE normalization engine required for slant-range gain equalization and pixel backscatter restoration.
+- **Deep MLP Acoustic Classifier:** PyTorch neural classifier trained on 60-band sonar frequency energy profiles for distinguishing metallic targets/mines from natural seabed rocks (85.71% accuracy, 0.9591 ROC-AUC).
+- **Physics-Guided Shadow Filter:** Deterministic acoustic ray-tracing module computing highlight specular intensity, cast shadow length, and Hu moments: $\text{Confidence} = 0.40(\text{YOLO}) + 0.25(\text{Highlight}) + 0.20(\text{Shadow}) + 0.15(\text{Contrast})$.
+- **Grad-CAM & Waveform Engine:** Explainable AI module providing feature attribution heatmaps and 1D cross-sectional backscatter profiles for transparent operator audit.
+- **Bayesian Active Verification:** Autonomous multi-look fusion engine calculating adaptive secondary AUV trajectories ($\pm 45^\circ$, $15-35\text{m}$ CPA) to resolve ambiguous detections.
+
+**Point-Short Technical Stack:**
+- **Frontend:** Next.js 14 App Router • React 18 • TypeScript • Tailwind CSS • Leaflet.js GIS • Recharts
+- **Backend API:** FastAPI (Async) • Python 3.11 • Uvicorn • Pydantic v2 • SQLAlchemy ORM • SQLite / PostgreSQL
+- **AI / Computer Vision:** PyTorch 2.6 • Ultralytics YOLOv8 • OpenCV • ONNX Runtime • Albumentations • Scikit-learn
+- **Reporting & Simulation:** ReportLab PDF Engine • NumPy 1.26 • Joblib • MAVLink / ROS2 Telemetry Bridge
+
+---
+
+### Slide 3: Feasibility & Viability
+**Technology Readiness Level (TRL-6):** VARUNA AI is fully engineered and validated. The backend is powered by high-performance FastAPI asynchronous microservices running PyTorch 2.6 and ONNX Runtime, and the frontend is an ultra-fast Next.js 14 App Router portal with military sonar dark-mode aesthetics. The system is 100% hardware-agnostic, supporting standard sonar formats (XTF, GeoTIFF, TIFF, PNG) from EdgeTech, Klein Marine, Lowrance, and Tritech sonar systems.
+
+**Edge Compute & Deployment Viability:** Optimized lightweight YOLOv8 models achieve sub-45ms per-tile inference on edge hardware (NVIDIA Jetson Orin Nano, Xavier NX, and Raspberry Pi 5), enabling direct on-board integration inside AUV and USV payload canisters. Because it operates entirely on open-source frameworks without expensive proprietary GIS software licenses, VARUNA AI can be deployed at a fraction of commercial sonar suite costs, delivering instantaneous operational feasibility to naval fleets, coast guards, and marine research institutes.
+
+---
+
+### Slide 4: Impact & Benefits
+**Measurable Operational & Economic Impact:** VARUNA AI slashes acoustic inspection turnaround time by **95%**—compressing 24 to 48 hours of manual video analysis into under 60 seconds of automated waterfall processing. The physics-guided acoustic cast shadow filter delivers an **80% reduction in false alarm triggers**, eliminating unnecessary diver hazard dispatches and saving hundreds of thousands of dollars in recovery mission budgets. Furthermore, every single classification is accompanied by 100% auditable explainability metrics, enabling human hydrographers to make rapid, defensible decisions in high-stakes environments.
+
+**Ecological & National Defense Benefits:** Accelerates the remediation of ghost fishing hotspots to protect marine biodiversity, prevent coral reef asphyxiation, and support Ministry of Earth Sciences (MoES) sustainable blue economy goals. For national maritime security, the system enables rapid clearance of submerged harbor debris, unexploded ordnance anomalies, and navigation channel obstructions, ensuring safe passageways for naval and commercial maritime assets.
+
+---
+
+### Slide 5: Research & References
+**Acoustic Datasets & Empirical Benchmarks:** The neural models in VARUNA AI are trained and cross-validated on authoritative underwater sonar datasets: (1) *PING Ecosystem SSS Crab Pot Dataset* (Hugging Face) with 6,674 real SSS captures of derelict fishing gear; (2) *Forward-Looking Sonar (FLS) Marine Debris Dataset* (Valdenegro-Toro / Kaggle) with 1,868 acoustic captures across 8 debris classes, achieving a held-out validation **mAP@50 of 92.17%** (99.0% on ghost chain/entanglements, 97.5% on hooks/longlines, 97.1% on containers); and (3) *Sonar Mines vs. Rocks Dataset* (Connectionist Bench / Kaggle) with an acoustic MLP achieving 85.71% accuracy and 0.9591 ROC-AUC.
+
+**Scientific & Institutional Grounding:** The architecture incorporates peer-reviewed principles from IEEE Journal of Oceanic Engineering (Acoustic shadow modeling for seabed target detection), MTS/IEEE Oceans (Side-scan sonar computer vision and feature attribution), and United Nations FAO Guidelines on ALDFG management. The entire software ecosystem has been verified across **46 automated backend test suites** and 40 production routes with 100% pass rates, fully aligned with the operational guidelines of the Ministry of Earth Sciences (MoES), Government of India.
+
+---
+
+## 13. Installation and Execution Guide
 
 ### Prerequisites
 - Node.js 18+ (Node 20 recommended)
@@ -343,7 +343,7 @@ docker-compose up --build
 
 ---
 
-## 13. Automated Test Suite (46 Tests)
+## 14. Automated Test Suite (46 Tests)
 
 Run the full automated test suite verifying preprocessing, physics confidence filters, coordinate splining, explainability overlays, and active verification:
 
@@ -368,7 +368,7 @@ backend\tests\test_reporting.py ..                                       [100%]
 
 ---
 
-## 14. Research Contact and Inquiries
+## 15. Research Contact and Inquiries
 
 For technical evaluations, collaborative research, or institutional deployments:
 
