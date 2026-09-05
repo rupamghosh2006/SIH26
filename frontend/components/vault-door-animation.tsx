@@ -1003,7 +1003,7 @@ function DoorPanel({
             fontSize: "clamp(48px, 8vw, 90px)",
           }}
         >
-          {isLeft ? "MAR" : "EYE"}
+          {isLeft ? "VAR" : "UNA"}
         </div>
         <div
           className="text-cyan-500/10 font-mono text-[10px] tracking-[0.4em] mt-1"

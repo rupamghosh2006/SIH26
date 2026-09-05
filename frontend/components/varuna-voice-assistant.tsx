@@ -276,8 +276,8 @@ export function VarunaVoiceAssistant() {
 
       // Primary Patterns (Strict-ish)
       const directPatterns = [
-        /\b(hey|hi|hello|okay|ok)\s+(marine\s*security|varuna|mar\s*eye)\b/i,
-        /\b(marine\s*security|varuna|mar\s*eye)\b/i,
+        /\b(hey|hi|hello|okay|ok)\s+(marine\s*security|varuna|varuna\s*ai)\b/i,
+        /\b(marine\s*security|varuna|varuna\s*ai)\b/i,
       ];
 
       if (directPatterns.some((p) => p.test(normalized))) return true;
