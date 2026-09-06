@@ -1,25 +1,160 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
-export const TEXT_MODEL_ID = "gemini-2.0-flash"
+export const TEXT_MODEL_ID = "gemini-1.5-flash"
 export const VISION_MODEL_ID = process.env.GEMINI_VISION_MODEL_ID || "gemini-1.5-flash"
 
-const getGeminiClient = () => {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error("Missing GEMINI_API_KEY environment variable")
-  }
-  return new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+function sanitizeKey(key: string): string {
+  if (!key) return ""
+  return key
+    .trim()
+    .replace(/^['"`]|['"`]$/g, "")
+    .trim()
 }
 
-// Get the Gemini 2.0 Flash model for text generation
+export function getGeminiApiKey(): string {
+  const rawKey =
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+    ""
+  return sanitizeKey(rawKey)
+}
+
+const getGeminiClient = (apiKeyOverride?: string) => {
+  const key = apiKeyOverride || getGeminiApiKey()
+  if (!key) {
+    throw new Error("Missing GEMINI_API_KEY (or GOOGLE_API_KEY) environment variable")
+  }
+  return new GoogleGenerativeAI(key)
+}
+
+// Get the Gemini Flash model for text generation
 export const getGeminiFlashModel = () => {
   const genAI = getGeminiClient()
   return genAI.getGenerativeModel({ model: TEXT_MODEL_ID })
 }
 
-// Get the Gemini 2.0 Flash model for image analysis
+// Get the Gemini Flash model for image analysis
 export const getGeminiFlashVisionModel = () => {
   const genAI = getGeminiClient()
   return genAI.getGenerativeModel({ model: VISION_MODEL_ID })
+}
+
+export interface ChatMessageItem {
+  sender: "user" | "bot"
+  content: string
+}
+
+export async function generateGeminiChatResponse(
+  message: string,
+  history: ChatMessageItem[] = [],
+  context: string = ""
+): Promise<string> {
+  const apiKey = getGeminiApiKey()
+  if (!apiKey) {
+    throw new Error("Missing GEMINI_API_KEY in environment variables")
+  }
+
+  const genAI = getGeminiClient(apiKey)
+
+  const systemInstruction = `You are the AI Marine Operations & Sonar Intelligence Assistant for Varuna — an advanced deep-sea intelligence platform developed for SIH26057: Automated Underwater Marine Debris and Ghost Net Detection System using Side-Scan Sonar (SSS) Imagery (MoES & NIOT).
+
+${context ? `Platform Context: ${context}\n` : ""}
+Platform Capabilities & Domain Knowledge:
+- Side-Scan Sonar (SSS) raw acoustic waterfall processing (speckle noise filtering, CLAHE contrast equalization, slant-range correction, Lee filter).
+- Detection of 8 marine debris categories:
+  1. Ghost Nets & ALDFG (Abandoned, Lost, or Discarded Fishing Gear) - highest entanglement hazard
+  2. Fishing Gear / Lines & Longlines
+  3. Tires & Rubber Waste
+  4. Containers & Industrial Chemical Drums - toxic benthic hazards
+  5. Subsea Metal Objects & Pipelines
+  6. Shipwreck & Structural Fragments
+  7. Natural Rock Clusters & Seabed Geology (False Positive Control)
+  8. Unidentified Acoustic Anomalies
+- Sonar Physics Validation: Distinguishes high-backscatter sonar reflections from acoustic shadows cast by raised seafloor debris.
+- Human-in-the-Loop Operator Verification widget (Confirm, False Alarm, Reclassify, Operator Field Notes).
+- GIS Bathymetry Mapping, AUV Swath Survey Planning, and autonomous debris recovery dispatch.
+- Multi-format survey report exports (PDF Survey Document, GeoJSON, CSV).
+
+Guidance for responses:
+- Tone: Expert, authoritative yet accessible marine hydrographer and AI analyst.
+- Format: Use clear bullet points starting with '-' when providing lists or multi-step recommendations.
+- Keep answers focused, insightful, and actionable for marine conservationists and sonar operators.
+`
+
+  const preferredModel = (process.env.GEMINI_MODEL || "").trim()
+  const candidateModels = [
+    preferredModel,
+    "gemini-1.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-pro",
+  ].filter(Boolean)
+
+  // Normalize history to alternate strictly: user, model, user, model...
+  const alternatingHistory: Array<{ role: "user" | "model"; parts: [{ text: string }] }> = []
+  for (const h of history) {
+    if (!h.content || !h.content.trim()) continue
+    const role = h.sender === "user" ? "user" : "model"
+    if (alternatingHistory.length === 0) {
+      if (role === "user") {
+        alternatingHistory.push({ role, parts: [{ text: h.content.trim() }] })
+      }
+    } else {
+      const lastRole = alternatingHistory[alternatingHistory.length - 1].role
+      if (lastRole !== role) {
+        alternatingHistory.push({ role, parts: [{ text: h.content.trim() }] })
+      } else {
+        alternatingHistory[alternatingHistory.length - 1].parts[0].text += `\n${h.content.trim()}`
+      }
+    }
+  }
+
+  // Multi-turn chats in Gemini must end on 'model' before user sends next message
+  if (alternatingHistory.length > 0 && alternatingHistory[alternatingHistory.length - 1].role === "user") {
+    alternatingHistory.pop()
+  }
+
+  // Keep recent context within reasonable token bounds
+  const trimmedHistory = alternatingHistory.slice(-8)
+
+  let lastError: unknown = null
+
+  for (const modelId of candidateModels) {
+    try {
+      const model = genAI.getGenerativeModel({
+        model: modelId,
+        systemInstruction: systemInstruction,
+      })
+
+      if (trimmedHistory.length > 0) {
+        try {
+          const chat = model.startChat({
+            history: trimmedHistory,
+          })
+          const result = await chat.sendMessage(message)
+          const text = result.response.text()
+          if (text) return text
+        } catch (chatErr) {
+          console.warn(`[Gemini] Chat session with model ${modelId} failed, falling back to generateContent:`, chatErr)
+          // Fall back to direct content generation if chat session fails
+          const directResult = await model.generateContent(message)
+          const text = directResult.response.text()
+          if (text) return text
+        }
+      } else {
+        const result = await model.generateContent(message)
+        const text = result.response.text()
+        if (text) return text
+      }
+    } catch (err) {
+      lastError = err
+      console.warn(`[Gemini] Attempt with model '${modelId}' failed:`, err)
+      continue
+    }
+  }
+
+  const errorMsg = lastError instanceof Error ? lastError.message : String(lastError)
+  throw new Error(`Gemini generation failed across models: ${errorMsg}`)
 }
 
 export interface SpeciesIdentificationResult {
