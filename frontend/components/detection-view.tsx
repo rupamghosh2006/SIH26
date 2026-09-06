@@ -17,10 +17,12 @@ import {
   AlertTriangle,
   Info,
   X,
+  Activity,
 } from "lucide-react";
 import HolographicCard from "./holographic-card";
 import RealTimeFeed from "./real-time-feed";
 import TacticalStat from "./tactical-stat";
+import SonarMapSkeleton from "./sonar-map-skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   addDetection,
@@ -170,6 +172,7 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
   const [longitude, setLongitude] = useState<string>("");
   const [backendNotice, setBackendNotice] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSelectSample = async (sample: typeof DEMO_SAMPLES[0]) => {
@@ -598,8 +601,25 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
               </div>
 
               <div
-                className="border-2 border-dashed border-primary/30 rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
+                  isDragging
+                    ? "border-cyan-400 bg-cyan-500/10 shadow-lg shadow-cyan-500/20"
+                    : "border-primary/30 hover:border-primary/50"
+                }`}
                 onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) {
+                    setSelectedFile(file);
+                  }
+                }}
               >
                 <input
                   ref={fileInputRef}
@@ -850,7 +870,7 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
       </Tabs>
 
       {/* Real-time Map Overlay */}
-      {results.length > 0 && (
+      {(results.length > 0 || isProcessing) && (
         <HolographicCard>
           <div className="space-y-4">
             <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3">
@@ -863,17 +883,28 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
                   Automated acoustic geotagging • Real-time anomaly positions with slant-to-ground range correction
                 </p>
               </div>
-              <span className="text-xs font-space-mono text-emerald-400 px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 font-bold">
-                {results[0]?.detections?.length || 0} Targets Plotted
-              </span>
+              {isProcessing ? (
+                <span className="text-xs font-space-mono text-cyan-300 px-3 py-1 rounded bg-cyan-500/10 border border-cyan-500/30 flex items-center gap-2 animate-pulse font-bold">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                  <span>Georeferencing Sonar Swath...</span>
+                </span>
+              ) : (
+                <span className="text-xs font-space-mono text-emerald-400 px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 font-bold">
+                  {results[0]?.detections?.length || 0} Targets Plotted
+                </span>
+              )}
             </div>
 
             <div className="h-[420px] w-full rounded-xl overflow-hidden">
-              <AdvancedLeafletMap
-                detections={results[0]?.detections || []}
-                surveyId={results[0]?.surveyId}
-                className="w-full h-full"
-              />
+              {isProcessing ? (
+                <SonarMapSkeleton />
+              ) : (
+                <AdvancedLeafletMap
+                  detections={(results[0]?.detections as any) || []}
+                  surveyId={results[0]?.surveyId}
+                  className="w-full h-full"
+                />
+              )}
             </div>
           </div>
         </HolographicCard>
@@ -882,10 +913,19 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
       {/* Live feed */}
       <HolographicCard>
         <div className="space-y-4">
-          <h3 className="text-lg font-bold text-cyan-300 font-orbitron">
-            Real-Time Activity Feed
-          </h3>
-          <RealTimeFeed />
+          <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3">
+            <h3 className="text-lg font-bold text-cyan-300 font-orbitron flex items-center gap-2">
+              <Activity className="w-5 h-5 text-cyan-400" />
+              Real-Time Activity Feed
+            </h3>
+            {isProcessing && (
+              <span className="text-xs font-space-mono text-cyan-300 px-3 py-1 rounded bg-cyan-500/10 border border-cyan-500/30 flex items-center gap-2 animate-pulse font-bold">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                <span>Streaming Telemetry...</span>
+              </span>
+            )}
+          </div>
+          <RealTimeFeed isLoading={isProcessing} />
         </div>
       </HolographicCard>
     </div>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
-  MessageCircle,
+  MessageSquareCode,
   X,
   Send,
   Bot,
@@ -271,7 +271,7 @@ export function Chatbot() {
               <X className="h-6 w-6 transition-transform" />
             ) : (
               <>
-                <MessageCircle className="h-6 w-6" />
+                <MessageSquareCode className="h-6 w-6" />
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-cyan-400 ring-2 ring-slate-950 shadow">
                   <Sparkles className="h-2.5 w-2.5 text-slate-950" />
                 </span>
