@@ -95,10 +95,10 @@ const EEZ_LINES: [number, number][][] = [
 // ═══════════════════════════════════════════════════════════
 const TILE_LAYERS = {
   dark: {
-    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com">CARTO</a>',
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    attribution: '&copy; <a href="https://www.esri.com/">Esri</a>, HERE, Garmin, &copy; OpenStreetMap',
     name: "Dark (Tactical)",
-    subdomains: "abcd",
+    subdomains: undefined,
   },
   satellite: {
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
@@ -203,7 +203,7 @@ export function TacticalMissionPlanner() {
   const [showShipping, setShowShipping] = useState(true);
   const [showEEZ, setShowEEZ] = useState(true);
   const [showThreats, setShowThreats] = useState(true);
-  const [tileType, setTileType] = useState<keyof typeof TILE_LAYERS>("topo");
+  const [tileType, setTileType] = useState<keyof typeof TILE_LAYERS>("satellite");
   const [cursorPos, setCursorPos] = useState<{lat: number; lng: number} | null>(null);
   const [liveDetections, setLiveDetections] = useState<any[]>([]);
   const [showLiveDetections, setShowLiveDetections] = useState(true);

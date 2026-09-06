@@ -2,8 +2,52 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import "leaflet/dist/leaflet.css";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
+import { Satellite, Globe, Waves, Moon } from "lucide-react";
+
+export type BasemapType = "satellite" | "hybrid" | "ocean" | "dark";
+
+export interface BasemapConfig {
+  id: BasemapType;
+  label: string;
+  url: string;
+  attribution: string;
+  maxZoom: number;
+  hasReferenceLabels?: boolean;
+}
+
+export const BASEMAP_OPTIONS: Record<BasemapType, BasemapConfig> = {
+  satellite: {
+    id: "satellite",
+    label: "Satellite",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution: '&copy; <a href="https://www.esri.com/">Esri</a> &copy; Maxar, Earthstar Geographics',
+    maxZoom: 19,
+  },
+  hybrid: {
+    id: "hybrid",
+    label: "Hybrid",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution: '&copy; <a href="https://www.esri.com/">Esri</a> &copy; Maxar, Earthstar Geographics',
+    maxZoom: 19,
+    hasReferenceLabels: true,
+  },
+  ocean: {
+    id: "ocean",
+    label: "Ocean Chart",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",
+    attribution: '&copy; <a href="https://www.esri.com/">Esri</a>, GEBCO, NOAA',
+    maxZoom: 13,
+  },
+  dark: {
+    id: "dark",
+    label: "Dark Tactical",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    attribution: '&copy; <a href="https://www.esri.com/">Esri</a>, HERE, Garmin, &copy; OpenStreetMap',
+    maxZoom: 16,
+  },
+};
 
 // Create custom icons dynamically
 function createHtmlIcon(htmlContent: string) {
@@ -56,6 +100,7 @@ interface AdvancedLeafletMapProps {
   center?: [number, number];
   zoom?: number;
   className?: string;
+  defaultBasemap?: BasemapType;
 }
 
 export default function AdvancedLeafletMap({
@@ -64,8 +109,10 @@ export default function AdvancedLeafletMap({
   center = [18.25, 83.45], // Bay of Bengal default survey location
   zoom = 6,
   className = "w-full h-full min-h-[350px]",
+  defaultBasemap = "satellite",
 }: AdvancedLeafletMapProps) {
   const [mounted, setMounted] = useState(false);
+  const [basemap, setBasemap] = useState<BasemapType>(defaultBasemap);
   const [vesselLocation, setVesselLocation] = useState<[number, number]>(center);
   const [localDetections, setLocalDetections] = useState<MapDetection[]>([]);
 
@@ -191,12 +238,26 @@ export default function AdvancedLeafletMap({
         zoomControl={false}
       >
         <MapBoundsUpdater points={boundsPoints} />
+        <ZoomControl position="bottomright" />
 
-        {/* Deep Ocean Tactical Basemap */}
+        {/* High-Resolution Dynamic Tactical Basemap (Satellite Default) */}
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          key={basemap}
+          url={BASEMAP_OPTIONS[basemap].url}
+          attribution={BASEMAP_OPTIONS[basemap].attribution}
+          maxZoom={BASEMAP_OPTIONS[basemap].maxZoom}
         />
+
+        {/* Optional Reference Labels Layer for Hybrid Mode */}
+        {BASEMAP_OPTIONS[basemap].hasReferenceLabels && (
+          <TileLayer
+            key="hybrid-labels"
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+            attribution='&copy; Esri &mdash; Boundaries & Places'
+            maxZoom={19}
+            zIndex={300}
+          />
+        )}
 
         {/* Survey Vessel Marker */}
         <Marker position={vesselLocation} icon={SurveyVesselIcon}>
@@ -289,6 +350,33 @@ export default function AdvancedLeafletMap({
         </p>
       </div>
 
+      {/* Basemap Switcher Tactical Control */}
+      <div className="absolute top-3 right-3 z-[400] bg-slate-900/90 backdrop-blur-md border border-cyan-500/40 p-1 rounded-xl shadow-lg flex items-center gap-1">
+        {(Object.keys(BASEMAP_OPTIONS) as BasemapType[]).map((key) => {
+          const cfg = BASEMAP_OPTIONS[key];
+          const isActive = basemap === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setBasemap(key)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-orbitron font-medium rounded-lg transition-all cursor-pointer ${
+                isActive
+                  ? "bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/40 ring-1 ring-cyan-300"
+                  : "text-slate-300 hover:text-cyan-300 hover:bg-slate-800/80"
+              }`}
+              title={`Switch to ${cfg.label} View`}
+            >
+              {key === "satellite" && <Satellite className="w-3 h-3" />}
+              {key === "hybrid" && <Globe className="w-3 h-3" />}
+              {key === "ocean" && <Waves className="w-3 h-3" />}
+              {key === "dark" && <Moon className="w-3 h-3" />}
+              <span>{cfg.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
       <style jsx global>{`
         .leaflet-popup-content-wrapper {
           background: transparent !important;
@@ -302,6 +390,33 @@ export default function AdvancedLeafletMap({
         .leaflet-container {
           background: #020617;
           font-family: inherit;
+        }
+        .leaflet-control-zoom {
+          border: 1px solid rgba(6, 182, 212, 0.3) !important;
+          border-radius: 8px !important;
+          overflow: hidden;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+        }
+        .leaflet-control-zoom a {
+          background-color: rgba(15, 23, 42, 0.85) !important;
+          color: #22d3ee !important;
+          border-bottom: 1px solid rgba(6, 182, 212, 0.2) !important;
+          backdrop-filter: blur(8px);
+        }
+        .leaflet-control-zoom a:hover {
+          background-color: rgba(6, 182, 212, 0.2) !important;
+          color: #ffffff !important;
+        }
+        .leaflet-control-attribution {
+          background: rgba(2, 6, 23, 0.75) !important;
+          color: #94a3b8 !important;
+          font-size: 9px !important;
+          backdrop-filter: blur(4px);
+          padding: 2px 6px !important;
+          border-top-left-radius: 6px;
+        }
+        .leaflet-control-attribution a {
+          color: #38bdf8 !important;
         }
       `}</style>
     </div>
