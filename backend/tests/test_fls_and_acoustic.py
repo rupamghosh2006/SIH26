@@ -7,31 +7,34 @@ import pytest
 import numpy as np
 from pathlib import Path
 
-from ai_pipeline.acoustic_classifier import AcousticSonarClassifier
+from ai_pipeline.seabed_classifier import SeabedClassifier
 
 
-def test_acoustic_classifier_inference():
-    """Verify that the trained acoustic classifier loads and runs predictions on 60-band pings."""
-    classifier = AcousticSonarClassifier()
-    assert classifier.model is not None, "Acoustic classifier model should be loaded"
-    assert classifier.scaler is not None, "Scaler should be loaded"
+def test_seabed_geological_classifier():
+    """Verify that the seabed classifier evaluates seafloor geological facies."""
+    classifier = SeabedClassifier()
+    dummy_sonar_patch = np.random.uniform(50, 200, (128, 128)).astype(np.uint8)
+    res = classifier.classify_facies(dummy_sonar_patch)
 
-    # Synthetic ping with 60 features
-    dummy_ping = np.random.uniform(0.01, 0.2, 60).astype(np.float32)
-    res = classifier.predict(dummy_ping)
+    assert "facies" in res
+    assert "confidence" in res
+    assert res["facies"] in [
+        "sand_ripples", "rocky_reef_boulders", "smooth_mud", "flat_sand"
+    ]
+    assert 0.0 <= res["confidence"] <= 1.0
 
-    assert res["success"] is True
-    assert res["prediction"] in ["Mine", "Rock"]
-    assert 0.0 <= res["confidence_score"] <= 100.0
-    assert res["threat_level"] in ["CRITICAL", "HIGH", "BENIGN"]
-
-
-def test_acoustic_classifier_invalid_input():
-    """Verify error handling on invalid dimension input."""
-    classifier = AcousticSonarClassifier()
-    invalid_ping = [0.1, 0.2, 0.3]  # Only 3 features instead of 60
-    with pytest.raises(ValueError):
-        classifier.predict(invalid_ping)
+    # Test geological interference evaluation
+    full_img = np.random.uniform(50, 200, (256, 256)).astype(np.uint8)
+    inter_res = classifier.evaluate_geological_interference(
+        full_image=full_img,
+        bbox=(50, 50, 30, 30),
+        has_shadow=False,
+        shadow_score=0.2,
+        shape_score=0.5
+    )
+    assert "facies" in inter_res
+    assert "penalty" in inter_res
+    assert "is_geological_risk" in inter_res
 
 
 def test_trained_yolo_checkpoints_exist():
@@ -39,7 +42,7 @@ def test_trained_yolo_checkpoints_exist():
     checkpoints = [
         "best.pt",
         "models/yolov8_varuna.pt",
-        "models/yolov8_seaguard.pt"
+        "models/yolov8_crab_pot.pt"
     ]
     for cp in checkpoints:
         candidates = [

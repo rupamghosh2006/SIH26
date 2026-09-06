@@ -70,8 +70,8 @@ def run_threat_detection(input_path, output_path):
         candidate_paths = [
             "backend/models/yolov8_varuna.pt",
             "../backend/models/yolov8_varuna.pt",
-            "backend/models/yolov8_seaguard.pt",
-            "../backend/models/yolov8_seaguard.pt",
+            "backend/models/yolov8_crab_pot.pt",
+            "../backend/models/yolov8_crab_pot.pt",
             "best.pt",
             "backend/models/yolov8n.pt",
             "../backend/models/yolov8n.pt"

@@ -382,7 +382,7 @@ export default function ProfilePage() {
 
       <div className="relative z-10 min-h-screen pt-24 pb-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Indian Defence Header with enhanced submarine animations */}
+          {/* MoES Header with hydrographic animations */}
           <div className="text-center mb-6">
             <div className="relative inline-block mb-3">
               <div

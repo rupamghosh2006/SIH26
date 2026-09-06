@@ -31,16 +31,16 @@ init_db()
 async def lifespan(app: FastAPI):
     # Startup actions
     print(r"""
-  __  __                  RX         ___  ____  
- |  \/  | __ _ _ __ ___  __  _   _  / _ \/ ___| 
- | |\/| |/ _` | '__/ _ \ \ \/ / | | | | \___ \  
- | |  | | (_| | | |  __/  >  <  | | |_| |___) | 
- |_|  |_|\__,_|_|  \___| /_/\_\ |_|\___/|____/  
-                                                
+ __     __ _    ____  _   _ _   _    _       _    ___ 
+ \ \   / // \  |  _ \| | | | \ | |  / \     / \  |_ _|
+  \ \ / // _ \ | |_) | | | |  \| | / _ \   / _ \  | | 
+   \ V // ___ \|  _ <| |_| | |\  |/ ___ \ / ___ \ | | 
+    \_//_/   \_\_| \_\\___/|_| \_/_/   \_/_/   \_\___|
+  MoES SIH26057: Autonomous Acoustic Debris Intelligence
     """)
-    print(f"[{settings.PROJECT_NAME}] Starting backend service...")
-    print(f"[{settings.PROJECT_NAME}] Uploads directory: {settings.UPLOADS_DIR}")
-    print(f"[{settings.PROJECT_NAME}] Model path: {settings.MODEL_PATH} (exists={os.path.exists(settings.MODEL_PATH)})")
+    print(f"[VARUNA AI - MoES] Starting backend service...")
+    print(f"[VARUNA AI - MoES] Uploads directory: {settings.UPLOADS_DIR}")
+    print(f"[VARUNA AI - MoES] Model path: {settings.MODEL_PATH} (exists={os.path.exists(settings.MODEL_PATH)})")
     yield
     # Shutdown actions
     print(f"[{settings.PROJECT_NAME}] Shutting down...")

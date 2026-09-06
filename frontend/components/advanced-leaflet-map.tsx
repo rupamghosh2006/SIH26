@@ -58,7 +58,7 @@ export default function AdvancedLeafletMap() {
     }
   }, []);
 
-  const SubmarineIcon = createHtmlIcon(`
+  const SurveyVesselIcon = createHtmlIcon(`
     <div style="width: 24px; height: 24px; background: rgba(16, 185, 129, 0.2); border: 2px solid #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(16, 185, 129, 0.6); animation: pulse 2s infinite;">
       <div style="width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></div>
     </div>
@@ -86,12 +86,12 @@ export default function AdvancedLeafletMap() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
 
-        {/* User / Submarine Marker */}
-        <Marker position={userLocation} icon={SubmarineIcon}>
+        {/* User / Survey Vessel Marker */}
+        <Marker position={userLocation} icon={SurveyVesselIcon}>
           <Popup className="bg-slate-900 border border-emerald-500/50 text-white rounded-lg p-0">
             <div className="p-3 bg-slate-900 rounded-lg">
-              <h4 className="text-emerald-400 font-orbitron font-bold text-sm">NCS-01 (Your Location)</h4>
-              <p className="text-xs text-slate-400 font-space-mono mt-1">Status: Active Patrol</p>
+              <h4 className="text-emerald-400 font-orbitron font-bold text-sm">ORV-SAGAR (Survey Vessel)</h4>
+              <p className="text-xs text-slate-400 font-space-mono mt-1">Status: Active Benthic Sonar Survey</p>
               <p className="text-xs text-slate-400 font-space-mono">Coords: {userLocation[0].toFixed(2)}, {userLocation[1].toFixed(2)}</p>
             </div>
           </Popup>

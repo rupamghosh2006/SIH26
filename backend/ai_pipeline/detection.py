@@ -138,7 +138,10 @@ class SonarDetector:
                 conf = float(b.conf[0].cpu().numpy())
                 cls_id = int(b.cls[0].cpu().numpy())
                 
-                cls_name = IDX_TO_CLASS.get(cls_id, CLASSES[cls_id % len(CLASSES)])
+                if hasattr(self.model, "names") and isinstance(self.model.names, dict):
+                    cls_name = self.model.names.get(cls_id, IDX_TO_CLASS.get(cls_id, f"debris_target_{cls_id}"))
+                else:
+                    cls_name = IDX_TO_CLASS.get(cls_id, CLASSES[cls_id % len(CLASSES)])
                 w = x2 - x1
                 h = y2 - y1
                 

@@ -5,7 +5,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: seaguard-backend
+    container_name: varuna-backend
     ports:
       - "8000:8000"
     volumes:
@@ -19,7 +19,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: seaguard-frontend
+    container_name: varuna-frontend
     ports:
       - "3000:80"
     depends_on:

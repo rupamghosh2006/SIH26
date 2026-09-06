@@ -1,5 +1,5 @@
 """
-Reporting Module for SeaGuard AI.
+Reporting Module for VARUNA AI.
 Generates structured JSON and CSV reports conforming to the standard survey detection schema.
 """
 

@@ -457,7 +457,7 @@ def create_synthetic_xtf_file(
         header = bytearray(1024)
         header[0] = 0x7B  # XTF file format
         header[1] = 1     # SystemType = Sonar
-        header[2:10] = b"SeaGuard"
+        header[2:10] = b"VARUNA_A"
         header[10:18] = b"v2.0.0\x00\x00"
         header[18:34] = b"Varuna_SSS_400k\x00"
         struct.pack_into("<H", header, 110, 2)  # 2 channels (Port, Starboard)

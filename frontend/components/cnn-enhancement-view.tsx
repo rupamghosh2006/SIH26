@@ -84,7 +84,7 @@ export function CNNEnhancementView() {
   const [systemStatus, setSystemStatus] = useState<
     "secure" | "processing" | "ready"
   >("ready");
-  const [depth, setDepth] = useState(450); // Realistic submarine depth: 450m
+  const [depth, setDepth] = useState(450); // Realistic AUV benthic survey depth: 450m
   const [pressure, setPressure] = useState(4500); // Realistic pressure at depth
   const [temperature, setTemperature] = useState(4);
   const [cpuUsage, setCpuUsage] = useState(45); // CPU usage percentage
@@ -167,14 +167,14 @@ export function CNNEnhancementView() {
     }
   }, [isProcessing, result]);
 
-  // Simulate submarine depth, pressure, temperature, and CPU readings
+  // Simulate AUV survey depth, pressure, temperature, and CPU readings
   useEffect(() => {
     const interval = setInterval(() => {
-      // Depth: realistic submarine depth between 200-800m, with small variations
+      // Depth: realistic AUV depth between 200-800m, with small variations
       setDepth((prev) => {
         const variation = (Math.random() - 0.5) * 5; // ±2.5m variation
         const newDepth = prev + variation;
-        // Keep depth in realistic submarine range (200-800m)
+        // Keep depth in realistic AUV benthic survey range (200-800m)
         const clampedDepth = Math.max(200, Math.min(800, newDepth));
 
         // Pressure: calculated from depth (1 bar per 10m depth + atmospheric pressure)
@@ -361,7 +361,7 @@ export function CNNEnhancementView() {
     <div className="relative min-h-screen w-full text-foreground overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-950">
       <SonarGridBackground />
 
-      {/* Multiple Radar Scanners - Submarine Control Room Style - Top Right */}
+      {/* Acoustic Swath Sonar Sweeper - Hydrographic Station Style - Top Right */}
       <div className="fixed top-28 right-4 w-40 h-40 z-20 pointer-events-none hidden md:block">
         <div className="relative w-full h-full">
           {/* Concentric rings */}
@@ -486,7 +486,7 @@ export function CNNEnhancementView() {
           </CardContent>
         </Card>
 
-        {/* Submarine Depth Gauge */}
+        {/* Bathymetric Depth Gauge */}
         <Card className="bg-slate-900/90 backdrop-blur-md border-2 border-blue-500/40 shadow-xl">
           <CardContent className="p-4">
             <div className="space-y-2">

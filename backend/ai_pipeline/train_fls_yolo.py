@@ -64,20 +64,16 @@ def train_fls_sonar_detector(
 
     # Export to application target locations
     target_varuna = models_path / "yolov8_varuna.pt"
-    target_seaguard = models_path / "yolov8_seaguard.pt"
     target_root_best = Path("best.pt")
 
     if source_pt.exists():
         shutil.copy2(str(source_pt), str(target_varuna))
-        shutil.copy2(str(source_pt), str(target_seaguard))
         shutil.copy2(str(source_pt), str(target_root_best))
         print(f"\n[Varuna AI] Checkpoints exported successfully:")
         print(f"  -> {target_varuna}")
-        print(f"  -> {target_seaguard}")
         print(f"  -> {target_root_best}")
     else:
         model.save(str(target_varuna))
-        shutil.copy2(str(target_varuna), str(target_seaguard))
         shutil.copy2(str(target_varuna), str(target_root_best))
 
     # Evaluate on held-out validation set

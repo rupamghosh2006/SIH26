@@ -192,24 +192,23 @@ Trained on the **Forward-Looking Sonar (FLS) Marine Debris Dataset** ([Valdenegr
 | **`propeller`** | 35 | **83.1%** | 🟠 High (Lost propulsion hardware) |
 | **`can`** | 58 | **75.9%** | 🟡 Medium (Metallic debris) |
 
-- **Primary Checkpoints:** `backend/models/yolov8_varuna.pt`, `best.pt`, and `backend/models/yolov8_seaguard.pt`.
+- **Primary Checkpoints:** `backend/models/yolov8_varuna.pt`, `best.pt`, and `backend/models/unet_ghostnet.pt`.
 
 ---
 
-### C. Acoustic Signal Target Classifier (Mines vs. Rocks)
-Trained on the **Sonar Mines vs. Rocks Dataset** ([Connectionist Bench / Kaggle](https://www.kaggle.com/datasets/mattcarter865/mines-vs-rocks)) consisting of 208 underwater sonar acoustic ping profiles across 60 frequency energy bands:
+### C. Seafloor Geological Interference Classifier (Facies & Ripple Rejection)
+Distinguishes anthropogenic marine debris from natural seabed formations using Haralick GLCM (Grey-Level Co-occurrence Matrix) statistical texture features and 2D FFT spatial frequency harmonics:
 
-- **Training Script:** [`backend/ai_pipeline/train_acoustic_classifier.py`](backend/ai_pipeline/train_acoustic_classifier.py)
-- **Inference Module:** [`backend/ai_pipeline/acoustic_classifier.py`](backend/ai_pipeline/acoustic_classifier.py)
+- **Module Script:** [`backend/ai_pipeline/seabed_classifier.py`](backend/ai_pipeline/seabed_classifier.py)
+- **Physics Filter:** [`backend/ai_pipeline/confidence_filter.py`](backend/ai_pipeline/confidence_filter.py)
 
-#### Model Benchmark Comparison
-| Architecture | Test Accuracy | F1-Score | ROC-AUC | Status |
-| :--- | :---: | :---: | :---: | :---: |
-| **PyTorch Deep MLP** | **85.71%** | **0.8696** | **0.9591** | 🏆 **Deployed** |
-| **Logistic Regression** | **83.33%** | 0.8444 | 0.9045 | Benchmark |
-| **Random Forest** | **80.95%** | 0.8261 | 0.9511 | Benchmark |
-
-- **Deployed Checkpoints:** `backend/models/sonar_mine_rock_classifier.joblib` and `backend/models/sonar_mine_rock_mlp.pt`.
+#### Geological Facies Rejection Benchmarks
+| Seabed Facies | Dominant Acoustic Profile | False-Alarm Penalty | Rejection Action |
+| :--- | :--- | :---: | :---: |
+| **Sand Ripples** | Periodic spatial harmonic peaks in 2D FFT | -35% | Suppressed as periodic sediment bedform |
+| **Rocky Reef / Boulders** | High contrast, zero geometric shadow regularity | -45% | Demoted unless 3D acoustic cast shadow verified |
+| **Smooth Mud / Silt** | High homogeneity, low acoustic backscatter | 0% | Clear acoustic background (high target contrast) |
+| **Flat Sand** | Uniform reverberation, zero periodic peaks | 0% | Planar seabed reference baseline |
 
 ---
 

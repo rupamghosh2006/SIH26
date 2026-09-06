@@ -229,9 +229,15 @@ class GhostNetSegmenter:
         density = round(white_pixels / max(1, total_pixels), 3)
         
         perimeter_m = 0.0
+        grapple_point = None
         if max_contour is not None:
             perimeter_px = cv2.arcLength(max_contour, True)
             perimeter_m = round(perimeter_px * meters_per_pixel, 2)
+            M = cv2.moments(max_contour)
+            if M["m00"] != 0:
+                cx = int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
+                grapple_point = [cx, cy]
 
         is_filamentous = bool(0.04 <= density <= 0.85)
 
@@ -241,7 +247,8 @@ class GhostNetSegmenter:
             "entangled_area_m2": entangled_area_m2,
             "perimeter_m": perimeter_m,
             "filament_density": density,
-            "is_filamentous": is_filamentous
+            "is_filamentous": is_filamentous,
+            "grapple_point": grapple_point
         }
 
     @staticmethod

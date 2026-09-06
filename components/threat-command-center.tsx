@@ -56,7 +56,6 @@ import {
 } from "@/lib/detection-storage";
 import { LiveTacticalRadar } from "@/components/live-tactical-radar";
 import { AIThreatIntelligence } from "@/components/ai-threat-intelligence";
-import { VaultDoorAnimation } from "@/components/vault-door-animation";
 
 interface ThreatAlert {
   id: string;
@@ -114,7 +113,6 @@ interface ThreatStats {
 
 export function ThreatCommandCenter() {
   const [mounted, setMounted] = useState(false);
-  const [vaultOpen, setVaultOpen] = useState(false);
   const [alerts, setAlerts] = useState<ThreatAlert[]>([]);
   const [systemHealth, setSystemHealth] = useState<SystemHealth>({
     cpu: 0,
@@ -1087,10 +1085,6 @@ export function ThreatCommandCenter() {
     );
   }
 
-  // Show vault door animation before revealing the command center
-  if (!vaultOpen) {
-    return <VaultDoorAnimation onComplete={() => setVaultOpen(true)} />;
-  }
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-950">

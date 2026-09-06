@@ -1,5 +1,5 @@
 """
-Pipeline Orchestration Service for SeaGuard AI.
+Pipeline Orchestration Service for VARUNA AI.
 Coordinates survey ingestion, async AI pipeline execution, thumbnail extraction,
 and instant demo survey generation.
 """
@@ -55,7 +55,7 @@ def run_survey_pipeline(db: Session, survey_id: str) -> None:
         sonar_pings = None
 
         if file_ext in [".xtf", ".jsf", ".sdf"]:
-            print(f"[SeaGuard AI] Parsing raw hydrographic sonar stream: {survey.image_path}")
+            print(f"[VARUNA AI] Parsing raw hydrographic sonar stream: {survey.image_path}")
             sonar_data = SonarFormatReader.read_sonar_file(survey.image_path)
             image = sonar_data.waterfall_image
             if sonar_data.sensor_altitude_m > 0:
@@ -118,13 +118,13 @@ def run_survey_pipeline(db: Session, survey_id: str) -> None:
             image_width=w,
             image_height=h
         )
-        print(f"[SeaGuard AI] Successfully processed survey {survey_id}: {len(detections)} detections.")
+        print(f"[VARUNA AI] Successfully processed survey {survey_id}: {len(detections)} detections.")
 
     except Exception as e:
         import traceback
         traceback.print_exc()
         crud.update_survey_status(db, survey_id, status="failed", error_message=str(e))
-        print(f"[SeaGuard AI] Failed processing survey {survey_id}: {e}")
+        print(f"[VARUNA AI] Failed processing survey {survey_id}: {e}")
 
 
 def create_sample_demo_survey(

@@ -173,6 +173,39 @@ def analyze_shape_and_texture(
     return shape_score, details
 
 
+def calculate_acoustic_target_height(
+    slant_range_px: float,
+    shadow_length_px: float,
+    swath_width_m: float = 150.0,
+    image_width_px: int = 1024,
+    towfish_altitude_m: float = 15.0
+) -> Dict[str, Any]:
+    """
+    Computes true physical acoustic target relief (height off seabed) using
+    standard side-scan sonar ray geometry:
+    H = (h * L_s) / (R_s + L_s)
+    where:
+    - h: towfish altitude above seafloor (meters)
+    - L_s: acoustic cast shadow length (meters)
+    - R_s: slant-range distance from transducer to highlight (meters)
+    """
+    m_per_px = swath_width_m / max(1, image_width_px)
+    slant_range_m = max(1.0, slant_range_px * m_per_px)
+    shadow_len_m = max(0.05, shadow_length_px * m_per_px)
+    
+    # Standard acoustic shadow height equation
+    target_height_m = (towfish_altitude_m * shadow_len_m) / (slant_range_m + shadow_len_m)
+    is_flat_seabed = bool(target_height_m < 0.15)  # Under 15cm is planar geology / mineral ripple
+    
+    return {
+        "target_height_m": round(float(target_height_m), 2),
+        "shadow_length_m": round(float(shadow_len_m), 2),
+        "slant_range_m": round(float(slant_range_m), 2),
+        "is_flat_seabed": is_flat_seabed,
+        "towfish_altitude_m": towfish_altitude_m
+    }
+
+
 def evaluate_detection_confidence(
     image: np.ndarray,
     bbox: Tuple[int, int, int, int],
@@ -201,6 +234,20 @@ def evaluate_detection_confidence(
     # If acoustic shadow is missing for a candidate, heavily suppress confidence
     if not has_shadow:
         composite = composite * 0.48
+
+    # Physical acoustic target relief calculation (Height off seabed H)
+    det_x = bbox[0] + bbox[2] / 2.0
+    slant_dist_px = abs(det_x - nadir_x)
+    shadow_len_px = float(bbox[2] * 1.5) if has_shadow else 0.5
+    relief_info = calculate_acoustic_target_height(
+        slant_range_px=slant_dist_px,
+        shadow_length_px=shadow_len_px,
+        swath_width_m=150.0,
+        image_width_px=image.shape[1] if image is not None and len(image.shape) > 1 else 1024,
+        towfish_altitude_m=15.0
+    )
+    if relief_info["is_flat_seabed"] and not has_shadow:
+        composite = composite * 0.80
 
     # Geological Interference Suppression (GLCM Haralick + Sand Ripple Harmonics)
     geo_details = None
@@ -232,6 +279,7 @@ def evaluate_detection_confidence(
     details = {
         "shadow_details": shadow_details,
         "shape_details": shape_details,
+        "acoustic_relief": relief_info,
         "suppression_applied": not has_shadow,
         "geological_analysis": geo_details
     }

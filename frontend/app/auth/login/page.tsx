@@ -313,7 +313,7 @@ function LoginFormContent() {
       <div className="absolute bottom-1/3 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-md mx-auto">
-        {/* Defence Emblem Header */}
+        {/* Oceanographic Emblem Header */}
         <div className="text-center mb-5">
           <div className="relative inline-block mb-3">
             <div className="absolute -inset-4 rounded-full border border-dashed border-cyan-500/20 animate-spin" style={{ animationDuration: "35s" }} />
@@ -327,7 +327,7 @@ function LoginFormContent() {
             Ministry of Earth Sciences (MoES)
           </h1>
           <p className="text-[10px] font-space-mono text-cyan-300/60 uppercase tracking-[0.3em] mt-0.5">
-            VARUNA AI Defence Sonar System
+            VARUNA AI Benthic Sonar System
           </p>
           <div className="text-[9px] font-space-mono text-slate-500 mt-1">
             {currentTime} • SECURE PORTAL

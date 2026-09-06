@@ -9,9 +9,6 @@ import { ConditionalNavigation } from "@/components/conditional-navigation";
 import { ConditionalSecurityBar } from "@/components/conditional-security-bar";
 import { Chatbot } from "@/components/chatbot";
 import { PageTransition } from "@/components/page-transition";
-import { BubbleCursor } from "@/components/bubble-cursor";
-import { SubmarineHUD } from "@/components/submarine-hud";
-import { VarunaVoiceAssistant } from "@/components/varuna-voice-assistant";
 import { Toaster } from "sonner";
 
 import "./globals.css";
@@ -71,8 +68,6 @@ export default function RootLayout({
       >
         <ConditionalSecurityBar />
         <ConditionalNavigation />
-        <BubbleCursor />
-        <SubmarineHUD />
         <Suspense
           fallback={
             <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-950" />

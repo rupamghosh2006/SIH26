@@ -62,10 +62,10 @@ class ThreatDetector:
                     self.model_path,
                     "backend/models/yolov8_varuna.pt",
                     os.path.join(os.path.dirname(__file__), "backend", "models", "yolov8_varuna.pt"),
-                    "backend/models/yolov8_seaguard.pt",
-                    os.path.join(os.path.dirname(__file__), "backend", "models", "yolov8_seaguard.pt"),
+                    "backend/models/yolov8_crab_pot.pt",
+                    os.path.join(os.path.dirname(__file__), "backend", "models", "yolov8_crab_pot.pt"),
                     "yolov8_varuna.pt",
-                    "yolov8_seaguard.pt",
+                    "yolov8_crab_pot.pt",
                     "best.pt",
                     "yolov8n.pt",
                     os.path.join(os.path.dirname(__file__), "yolov8n.pt"),
@@ -224,7 +224,7 @@ class ThreatDetector:
                     bh = int(t['bounding_box']['height'])
                     
                     if evaluate_detection_confidence is not None:
-                        eval_res = evaluate_detection_confidence(gray, (bx, by, bw, bh), t['confidence'], nadir_x)
+                        eval_res = evaluate_detection_confidence(gray, (bx, by, bw, bh), t['confidence'], nadir_x, seabed_classifier=classifier)
                         t['detector_score'] = eval_res.detector_score
                         t['shadow_score'] = eval_res.shadow_score
                         t['shape_score'] = eval_res.shape_score
@@ -260,8 +260,15 @@ class ThreatDetector:
                     t['srr_corrected'] = True
                     t['seabed_facies'] = seafloor_facies
 
-                    # U-Net Ghost Net Segmentation
-                    if t['class'] == 'ghost_net' or t.get('debris_type') == 'ghost_net':
+                    # U-Net Ghost Net & ALDFG Mesh Segmentation
+                    is_aldfg = (
+                        'net' in t['class'].lower() or
+                        'pot' in t['class'].lower() or
+                        'gear' in t['class'].lower() or
+                        'debris' in t['class'].lower() or
+                        t['class'] in ['ghost_net', 'net_or_entangled_debris', 'crab_pot']
+                    )
+                    if is_aldfg:
                         if segmenter is not None and image is not None:
                             crop = image[max(0, by):min(height, by+bh), max(0, bx):min(width, bx+bw)]
                             if crop.size > 0:
@@ -269,6 +276,7 @@ class ThreatDetector:
                                 seg = segmenter.segment_patch(gray_crop, meters_per_pixel=m_px_x)
                                 t['entangled_area_m2'] = seg['entangled_area_m2']
                                 t['polygon'] = seg['polygon']
+                                t['grapple_point'] = seg.get('grapple_point')
                                 if seg['entangled_area_m2'] > 0:
                                     t['physical_size_m'] += f" (Net Area: {seg['entangled_area_m2']}m²)"
                                     t['estimated_size_m'] = t['physical_size_m']

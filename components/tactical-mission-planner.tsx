@@ -43,41 +43,35 @@ interface MissionProfile {
 // MISSION PROFILES (AUV & Marine Debris Survey Fleets)
 // ═══════════════════════════════════════════════════════════
 const MISSION_PROFILES: MissionProfile[] = [
-  { name: "Deep-Sea Swath Survey", type: "patrol", vessel: "Varuna AUV-Alpha (SSS 400kHz)", speed: 4, fuelCapacity: 48, maxRange: 120, armament: "Side-Scan Sonar, Acoustic Altimeter", crew: 0, displacement: "1.2t Autonomous" },
+  { name: "Deep-Sea Swath Survey", type: "patrol", vessel: "Varuna AUV-Alpha (SSS 400kHz)", speed: 4, fuelCapacity: 48, maxRange: 120, armament: "Side-Scan Sonar, Acoustic Altimeter", crew: 0, displacement: "1.2t Autonomous AUV" },
   { name: "Ghost Net Recovery", type: "strike", vessel: "RV Ocean Cleaner (ROV Deployed)", speed: 8, fuelCapacity: 2400, maxRange: 1800, armament: "Hydraulic Net Cutter, Heavy Winch", crew: 18, displacement: "1,400t Research Vessel" },
   { name: "Coastal Debris Heatmap", type: "recon", vessel: "Eco-ASV Sentinel (Dual SSS)", speed: 6, fuelCapacity: 120, maxRange: 350, armament: "Edge YOLOv8 Inference, Telemetry", crew: 0, displacement: "850kg ASV" },
-  { name: "Wreckage & Container Survey", type: "escort", vessel: "Deep-Tow Sonar Sled Mk IV", speed: 3, fuelCapacity: 5000, maxRange: 4200, armament: "Synthetic Aperture Sonar, 4K Cam", crew: 24, displacement: "3,200t Survey Ship" },
+  { name: "Wreckage & Container Survey", type: "escort", vessel: "Deep-Tow Sonar Sled Mk IV", speed: 3, fuelCapacity: 5000, maxRange: 4200, armament: "Synthetic Aperture Sonar, 4K Optical Rig", crew: 24, displacement: "3,200t Survey Ship" },
   { name: "Harbor Environmental Audit", type: "blockade", vessel: "Harbor Drone Skiff", speed: 5, fuelCapacity: 80, maxRange: 180, armament: "Multi-Beam Bathymetry, SSS", crew: 2, displacement: "4.5t Survey Launch" },
 ];
 
 // ═══════════════════════════════════════════════════════════
-// NAVAL MARKERS (real locations)
+// OCEANOGRAPHIC RESEARCH STATIONS & SURVEY HUBS (MoES / NIOT)
 // ═══════════════════════════════════════════════════════════
 interface NavalMarker { lat: number; lng: number; name: string; type: "base" | "port" | "choke" | "airfield"; details: string; }
 const MARKERS: NavalMarker[] = [
-  { lat: 18.94, lng: 72.84, name: "Mumbai (WNC HQ)", type: "base", details: "Western Oceanographic Command (NIOT / MoES) Headquarters" },
-  { lat: 14.82, lng: 74.12, name: "Karwar (Project Seabird)", type: "base", details: "Largest naval base in Indian Ocean — INS Kadamba" },
-  { lat: 9.97, lng: 76.27, name: "Kochi (SNC HQ)", type: "base", details: "Southern Oceanographic Command (CMLRE / MoES) — Training Command" },
-  { lat: 17.70, lng: 83.30, name: "Visakhapatnam (ENC HQ)", type: "base", details: "Eastern Oceanographic Command (INCOIS / MoES) HQ — Submarine Arm" },
-  { lat: 6.83, lng: 93.93, name: "INS Baaz (Campbell Bay)", type: "airfield", details: "Southernmost air station — A&N Islands" },
-  { lat: 11.67, lng: 92.73, name: "Port Blair (A&N Command)", type: "base", details: "Andaman & Nicobar Command — Tri-service" },
-  { lat: 10.00, lng: 76.27, name: "INS Garuda (Kochi NAS)", type: "airfield", details: "Naval Air Station — P-8I, MiG-29K" },
-  { lat: 19.09, lng: 72.87, name: "INS Hansa (Dabolim NAS)", type: "airfield", details: "Naval Air Station Goa — MiG-29K OTU" },
-  { lat: 13.08, lng: 80.28, name: "Chennai", type: "port", details: "Major commercial port — Eastern seaboard" },
-  { lat: 15.41, lng: 73.88, name: "Goa (Mormugao)", type: "port", details: "Naval Dockyard — Fleet maintenance" },
-  { lat: 4.17, lng: 73.51, name: "Malé (Maldives)", type: "port", details: "Republic of Maldives — Strategic partner" },
-  { lat: 6.93, lng: 79.85, name: "Colombo", type: "port", details: "Sri Lanka — Key shipping hub" },
-  { lat: 25.27, lng: 55.30, name: "Dubai (Jebel Ali)", type: "port", details: "UAE — Largest port in Middle East" },
-  { lat: 23.61, lng: 58.54, name: "Muscat", type: "port", details: "Oman — Strategic ally at Hormuz approach" },
-  { lat: 11.59, lng: 43.15, name: "Djibouti", type: "port", details: "Horn of Africa — Anti-piracy operations" },
-  { lat: 1.29, lng: 103.85, name: "Singapore (Changi NB)", type: "port", details: "Key transit port — Malacca Strait" },
-  { lat: 12.63, lng: 45.03, name: "Bab el-Mandeb", type: "choke", details: "Chokepoint — 20nm wide — Red Sea entry" },
-  { lat: 26.60, lng: 56.50, name: "Strait of Hormuz", type: "choke", details: "Chokepoint — 21nm wide — 40% global oil" },
-  { lat: 2.50, lng: 101.40, name: "Malacca Strait", type: "choke", details: "Chokepoint — 1.5nm narrowest — 25% global trade" },
-  { lat: -8.40, lng: 115.70, name: "Lombok Strait", type: "choke", details: "Alternative to Malacca — Deep water passage" },
-  { lat: 21.15, lng: 72.68, name: "Surat", type: "port", details: "Gujarat — Growing commercial port" },
-  { lat: 12.91, lng: 74.86, name: "Mangalore (New Mangalore)", type: "port", details: "Karnataka — Oil imports hub" },
-  { lat: 8.48, lng: 76.95, name: "Thiruvananthapuram", type: "port", details: "Kerala — Vizhinjam deep-water port (under construction)" },
+  { lat: 12.92, lng: 80.23, name: "NIOT Chennai (MoES HQ)", type: "base", details: "National Institute of Ocean Technology — Deep ocean acoustics & AUV fleet" },
+  { lat: 17.53, lng: 78.37, name: "INCOIS Hyderabad", type: "base", details: "Indian National Centre for Ocean Information Services — Marine advisories" },
+  { lat: 9.97, lng: 76.27, name: "CMLRE Kochi (MoES)", type: "base", details: "Centre for Marine Living Resources & Ecology — Ghost net studies" },
+  { lat: 15.46, lng: 73.80, name: "NIO Goa (CSIR)", type: "base", details: "National Institute of Oceanography — Benthic seafloor mapping" },
+  { lat: 11.67, lng: 92.73, name: "Port Blair Marine Station", type: "base", details: "Andaman & Nicobar Marine Habitat & Coral Reef Sanctuary Hub" },
+  { lat: 9.28, lng: 79.12, name: "Gulf of Mannar Biosphere", type: "choke", details: "Critical marine sanctuary — High ALDFG / ghost gear risk zone" },
+  { lat: 21.65, lng: 88.35, name: "Sundarbans Estuary Node", type: "choke", details: "Coastal anthropogenic plastic & debris outfall monitoring" },
+  { lat: 10.57, lng: 72.64, name: "Lakshadweep Kavaratti Node", type: "base", details: "Coral atoll debris monitoring & benthic sonar surveillance" },
+  { lat: 13.08, lng: 80.28, name: "Chennai Port (RV Sagar Nidhi)", type: "port", details: "MoES flagship ocean research vessel home berth" },
+  { lat: 18.94, lng: 72.84, name: "Mumbai Port (MoES West Hub)", type: "port", details: "Western coastal survey & pollution monitoring fleet" },
+  { lat: 17.70, lng: 83.30, name: "Visakhapatnam Ocean Hub", type: "port", details: "Eastern Bay of Bengal deep-tow survey division" },
+  { lat: 15.41, lng: 73.88, name: "Mormugao Port Goa", type: "port", details: "RV Sindhu Sadhana research vessel berth" },
+  { lat: 6.93, lng: 79.85, name: "Colombo Survey Waypoint", type: "port", details: "International Indian Ocean acoustic transect" },
+  { lat: 1.29, lng: 103.85, name: "Malacca Approach Transect", type: "choke", details: "International maritime debris acoustic corridor" },
+  { lat: 21.15, lng: 72.68, name: "Gulf of Khambhat", type: "choke", details: "High tidal current debris transport zone" },
+  { lat: 12.91, lng: 74.86, name: "New Mangalore Survey Node", type: "port", details: "Karnataka coastal benthic audit station" },
+  { lat: 8.48, lng: 76.95, name: "Vizhinjam Deep Observatory", type: "port", details: "Deep-water acoustic baseline calibration node" },
 ];
 
 // Shipping lanes (real routes)

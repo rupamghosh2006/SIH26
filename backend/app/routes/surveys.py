@@ -280,13 +280,13 @@ def download_survey_report(
         return Response(
             content=report_content,
             media_type="text/csv",
-            headers={"Content-Disposition": f'attachment; filename="seaguard_{survey_id}_report.csv"'}
+            headers={"Content-Disposition": f'attachment; filename="varuna_{survey_id}_report.csv"'}
         )
     else:
         return Response(
             content=report_content,
             media_type="application/json",
-            headers={"Content-Disposition": f'attachment; filename="seaguard_{survey_id}_report.json"'}
+            headers={"Content-Disposition": f'attachment; filename="varuna_{survey_id}_report.json"'}
         )
 
 

@@ -297,7 +297,7 @@ export default function RegisterPage() {
       <div className="relative z-10 mx-auto max-w-lg px-6 pt-20 pb-16">
         {step === "form" ? (
           <>
-            {/* Indian Defence Header with enhanced submarine animations */}
+            {/* MoES Header with hydrographic animations */}
             <div className="text-center mb-6">
               <div className="relative inline-block mb-4">
                 {/* Multiple spinning security rings */}
@@ -342,7 +342,7 @@ export default function RegisterPage() {
               <div className="flex items-center justify-center gap-2 mb-3">
                 <div className="h-px flex-1 max-w-16 bg-gradient-to-r from-transparent to-cyan-500/30" />
                 <span className="text-[9px] font-space-mono text-cyan-300/50 uppercase tracking-[0.4em]">
-                  Varuna AI Defence System
+                  Varuna AI Oceanographic System
                 </span>
                 <div className="h-px flex-1 max-w-16 bg-gradient-to-l from-transparent to-cyan-500/30" />
               </div>

@@ -92,7 +92,7 @@ export function Chatbot() {
         },
         body: JSON.stringify({
           message: inputMessage,
-          context: "Varuna AI Marine Security Platform - AI-powered submarine detection, mine identification, diver tracking, and threat assessment for underwater defense systems"
+          context: "Varuna AI - Automated Underwater Marine Debris and Ghost Net Detection System using Side-Scan Sonar (SSS) Imagery (SIH26057 / MoES)"
         })
       })
 
