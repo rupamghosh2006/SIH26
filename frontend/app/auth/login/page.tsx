@@ -183,7 +183,7 @@ function LoginFormContent() {
       }
 
       setSuccess(`Authenticated as ${roleType.toUpperCase()}! Redirecting...`);
-      const target = roleType === "admin" ? "/command-center" : redirectTarget;
+      const target = roleType === "admin" ? "/detection" : redirectTarget;
       setTimeout(() => {
         router.push(target);
       }, 300);

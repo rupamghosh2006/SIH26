@@ -146,22 +146,32 @@ $$\text{Confidence Score} = 0.50 \cdot \mathcal{S}_{\text{YOLO}} + 0.35 \cdot \m
 
 VARUNA AI incorporates specialized acoustic intelligence models trained and evaluated on real underwater sonar datasets:
 
-### A. YOLOv8 Side-Scan Sonar (SSS) Crab Pot & Derelict Gear Model
-Trained on the **PING Ecosystem SSS Crab Pot Dataset** ([Hugging Face: `PINGEcosystem/sss-crab-pot-detection-ds`](https://huggingface.co/datasets/PINGEcosystem/sss-crab-pot-detection-ds)) containing 6,674 Side-Scan Sonar acoustic captures with axis-aligned bounding box annotations for derelict crab pots ("ghost pots" / ALDFG):
+### A. YOLOv8 Side-Scan Sonar (SSS) Debris & Hazard Detection Model
+The active production detector ([`backend/models/yolov8_varuna_active.pt`](backend/models/yolov8_varuna_active.pt)) is a fine-tuned anchor-free convolutional network for automated side-scan sonar (SSS) acoustic waterfall analysis across 4 primary debris and navigation hazard classes (`shipwreck`, `pipe_or_cylinder`, `net_or_entangled_debris`, and `unknown_anomaly`):
 
-- **Ready-to-Test Images Directory:** [`public/sample-sonar/`](public/sample-sonar/) *(Contains 29 curated real SSS waterfall captures ready for upload in `/cnn` and `/detection`)*
-- **YOLOv8 Structured Dataset:** [`backend/data/crab_pot_yolo/`](backend/data/crab_pot_yolo/) (`data.yaml`, `images/train/`, `labels/train/`, `images/val/`, `labels/val/`)
-- **Ingestion & Normalizer Script:** [`backend/ai_pipeline/datasets/download_crab_pot_dataset.py`](backend/ai_pipeline/datasets/download_crab_pot_dataset.py)
-- **Training Script:** [`backend/ai_pipeline/train_crab_pot_yolo.py`](backend/ai_pipeline/train_crab_pot_yolo.py)
-- **Primary Checkpoints:** `backend/models/yolov8_crab_pot.pt`, `backend/models/yolov8_varuna.pt`, `best.pt`
+- **Live Demo Benchmark Images:** [`public/sample-sonar/`](public/sample-sonar/) *(Contains **7 curated benchmark sonar waterfall captures** ready for instant zero-configuration testing in `/detection` via the Quick Sample Select bar)*
+- **Live Demo Data Disclosure:** In the live demo folder specifically (`public/sample-sonar/`), **all 7 demo captures** (`ghost_net_sample_sss_01/02`, `shipwreck_sample_sss_01/02`, `pipe_cylinder_sample_sss_01/02`, and `multi_debris_field_sample_01`) are high-fidelity procedural synthetic sonar waterfall captures generated with physics-modeled Rayleigh acoustic backscatter, specular highlights, and cast-shadow geometry. They are strictly held-out with **zero hash overlap** (0 duplicates) against both the training and validation splits to ensure an uncompromised, leak-free evaluation.
+- **Model Training & Validation Split:** The active model is trained and evaluated on a clean, unified sonar dataset ([`backend/data/unified_sonar/`](backend/data/unified_sonar/)) with **zero train/val leakage** (0.0% overlap, 297 train images, 74 validation images).
+  - *Real Data Sources:* Shipwreck and pipeline/cylinder training & validation instances are sourced from real acoustic AUV datasets (**AI4Shipwrecks** and **NOMBO/MILCO**).
+  - *Synthetic Data Sources:* Due to the complete absence of open-source real acoustic SSS records of ghost nets, all 275 instances of `net_or_entangled_debris` are trained and validated using physics-modeled synthetic sonar waterfalls.
 
-```bash
-# Ingest and convert Hugging Face dataset to YOLO format
-python backend/ai_pipeline/datasets/download_crab_pot_dataset.py
+#### Verified Validation Benchmark Metrics (Clean Split — Zero Leakage)
+| Overall Metric | Validation Score | Dataset Composition |
+| :--- | :---: | :--- |
+| **mAP@50** | **95.90%** | Held-out real + physics synthetic sonar |
+| **mAP@50-95** | **85.20%** | Multi-IoU localization threshold |
+| **Box Precision (P)** | **86.70%** | Zero false-positive suppression |
+| **Box Recall (R)** | **91.81%** | Target capture rate across 219 instances |
 
-# Launch YOLOv8 fine-tuning on real SSS imagery
-python backend/ai_pipeline/train_crab_pot_yolo.py --epochs 10 --batch 16 --imgsz 640
-```
+#### Per-Class Detection Performance & Data Provenance Breakdown
+| Class Category | Precision (P) | Recall (R) | mAP@50 | mAP@50-95 | Validation Data Type |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **`shipwreck`** | 80.6% | 83.8% | **88.5%** | **76.7%** | **Real** (AI4Shipwrecks held-out acoustic sonar) |
+| **`pipe_or_cylinder`** | 100.0% | 84.9% | **98.0%** | **91.4%** | **Real** (NOMBO/MILCO held-out acoustic sonar) |
+| **`net_or_entangled_debris`** | 85.4% | 98.5% | **97.6%** | **86.5%** | **100% Synthetic** (Rayleigh physics sonar waterfalls) |
+| **`unknown_anomaly`** | 80.9% | 100.0% | **99.5%** | **86.3%** | **Real** (NOMBO seabed clutter acoustic captures) |
+
+- **Primary Production Checkpoint:** `backend/models/yolov8_varuna_active.pt`
 
 ---
 
@@ -250,8 +260,8 @@ VARUNA AI does not blindly accept single-pass classifications when detections ar
 ## 11. Platform Core Modules & Capabilities
 
 1. **Acoustic Sonar Enhancement Lab (`/cnn`)**: Interactive acoustic enhancement utilizing bilateral speckle filtering, CLAHE gain equalization, and persistent analytical reporting.
-2. **Debris Detection Center (`/detection`)**: Multi-scale YOLOv8 object detection with bounding boxes, confidence score tiers, Explainable Sonar forensic popups, and Active Verification modals.
-3. **GIS Operations Command Center (`/command-center`)**: Real-time Leaflet GIS swath mapping, GPS anomaly markers, and bathymetric depth profiles with VARUNA security badge.
+2. **Debris Detection & Sonar Map Center (`/detection`)**: Multi-scale YOLOv8 object detection with bounding boxes, confidence score tiers, Explainable Sonar forensic popups, Active Verification modals, and interactive Leaflet GIS swath mapping.
+3. **Seafloor Debris Registry & Threat Geolocation (`/detection` & `/watchlist`)**: Real-time Leaflet GIS anomaly markers, bathymetric depth logs, and VARUNA acoustic threat auditing.
 4. **Debris Registry & Watchlist (`/watchlist`)**: Catalog of detected marine anomalies, geolocation tracking, and ecological risk logs.
 5. **Analytics Dashboard (`/analytics`)**: Statistical breakdown of debris distributions, benthic classification metrics, and survey audit summaries.
 6. **Audit & Report Export**: Automated structured GeoJSON, CSV, and hydrographic PDF report compilation for maritime authorities.

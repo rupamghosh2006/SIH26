@@ -37,7 +37,6 @@ export function Navigation() {
   const navItems = [
     { href: "/", label: "Home", icon: Home },
     { href: "/detection", label: "Sonar Debris AI & Map", icon: Target },
-    { href: "/command-center", label: "GIS Ops", icon: Radar },
   ];
 
   const visibleNavItems = navItems;

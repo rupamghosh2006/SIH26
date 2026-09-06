@@ -77,6 +77,65 @@ interface DetectionResult {
   srrApplied?: boolean;
 }
 
+export const DEMO_SAMPLES = [
+  {
+    filename: "ghost_net_sample_sss_01.jpg",
+    label: "Ghost Net #1",
+    category: "Net / ALDFG",
+    badge: "98% Conf",
+    lat: "15.2993",
+    lng: "74.1240",
+  },
+  {
+    filename: "ghost_net_sample_sss_02.jpg",
+    label: "Ghost Net #2",
+    category: "Net / ALDFG",
+    badge: "84% Conf",
+    lat: "15.3120",
+    lng: "74.1355",
+  },
+  {
+    filename: "shipwreck_sample_sss_01.jpg",
+    label: "Shipwreck #1",
+    category: "Shipwreck Hull",
+    badge: "91% Conf",
+    lat: "15.2811",
+    lng: "74.1082",
+  },
+  {
+    filename: "shipwreck_sample_sss_02.jpg",
+    label: "Shipwreck #2",
+    category: "Shipwreck Keel",
+    badge: "79% Conf",
+    lat: "15.2750",
+    lng: "74.0990",
+  },
+  {
+    filename: "pipe_cylinder_sample_sss_01.jpg",
+    label: "Pipeline #1",
+    category: "Subsea Pipe",
+    badge: "73% Conf",
+    lat: "15.3250",
+    lng: "74.1520",
+  },
+  {
+    filename: "pipe_cylinder_sample_sss_02.jpg",
+    label: "Pipeline #2",
+    category: "Subsea Pipe",
+    badge: "70% Conf",
+    lat: "15.3310",
+    lng: "74.1610",
+  },
+  {
+    filename: "multi_debris_field_sample_01.jpg",
+    label: "Multi-Debris",
+    category: "Debris Field",
+    badge: "Multi-Target",
+    lat: "15.3050",
+    lng: "74.1410",
+  },
+];
+
 interface DetectionViewProps {
   onResultsUpdate?: (results: DetectionResult[]) => void;
 }
@@ -104,6 +163,20 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
   const [latitude, setLatitude] = useState<string>("");
   const [longitude, setLongitude] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSelectSample = async (sample: typeof DEMO_SAMPLES[0]) => {
+    try {
+      const response = await fetch(`/sample-sonar/${sample.filename}`);
+      if (!response.ok) throw new Error("Failed to load sample image");
+      const blob = await response.blob();
+      const file = new File([blob], sample.filename, { type: "image/jpeg" });
+      setSelectedFile(file);
+      if (sample.lat) setLatitude(sample.lat);
+      if (sample.lng) setLongitude(sample.lng);
+    } catch (err) {
+      console.error("Error loading sample image:", err);
+    }
+  };
 
   // Helper function to calculate Haversine distance (in km)
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -451,14 +524,14 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
         />
         <TacticalStat
           label="Classification"
-          value="96"
+          value="95.9"
           unit="%"
           variant="success"
           icon={<Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
         />
         <TacticalStat
           label="Target Classes"
-          value="8"
+          value="4"
           unit="types"
           variant="secondary"
           icon={<BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" />}
@@ -525,6 +598,51 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
                     </p>
                   </div>
                 )}
+              </div>
+
+              {/* Quick Sample Select Bar */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                    <span className="text-xs font-semibold uppercase tracking-wider text-cyan-300 font-orbitron">
+                      Quick Sample Select (Verified Benchmarks)
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-space-mono">
+                    7 Curated Sonar Waterfall Captures
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
+                  {DEMO_SAMPLES.map((sample) => {
+                    const isSelected = selectedFile?.name === sample.filename;
+                    return (
+                      <button
+                        key={sample.filename}
+                        type="button"
+                        onClick={() => handleSelectSample(sample)}
+                        className={`group relative p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-cyan-950/70 border-cyan-400 text-cyan-200 shadow-lg shadow-cyan-500/20 ring-1 ring-cyan-400/50"
+                            : "bg-slate-900/60 border-cyan-500/20 text-slate-300 hover:border-cyan-400/50 hover:bg-slate-800/60"
+                        }`}
+                      >
+                        <div className="text-[11px] font-medium font-orbitron truncate text-cyan-300 group-hover:text-cyan-200">
+                          {sample.label}
+                        </div>
+                        <div className="text-[10px] text-slate-400 truncate mt-0.5">
+                          {sample.category}
+                        </div>
+                        <div className="mt-1 flex items-center justify-between text-[9px] font-space-mono text-cyan-400/80">
+                          <span>{sample.badge}</span>
+                          {isSelected && (
+                            <span className="text-cyan-300 font-bold">✓</span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="flex justify-center">

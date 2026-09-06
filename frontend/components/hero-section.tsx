@@ -156,12 +156,12 @@ export function HeroSection() {
               </button>
 
               <button
-                onClick={() => router.push("/command-center")}
+                onClick={() => router.push("/detection")}
                 className="group relative px-8 py-4 rounded-lg font-orbitron font-bold text-cyan-300 uppercase tracking-wider overflow-hidden text-sm border-2 border-cyan-500/50 hover:border-cyan-400 transition-all cursor-pointer"
               >
                 <div className="absolute inset-0 bg-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <span className="relative flex items-center justify-center space-x-2">
-                  <span>COMMAND CENTER</span>
+                  <span>EXPLORE SONAR PIPELINE</span>
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
                 </span>
               </button>
