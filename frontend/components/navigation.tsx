@@ -3,11 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Home, Radar, Upload, CircleHelp, Radio } from "lucide-react";
+import { Menu, X, Home, Radar, Upload, CircleHelp, Radio, History } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Overview", icon: Home },
   { href: "/detection", label: "Detection", icon: Radar },
+  { href: "/history", label: "History", icon: History },
 ];
 
 export function Navigation() {

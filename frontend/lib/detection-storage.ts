@@ -1,10 +1,12 @@
 "use client"
 
-interface StoredDetection {
+export interface StoredDetection {
   id: string
   timestamp: number
+  surveyId?: string
   originalImage: string
   detectedImage: string
+  originalFileName?: string
   detections: Array<{
     class: string
     confidence: number
@@ -25,6 +27,8 @@ interface StoredDetection {
   overallThreatLevel?: string
   overallThreatScore?: number
   threatCount?: number
+  seafloorFacies?: string
+  srrApplied?: boolean
   // Location where the detection was performed (from user profile GPS or manual input)
   lat?: number
   lng?: number

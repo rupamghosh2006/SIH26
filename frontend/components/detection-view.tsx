@@ -19,7 +19,6 @@ import {
   X,
 } from "lucide-react";
 import HolographicCard from "./holographic-card";
-import DetectionResultsEnhanced from "./detection-results-enhanced";
 import RealTimeFeed from "./real-time-feed";
 import TacticalStat from "./tactical-stat";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -151,8 +150,10 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
     if (typeof window === "undefined") return [];
     const stored = loadDetections();
     return stored.map((s) => ({
+      surveyId: s.surveyId,
       originalImage: s.originalImage,
       detectedImage: s.detectedImage,
+      originalFileName: s.originalFileName,
       detections: s.detections,
       processingTime: s.processingTime,
       totalObjects: s.totalObjects,
@@ -160,6 +161,8 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
       overallThreatScore: normalizeOverallThreatScore(s.overallThreatScore),
       threatCount: s.threatCount,
       timestamp: new Date(s.timestamp),
+      seafloorFacies: s.seafloorFacies,
+      srrApplied: s.srrApplied,
     }));
   });
   const [activeTab, setActiveTab] = useState("image");
@@ -331,14 +334,18 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
         const autoLng = primaryDet?.longitude || finalLng || undefined;
 
         addDetection({
+          surveyId: detectionResult.surveyId,
           originalImage: detectionResult.originalImage,
           detectedImage: detectionResult.detectedImage,
+          originalFileName: detectionResult.originalFileName,
           detections: detectionResult.detections,
           processingTime: detectionResult.processingTime,
           totalObjects: detectionResult.totalObjects,
           overallThreatLevel: detectionResult.overallThreatLevel,
           overallThreatScore: detectionResult.overallThreatScore,
           threatCount: detectionResult.threatCount,
+          seafloorFacies: detectionResult.seafloorFacies,
+          srrApplied: detectionResult.srrApplied,
           lat: autoLat,
           lng: autoLng,
         });
@@ -452,14 +459,18 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
         };
 
         addDetection({
+          surveyId: detectionResult.surveyId,
           originalImage: detectionResult.originalImage,
           detectedImage: detectionResult.detectedImage,
+          originalFileName: detectionResult.originalFileName,
           detections: detectionResult.detections,
           processingTime: detectionResult.processingTime,
           totalObjects: detectionResult.totalObjects,
           overallThreatLevel: detectionResult.overallThreatLevel,
           overallThreatScore: detectionResult.overallThreatScore,
           threatCount: detectionResult.threatCount,
+          seafloorFacies: detectionResult.seafloorFacies,
+          srrApplied: detectionResult.srrApplied,
           lat: finalLat || undefined,
           lng: finalLng || undefined,
         });
@@ -489,34 +500,6 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
     } finally {
       setIsProcessing(false);
       setProcessingProgress(0);
-    }
-  };
-
-  const downloadFile = (fileData: string, filename: string) => {
-    try {
-      const link = document.createElement("a");
-      link.href = fileData;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Download failed:", error);
-      alert("Download failed. Please try again.");
-    }
-  };
-
-  const deleteResult = (index: number) => {
-    if (
-      window.confirm("Are you sure you want to delete this detection result?")
-    ) {
-      const newResults = results.filter((_, i) => i !== index);
-      updateResults(newResults);
-      const stored = loadDetections();
-      if (stored[index]) {
-        const { deleteDetection } = require("@/lib/detection-storage");
-        deleteDetection(stored[index].id);
-      }
     }
   };
 
@@ -891,45 +874,6 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
                 surveyId={results[0]?.surveyId}
                 className="w-full h-full"
               />
-            </div>
-          </div>
-        </HolographicCard>
-      )}
-
-      {/* Results section */}
-      {results.length > 0 && (
-        <HolographicCard>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-border/50 pb-4">
-              <h2 className="text-xl font-bold text-cyan-300 font-orbitron">
-                Detection History
-              </h2>
-              <span className="text-sm text-slate-400">
-                {results.length} results
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              {results.map((result, index) => (
-                <DetectionResultsEnhanced
-                  key={index}
-                  index={index}
-                  surveyId={result.surveyId}
-                  originalImage={result.originalImage}
-                  detectedImage={result.detectedImage}
-                  originalFileName={result.originalFileName}
-                  detections={result.detections}
-                  processingTime={result.processingTime}
-                  totalObjects={result.totalObjects}
-                  overallThreatLevel={result.overallThreatLevel}
-                  overallThreatScore={result.overallThreatScore}
-                  threatCount={result.threatCount}
-                  seafloorFacies={result.seafloorFacies}
-                  srrApplied={result.srrApplied}
-                  onDelete={deleteResult}
-                  onDownload={downloadFile}
-                />
-              ))}
             </div>
           </div>
         </HolographicCard>
