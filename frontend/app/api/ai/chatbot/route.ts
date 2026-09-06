@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       hasGEMINI_KEY: Boolean(geminiKey),
       hasGROQ_KEY: hasGroq,
       nodeEnv: process.env.NODE_ENV || "unknown",
-      geminiModel: process.env.GEMINI_MODEL || "gemini-1.5-flash",
+      geminiModel: process.env.GEMINI_MODEL || "gemini-2.5-flash",
     }
 
     if (process.env.NODE_ENV !== "production") {
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           response,
           provider: "gemini",
-          model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
+          model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
         })
       } catch (geminiError) {
         console.error("[chatbot] Gemini error:", geminiError)

@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
-export const TEXT_MODEL_ID = "gemini-1.5-flash"
-export const VISION_MODEL_ID = process.env.GEMINI_VISION_MODEL_ID || "gemini-1.5-flash"
+export const TEXT_MODEL_ID = "gemini-2.5-flash"
+export const VISION_MODEL_ID = process.env.GEMINI_VISION_MODEL_ID || "gemini-2.5-flash"
 
 function sanitizeKey(key: string): string {
   if (!key) return ""
@@ -26,6 +26,48 @@ const getGeminiClient = (apiKeyOverride?: string) => {
     throw new Error("Missing GEMINI_API_KEY (or GOOGLE_API_KEY) environment variable")
   }
   return new GoogleGenerativeAI(key)
+}
+
+// Cached list of models returned from Google API for the given key
+let cachedModels: { timestamp: number; models: string[] } | null = null
+
+async function getAvailableGeminiModels(apiKey: string): Promise<string[]> {
+  const now = Date.now()
+  if (
+    cachedModels &&
+    now - cachedModels.timestamp < 10 * 60 * 1000 &&
+    cachedModels.models.length > 0
+  ) {
+    return cachedModels.models
+  }
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
+      { headers: { Accept: "application/json" } }
+    )
+    if (res.ok) {
+      const data = await res.json()
+      if (data?.models && Array.isArray(data.models)) {
+        const models: string[] = data.models
+          .filter(
+            (m: any) =>
+              Array.isArray(m.supportedGenerationMethods) &&
+              m.supportedGenerationMethods.includes("generateContent")
+          )
+          .map((m: any) => m.name.replace(/^models\//, ""))
+
+        if (models.length > 0) {
+          cachedModels = { timestamp: now, models }
+          return models
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[Gemini] Unable to list models from Google API, using fallback candidates:", err)
+  }
+
+  return []
 }
 
 // Get the Gemini Flash model for text generation
@@ -83,12 +125,39 @@ Guidance for responses:
 `
 
   const preferredModel = (process.env.GEMINI_MODEL || "").trim()
-  const candidateModels = [
+  const liveModels = await getAvailableGeminiModels(apiKey)
+
+  const priorityOrder = [
     preferredModel,
-    "gemini-1.5-flash",
+    "gemini-2.5-flash",
     "gemini-2.0-flash",
+    "gemini-2.5-pro",
+    "gemini-2.0-flash-lite",
+    "gemini-1.5-flash-latest",
+    "gemini-1.5-flash-002",
+    "gemini-1.5-flash",
     "gemini-1.5-pro",
+    "gemini-pro",
   ].filter(Boolean)
+
+  let candidateModels: string[] = []
+  if (liveModels.length > 0) {
+    const sortedLive = [...liveModels].sort((a, b) => {
+      const idxA = priorityOrder.indexOf(a)
+      const idxB = priorityOrder.indexOf(b)
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB
+      if (idxA !== -1) return -1
+      if (idxB !== -1) return 1
+      if (a.includes("flash") && !b.includes("flash")) return -1
+      if (!a.includes("flash") && b.includes("flash")) return 1
+      return 0
+    })
+    candidateModels = preferredModel
+      ? [preferredModel, ...sortedLive.filter((m) => m !== preferredModel)]
+      : sortedLive
+  } else {
+    candidateModels = priorityOrder
+  }
 
   // Normalize history to alternate strictly: user, model, user, model...
   const alternatingHistory: Array<{ role: "user" | "model"; parts: [{ text: string }] }> = []
@@ -117,9 +186,11 @@ Guidance for responses:
   // Keep recent context within reasonable token bounds
   const trimmedHistory = alternatingHistory.slice(-8)
 
+  const triedModels: string[] = []
   let lastError: unknown = null
 
   for (const modelId of candidateModels) {
+    triedModels.push(modelId)
     try {
       const model = genAI.getGenerativeModel({
         model: modelId,
@@ -154,7 +225,7 @@ Guidance for responses:
   }
 
   const errorMsg = lastError instanceof Error ? lastError.message : String(lastError)
-  throw new Error(`Gemini generation failed across models: ${errorMsg}`)
+  throw new Error(`Gemini generation failed across models (attempted: ${triedModels.slice(0, 5).join(", ")}): ${errorMsg}`)
 }
 
 export interface SpeciesIdentificationResult {
