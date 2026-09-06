@@ -257,9 +257,14 @@ class GhostNetSegmenter:
         Multi-scale morphological line and webbing detector.
         Extracts high-frequency ridge filaments characteristic of discarded fishing nets.
         """
-        # Equalize contrast locally
+        # Equalize contrast locally (ensure grayscale)
+        if len(patch_img.shape) == 3:
+            gray = cv2.cvtColor(patch_img, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = patch_img.copy()
+
         clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(4, 4))
-        enhanced = clahe.apply(patch_img)
+        enhanced = clahe.apply(gray)
         
         # Black top-hat and White top-hat to catch both reflective strands and dark rope shadows
         k_line = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))

@@ -106,6 +106,7 @@ class SurveyListResponse(BaseModel):
 
 class SurveyDetailResponse(SurveySummary):
     image_url: str
+    annotated_image_url: Optional[str] = None
     nadir_x: Optional[int] = None
     error_message: Optional[str] = None
     detections: List[DetectionResponse] = Field(default_factory=list)

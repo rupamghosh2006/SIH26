@@ -105,18 +105,23 @@ def test_prepare_crab_pot_yolo_dataset(temp_crab_pot_dir, tmp_path):
 
 
 def test_train_crab_pot_sonar_detector_interface(temp_crab_pot_dir, tmp_path):
-    """Test train_crab_pot_sonar_detector initializes and configures dataset without crashing."""
+    """Test train_crab_pot_sonar_detector initializes and configures dataset without crashing or touching production models."""
     out_yolo = tmp_path / "crab_pot_yolo_run"
     models_dir = tmp_path / "models"
+    project_dir = tmp_path / "runs"
 
     result = train_crab_pot_sonar_detector(
         raw_data_dir=str(temp_crab_pot_dir),
         yolo_data_dir=str(out_yolo),
         models_dir=str(models_dir),
+        project_dir=str(project_dir),
         epochs=1,
         batch_size=4,
-        imgsz=384
+        imgsz=384,
+        export_to_production=False
     )
 
     assert "status" in result
     assert result["status"] in ["success", "dataset_prepared"]
+    # Ensure temporary run produced artifacts inside tmp_path only
+    assert (models_dir / "yolov8_crab_pot.pt").exists() or result["status"] == "dataset_prepared"

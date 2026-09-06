@@ -2,29 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  const authToken = request.cookies.get("auth_token")?.value;
-
-  const protectedRoutes = [
-    "/profile",
-    "/command-center",
-    "/detection",
-    "/cnn",
-    "/analytics",
-    "/watchlist",
-  ];
-
-  const isProtectedRoute = protectedRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
-
-  // If visiting protected route without an auth token, redirect smoothly to login
-  if (isProtectedRoute && !authToken) {
-    const loginUrl = new URL("/auth/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
+  // Auth removed for evaluation: all dashboard routes are directly accessible
   return NextResponse.next();
 }
 

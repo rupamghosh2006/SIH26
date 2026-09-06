@@ -13,7 +13,7 @@ import uuid
 import aiofiles
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks, Query, Response
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, FileResponse
 from sqlalchemy.orm import Session
 import cv2
 import numpy as np
@@ -167,6 +167,9 @@ def get_survey_detail(
 
     image_rel_filename = os.path.basename(survey.image_path)
     image_url = f"/static/uploads/{image_rel_filename}"
+    annotated_rel_filename = f"{survey.id}_annotated.jpg"
+    annotated_path = settings.UPLOADS_DIR / annotated_rel_filename
+    annotated_image_url = f"/static/uploads/{annotated_rel_filename}" if annotated_path.exists() else image_url
 
     # Format detections
     formatted_detections = []
@@ -183,10 +186,33 @@ def get_survey_detail(
     return {
         **summary,
         "image_url": image_url,
+        "annotated_image_url": annotated_image_url,
         "nadir_x": survey.nadir_x,
         "error_message": survey.error_message,
         "detections": formatted_detections
     }
+
+
+@router.get("/{survey_id}/annotated-image")
+def get_survey_annotated_image(
+    survey_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Returns the annotated survey image with plotted bounding boxes and labels.
+    """
+    survey = crud.get_survey(db, survey_id)
+    if not survey:
+        raise HTTPException(status_code=404, detail="Survey not found.")
+
+    annotated_filename = f"{survey_id}_annotated.jpg"
+    annotated_path = settings.UPLOADS_DIR / annotated_filename
+    if not annotated_path.exists():
+        annotated_path = settings.UPLOADS_DIR / survey.filename
+        if not annotated_path.exists():
+            raise HTTPException(status_code=404, detail="Image file not found.")
+
+    return FileResponse(annotated_path, media_type="image/jpeg")
 
 
 @router.get("/{survey_id}/detections", response_model=List[schemas.DetectionResponse])

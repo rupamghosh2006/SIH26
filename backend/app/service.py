@@ -109,7 +109,36 @@ def run_survey_pipeline(db: Session, survey_id: str) -> None:
         nadir_x = results["nadir_info"]["nadir_center"]
         detections = results["detections"]
 
-        # 4. Save results to database
+        # 4. Generate annotated image visualization with bounding boxes
+        try:
+            annotated_filename = f"{survey.id}_annotated.jpg"
+            annotated_path = str(settings.UPLOADS_DIR / annotated_filename)
+            ann_img = cv2.imread(survey.image_path)
+            if ann_img is not None:
+                tier_colors = {
+                    "High": (0, 0, 255),      # Red
+                    "Medium": (0, 165, 255),  # Orange
+                    "Low": (0, 255, 255)      # Yellow
+                }
+                for d in detections:
+                    bx, by, bw, bh = d["bbox"]
+                    tier = d.get("confidence_tier", "Medium")
+                    color = tier_colors.get(tier, (0, 255, 0))
+                    cv2.rectangle(ann_img, (bx, by), (bx + bw, by + bh), color, 2)
+                    cls_name = d.get("predicted_class", "debris")
+                    conf_score = d.get("confidence_score", 0.0)
+                    dim_str = d.get("estimated_size_m", "")
+                    label = f"{cls_name} {conf_score:.1f}% [{tier}]"
+                    if dim_str:
+                        label += f" ({dim_str})"
+                    lbl_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.45, 1)[0]
+                    cv2.rectangle(ann_img, (bx, max(0, by - lbl_size[1] - 6)), (bx + lbl_size[0] + 4, by), color, -1)
+                    cv2.putText(ann_img, label, (bx + 2, max(12, by - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 0), 1, cv2.LINE_AA)
+                cv2.imwrite(annotated_path, ann_img)
+        except Exception as ann_err:
+            print(f"[VARUNA AI] Warning: Failed to generate annotated image: {ann_err}")
+
+        # 5. Save results to database
         crud.save_survey_results(
             db=db,
             survey_id=survey_id,

@@ -36,11 +36,8 @@ export function Navigation() {
   const router = useRouter();
   const navItems = [
     { href: "/", label: "Home", icon: Home },
-    { href: "/cnn", label: "Acoustic Lab", icon: Brain },
-    { href: "/detection", label: "Debris AI", icon: Target },
+    { href: "/detection", label: "Sonar Debris AI & Map", icon: Target },
     { href: "/command-center", label: "GIS Ops", icon: Radar },
-    { href: "/watchlist", label: "Debris Registry", icon: Activity },
-    { href: "/analytics", label: "Analytics", icon: BarChart3 },
   ];
 
   const visibleNavItems = navItems;
@@ -174,90 +171,13 @@ export function Navigation() {
                 </span>
               </div>
 
-              {/* Profile Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="group flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-slate-900/40 backdrop-blur-xl border border-cyan-500/15 hover:border-cyan-400/40 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10"
-                >
-                  <div className="relative">
-                    <div className="w-7 h-7 rounded-full overflow-hidden border-2 border-cyan-400/30 group-hover:border-cyan-300/60 transition-all duration-300 group-hover:scale-105">
-                      {avatar ? (
-                        <img
-                          src={avatar || "/placeholder.svg"}
-                          alt="Avatar"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-cyan-500/30 to-blue-500/30 flex items-center justify-center">
-                          <User className="w-3.5 h-3.5 text-cyan-300" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-slate-950 animate-pulse" />
-                  </div>
-                  <div className="hidden xl:block text-left">
-                    <div className="text-[10px] font-space-mono font-bold text-cyan-100 uppercase tracking-wider">
-                      {userData?.firstName || "OPERATOR"}
-                    </div>
-                  </div>
-                  <ChevronDown
-                    className={`w-3 h-3 text-cyan-400/60 transition-transform duration-300 ${
-                      isProfileOpen ? "rotate-180" : ""
-                    }`}
-                  />
+              {/* Quick Action - Upload Sonar Log */}
+              <Link href="/detection" className="hidden sm:block">
+                <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-400/40 text-xs font-space-mono font-bold text-cyan-200 hover:text-white hover:border-cyan-300 transition-all shadow-md shadow-cyan-500/10 cursor-pointer">
+                  <Target className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>UPLOAD SONAR LOG</span>
                 </button>
-
-                {/* Profile Dropdown Menu */}
-                {isProfileOpen && (
-                  <div className="absolute right-0 mt-3 w-72 glass-heavy rounded-xl shadow-2xl shadow-cyan-500/20 py-2 z-[70] animate-slide-up">
-                    {/* Dropdown glow border */}
-                    <div className="absolute inset-0 rounded-xl border border-cyan-500/20" />
-
-                    <div className="relative z-10">
-                      <div className="px-4 py-3 border-b border-cyan-500/10">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-cyan-400/40 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center">
-                            {avatar ? (
-                              <img
-                                src={avatar}
-                                alt="Avatar"
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <User className="w-5 h-5 text-cyan-300" />
-                            )}
-                          </div>
-                          <div>
-                            <div className="text-sm font-orbitron font-bold text-cyan-100 tracking-wide">
-                              {userData?.firstName} {userData?.lastName}
-                            </div>
-                            <div className="text-[10px] font-space-mono text-cyan-300/50">
-                              {userData?.email}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <Link
-                        href="/profile"
-                        className="flex items-center space-x-3 px-4 py-2.5 text-xs font-space-mono text-cyan-200 hover:text-cyan-100 hover:bg-cyan-500/10 transition-all duration-200 uppercase tracking-wider font-bold group/item"
-                        onClick={() => setIsProfileOpen(false)}
-                      >
-                        <User className="w-4 h-4 group-hover/item:scale-110 transition-transform" />
-                        <span>Profile Settings</span>
-                      </Link>
-                      <div className="border-t border-cyan-500/10 my-1" />
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center space-x-3 px-4 py-2.5 text-xs font-space-mono text-red-300/80 hover:text-red-200 hover:bg-red-500/10 transition-all duration-200 w-full text-left uppercase tracking-wider font-bold group/item"
-                      >
-                        <LogOut className="w-4 h-4 group-hover/item:scale-110 transition-transform" />
-                        <span>Logout</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              </Link>
 
               {/* Contact Button */}
               <Link href="/contact" className="hidden sm:block">
@@ -323,56 +243,19 @@ export function Navigation() {
                 );
               })}
 
-              {/* Mobile Profile */}
-              {userData && (
-                <div className="pt-3 mt-2 border-t border-cyan-500/10">
-                  <div className="px-4 py-3 bg-cyan-500/5 rounded-xl border border-cyan-500/10">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-cyan-400/30">
-                        {avatar ? (
-                          <img
-                            src={avatar || "/placeholder.svg"}
-                            alt="Avatar"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center">
-                            <User className="w-5 h-5 text-cyan-300" />
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <div className="text-xs font-space-mono font-bold text-cyan-100 uppercase tracking-wider">
-                          {userData.firstName}
-                        </div>
-                        <div className="text-[10px] font-space-mono text-cyan-300/50">
-                          {userData.email}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-2">
-                    <Link
-                      href="/profile"
-                      className="flex-1 flex items-center justify-center space-x-2 px-3 py-2.5 text-[10px] font-space-mono text-cyan-200 hover:text-cyan-100 bg-cyan-500/5 hover:bg-cyan-500/10 rounded-lg transition-all duration-200 uppercase tracking-wider font-bold border border-cyan-500/10"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <User className="w-3 h-3" />
-                      <span>Profile</span>
-                    </Link>
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setIsMenuOpen(false);
-                      }}
-                      className="flex-1 flex items-center justify-center space-x-2 px-3 py-2.5 text-[10px] font-space-mono text-red-300/70 hover:text-red-200 bg-red-500/5 hover:bg-red-500/10 rounded-lg transition-all duration-200 uppercase tracking-wider font-bold border border-red-500/10"
-                    >
-                      <LogOut className="w-3 h-3" />
-                      <span>Logout</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+              {/* Quick Upload in Mobile Menu */}
+              <div className="pt-2">
+                <Link
+                  href="/detection"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="block"
+                >
+                  <button className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-400/30 text-xs font-space-mono font-bold uppercase tracking-wider text-cyan-100 flex items-center justify-center gap-2">
+                    <Target className="w-3.5 h-3.5 text-cyan-400" />
+                    Upload Sonar Log
+                  </button>
+                </Link>
+              </div>
 
               <div className="pt-2">
                 <Link

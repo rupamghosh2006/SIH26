@@ -62,7 +62,17 @@ backend/seaguard.db
 *.sqlite3
 *.db-journal
 
+# Archives, backups & legacy caches
+archive/
+node_modules_archived/
+*.bak
+*.tmp
+*.swp
+*~
+desktop.ini
+
 # IDE & OS
 .vscode/
 .idea/
 *.log
+

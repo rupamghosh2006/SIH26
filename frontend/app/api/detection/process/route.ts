@@ -1,518 +1,189 @@
-import { NextRequest, NextResponse } from "next/server"
-import { runPythonCommand } from "@/lib/python-runner"
-import { writeFile, mkdir, unlink } from "fs/promises"
-import { join } from "path"
-import { existsSync } from "fs"
-import { generateSafeUploadFilename } from "@/lib/path-security"
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
   try {
-    const formData = await request.formData()
-    const file = formData.get("file") as File
-    const type = formData.get("type") as string // "image" or "video"
+    const formData = await request.formData();
+    const file = formData.get("file") as File | null;
+    const type = (formData.get("type") as string) || "image";
 
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 })
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Create temporary directories
-    const tempDir = join(process.cwd(), "temp")
-    const inputDir = join(tempDir, "input")
-    const outputDir = join(tempDir, "output")
-    
-    if (!existsSync(tempDir)) {
-      await mkdir(tempDir, { recursive: true })
-    }
-    if (!existsSync(inputDir)) {
-      await mkdir(inputDir, { recursive: true })
-    }
-    if (!existsSync(outputDir)) {
-      await mkdir(outputDir, { recursive: true })
-    }
+    const fastApiBaseUrl = process.env.FASTAPI_BASE_URL || "http://127.0.0.1:8000";
 
-    // Save uploaded file
-    const fileBuffer = await file.arrayBuffer()
-    const fileName = generateSafeUploadFilename(file.name, "detection")
-    const inputPath = join(inputDir, fileName)
-    await writeFile(inputPath, Buffer.from(fileBuffer))
+    // Build multipart/form-data for FastAPI /api/surveys/upload
+    const uploadData = new FormData();
+    uploadData.append("image_file", file, file.name);
+    uploadData.append("title", `Sonar Survey - ${file.name}`);
+    uploadData.append("slant_range_m", "75.0");
+    uploadData.append("auto_process", "true");
 
-    let result: any = {}
-    const projectRoot = process.cwd()
+    console.log(`[Next.js Detection API] Forwarding upload to FastAPI at ${fastApiBaseUrl}/api/surveys/upload`);
 
-    if (type === "image") {
-      // Process single image with YOLO
-      const outputFileName = `detected_${fileName}`
-      const outputPath = join(outputDir, outputFileName)
-      
-      // Create a Python script to run debris detection
-      // Escape paths properly for Windows/Unix compatibility
-      const escapedInputPath = inputPath.replace(/\\/g, "/").replace(/'/g, "\\'")
-      const escapedOutputPath = outputPath.replace(/\\/g, "/").replace(/'/g, "\\'")
-      
-      const debrisDetectionScript = `import sys
-import os
-import json
-from pathlib import Path
-
-# Add the current directory to Python path
-sys.path.insert(0, os.getcwd())
-
-from threat_detector import ThreatDetector
-
-def run_threat_detection(input_path, output_path):
-    try:
-        # Check if input file exists
-        if not os.path.exists(input_path):
-            print(f"ERROR: Input file not found: {input_path}", file=sys.stderr)
-            return None
-        
-        # Search for available side-scan sonar model weights
-        candidate_paths = [
-            "backend/models/yolov8_varuna.pt",
-            "../backend/models/yolov8_varuna.pt",
-            "backend/models/yolov8_crab_pot.pt",
-            "../backend/models/yolov8_crab_pot.pt",
-            "best.pt",
-            "backend/models/yolov8n.pt",
-            "../backend/models/yolov8n.pt"
-        ]
-        model_path = next((p for p in candidate_paths if os.path.exists(p)), None)
-        
-        # Initialize detector with side-scan sonar weights or classical acoustic shadow pipeline
-        detector = ThreatDetector(model_path=model_path, confidence_threshold=0.25, verbose=False)
-        
-        # Run debris detection
-        result = detector.detect_threats(input_path)
-        
-        if not result['success']:
-            print(f"ERROR: Detection failed: {result.get('error', 'Unknown error')}", file=sys.stderr)
-            return None
-        
-        # Convert debris detection results to the expected format
-        detections = []
-        for threat in result['threats']:
-            bbox = threat['bounding_box']
-            detections.append({
-                'class': threat['class'],
-                'confidence': threat['confidence'],
-                'threat_level': threat['threat_level'],
-                'bbox': [bbox['x1'], bbox['y1'], bbox['width'], bbox['height']],  # [x, y, width, height]
-                'detector_score': threat.get('detector_score', round(threat['confidence'] * 100, 1)),
-                'shadow_score': threat.get('shadow_score', 80.0),
-                'shape_score': threat.get('shape_score', 75.0),
-                'shadow_detected': threat.get('shadow_detected', True),
-                'confidence_score': threat.get('confidence_score', round(threat['confidence'] * 100, 1)),
-                'confidence_tier': threat.get('confidence_tier', 'High' if threat['confidence'] >= 0.75 else 'Medium'),
-                'estimated_size_m': threat.get('physical_size_m', threat.get('estimated_size_m', 'Unknown')),
-                'physical_size_m': threat.get('physical_size_m', threat.get('estimated_size_m', 'Unknown')),
-                'entangled_area_m2': threat.get('entangled_area_m2'),
-                'polygon': threat.get('polygon', []),
-                'seabed_facies': threat.get('seabed_facies', 'flat_sand'),
-                'srr_corrected': threat.get('srr_corrected', True),
-                'filter_details': threat.get('filter_details', {})
-            })
-        
-        # Create annotated image
-        annotated_path = detector.create_annotated_image(input_path, result, output_path)
-        
-        if not annotated_path:
-            import shutil
-            shutil.copy2(input_path, output_path)
-        
-        return {
-            'detections': detections,
-            'total_objects': len(detections),
-            'overall_threat_level': result['overall_threat_level'],
-            'overall_threat_score': result['overall_threat_score'],
-            'threat_count': result['threat_count'],
-            'nadir_x': result.get('metadata', {}).get('image_width', 800) // 2,
-            'seafloor_facies': result.get('seafloor_facies', 'flat_sand'),
-            'srr_applied': True
-        }
-        
-    except Exception as e:
-        print(f"ERROR: Exception in detection: {str(e)}", file=sys.stderr)
-        import traceback
-        traceback.print_exc(file=sys.stderr)
-        return None
-
-if __name__ == "__main__":
-    input_path = r"${escapedInputPath}"
-    output_path = r"${escapedOutputPath}"
-    
-    result = run_threat_detection(input_path, output_path)
-    if result:
-        print(f"__JSON_START__{json.dumps(result)}__JSON_END__")
-    else:
-        print(f"__JSON_START__{json.dumps({'detections': [], 'total_objects': 0, 'overall_threat_level': 'NONE', 'overall_threat_score': 0.0, 'threat_count': 0, 'seafloor_facies': 'flat_sand', 'srr_applied': True})}__JSON_END__")`
-
-      // Write the script to a temporary file
-      const scriptPath = join(tempDir, "threat_detection.py")
-      await writeFile(scriptPath, debrisDetectionScript)
-
-      // Run the YOLO detection script from the project root directory
-      const pythonResult = await runPythonCommand([
-        scriptPath
-      ], projectRoot)
-
-      if (pythonResult.code !== 0) {
-        console.warn("Detection non-zero exit code:", pythonResult.code)
-        console.warn("Python stderr:", pythonResult.stderr)
-      }
-
-      // Parse the detection results
-      let detections = []
-      let totalObjects = 0
-      let overallThreatLevel = 'NONE'
-      let overallThreatScore = 0.0
-      let threatCount = 0
-      let seafloorFacies = 'flat_sand'
-      
-      let detectionData: any = null
-      const startTag = "__JSON_START__"
-      const endTag = "__JSON_END__"
-      const sIdx = pythonResult.stdout.indexOf(startTag)
-      const eIdx = pythonResult.stdout.indexOf(endTag)
-      
-      if (sIdx !== -1 && eIdx !== -1) {
-        try {
-          detectionData = JSON.parse(pythonResult.stdout.substring(sIdx + startTag.length, eIdx))
-        } catch (e) {
-          console.warn("Failed to parse marked detection JSON:", e)
-        }
-      }
-
-      if (!detectionData) {
-        // Fallback: search backwards for valid JSON line
-        const stdoutLines = pythonResult.stdout.trim().split('\n')
-        for (let i = stdoutLines.length - 1; i >= 0; i--) {
-          const line = stdoutLines[i].trim()
-          if (line.startsWith('{') && line.endsWith('}')) {
-            try {
-              detectionData = JSON.parse(line)
-              break
-            } catch (_) {}
-          }
-        }
-      }
-
-      if (detectionData) {
-        detections = detectionData.detections || []
-        totalObjects = detectionData.total_objects || detections.length
-        overallThreatLevel = detectionData.overall_threat_level || 'NONE'
-        overallThreatScore = detectionData.overall_threat_score || 0.0
-        threatCount = detectionData.threat_count || detections.length
-        seafloorFacies = detectionData.seafloor_facies || 'flat_sand'
-      }
-
-      let detectedImageBase64 = ""
-      if (existsSync(outputPath)) {
-        const outputBuffer = await import("fs").then(fs => fs.promises.readFile(outputPath))
-        detectedImageBase64 = outputBuffer.toString("base64")
-      } else if (existsSync(inputPath)) {
-        const inputBuffer = await import("fs").then(fs => fs.promises.readFile(inputPath))
-        detectedImageBase64 = inputBuffer.toString("base64")
-      }
-
-      result = {
-        success: true,
-        type: "image",
-        originalFileName: fileName,
-        detectedImage: `data:image/jpeg;base64,${detectedImageBase64}`,
-        detections: detections,
-        totalObjects: totalObjects,
-        overallThreatLevel: overallThreatLevel,
-        overallThreatScore: overallThreatScore,
-        threatCount: threatCount,
-        seafloorFacies: seafloorFacies,
-        srrApplied: true,
-        processingTime: 1.2
-      }
-
-    } else if (type === "video") {
-      // Process video with YOLO
-      const outputVideoName = `detected_${fileName.replace(/\.[^/.]+$/, "")}.avi`
-      const outputVideoPath = join(outputDir, outputVideoName)
-      
-      console.log(`Expected video output path: ${outputVideoPath}`)
-
-      // Create a Python script for video debris detection
-      const videoDebrisDetectionScript = `
-import sys
-import os
-import json
-import cv2
-from pathlib import Path
-
-# Add the current directory to Python path
-sys.path.insert(0, os.getcwd())
-
-from threat_detector import ThreatDetector
-
-def run_video_threat_detection(input_path, output_path):
-    try:
-        # Check if input file exists
-        if not os.path.exists(input_path):
-            return None
-        
-        # Initialize threat detector with the model from current folder
-        model_path = "best.pt"
-        
-        if not os.path.exists(model_path):
-            return None
-            
-        # Initialize detector with optimized confidence threshold for production
-        detector = ThreatDetector(model_path=model_path, confidence_threshold=0.25, verbose=False)
-        
-        if not detector.model:
-            return None
-        
-        # Open video
-        cap = cv2.VideoCapture(input_path)
-        if not cap.isOpened():
-            return None
-            
-        # Get video properties
-        fps = int(cap.get(cv2.CAP_PROP_FPS))
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        
-        # Setup video writer with XVID codec and AVI extension for better compatibility
-        fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
-        
-        frame_count = 0
-        all_detections = []
-        overall_threat_scores = []
-        
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
-                
-            # Save frame temporarily for debris detection
-            temp_frame_path = f"temp_frame_{frame_count}.jpg"
-            cv2.imwrite(temp_frame_path, frame)
-            
-            # Run debris detection on frame
-            result = detector.detect_threats(temp_frame_path)
-            
-            if result['success'] and result['threats']:
-                # Convert debris detection results to the expected format
-                frame_detections = []
-                for threat in result['threats']:
-                    bbox = threat['bounding_box']
-                    frame_detections.append({
-                        'class': threat['class'],
-                        'confidence': threat['confidence'],
-                        'threat_level': threat['threat_level'],
-                        'bbox': [bbox['x1'], bbox['y1'], bbox['width'], bbox['height']]
-                    })
-                
-                all_detections.extend(frame_detections)
-                # Calculate threat score from individual threats
-                frame_threat_score = 0.8 if any(t['threat_level'] == 'HIGH' for t in frame_detections) else 0.5 if any(t['threat_level'] == 'MEDIUM' for t in frame_detections) else 0.2
-                overall_threat_scores.append(frame_threat_score)
-                
-                # Create annotated frame
-                annotated_path = detector.create_annotated_image(temp_frame_path, result, f"annotated_frame_{frame_count}.jpg")
-                if annotated_path and os.path.exists(annotated_path):
-                    annotated_frame = cv2.imread(annotated_path)
-                    out.write(annotated_frame)
-                    os.remove(annotated_path)
-                else:
-                    out.write(frame)
-            else:
-                out.write(frame)
-            
-            # Clean up temporary frame
-            if os.path.exists(temp_frame_path):
-                os.remove(temp_frame_path)
-            
-            frame_count += 1
-        
-        cap.release()
-        out.release()
-        
-        # Calculate overall threat assessment for the video
-        avg_threat_score = sum(overall_threat_scores) / len(overall_threat_scores) if overall_threat_scores else 0.0
-        
-        # Determine overall threat level
-        if avg_threat_score >= 0.8:
-            overall_threat_level = 'CRITICAL'
-        elif avg_threat_score >= 0.6:
-            overall_threat_level = 'HIGH'
-        elif avg_threat_score >= 0.4:
-            overall_threat_level = 'MEDIUM'
-        elif avg_threat_score >= 0.2:
-            overall_threat_level = 'LOW'
-        else:
-            overall_threat_level = 'MINIMAL'
-        
-        # Count unique object classes and filter out low-confidence detections
-        unique_objects = {}
-        for detection in all_detections:
-            class_name = detection['class']
-            confidence = detection['confidence']
-            
-            # Only keep the highest confidence detection for each class
-            if class_name not in unique_objects or confidence > unique_objects[class_name]['confidence']:
-                unique_objects[class_name] = detection
-        
-        # Convert back to list
-        filtered_detections = list(unique_objects.values())
-        
-        return {
-            'detections': filtered_detections,
-            'total_objects': len(filtered_detections),
-            'frame_count': frame_count,
-            'overall_threat_level': overall_threat_level,
-            'overall_threat_score': round(avg_threat_score * 100, 1),
-            'threat_count': len(filtered_detections)
-        }
-        
-    except Exception as e:
-        return None
-
-if __name__ == "__main__":
-    input_path = r"${inputPath.replace(/\\/g, "\\\\")}"
-    output_path = r"${outputVideoPath.replace(/\\/g, "\\\\")}"
-    
-    result = run_video_threat_detection(input_path, output_path)
-    if result:
-        print(json.dumps(result))
-    else:
-        print(json.dumps({
-            'detections': [],
-            'total_objects': 0,
-            'frame_count': 0,
-            'overall_threat_level': 'NONE',
-            'overall_threat_score': 0.0,
-            'threat_count': 0
-        }))
-`
-
-      // Write the video script
-      const videoScriptPath = join(tempDir, "video_threat_detection.py")
-      await writeFile(videoScriptPath, videoDebrisDetectionScript)
-
-      console.log("Executing video detection script:", videoScriptPath)
-      console.log("From directory:", projectRoot)
-      
-      // Run video detection from the project root directory
-      const pythonResult = await runPythonCommand([
-        videoScriptPath
-      ], projectRoot)
-      
-      console.log("Python execution completed with code:", pythonResult.code)
-
-      if (pythonResult.code !== 0) {
-        console.error("Python error:", pythonResult.stderr)
-        return NextResponse.json({ 
-          error: "Video detection failed", 
-          details: pythonResult.stderr 
-        }, { status: 500 })
-      }
-
-      // Parse video detection results
-      let detections = []
-      let totalObjects = 0
-      let overallThreatLevel = 'NONE'
-      let overallThreatScore = 0.0
-      let threatCount = 0
-      
-      try {
-        // Try to extract JSON from stdout (in case there's extra output)
-        const lines = pythonResult.stdout.trim().split('\n')
-        let jsonLine = lines[lines.length - 1] // Get last line (should be JSON)
-        
-        // If last line is empty, try second to last
-        if (!jsonLine && lines.length > 1) {
-          jsonLine = lines[lines.length - 2]
-        }
-        
-        console.log("Attempting to parse JSON from:", jsonLine.substring(0, 100))
-        const detectionData = JSON.parse(jsonLine)
-        detections = detectionData.detections || []
-        totalObjects = detectionData.total_objects || 0
-        overallThreatLevel = detectionData.overall_threat_level || 'NONE'
-        overallThreatScore = detectionData.overall_threat_score || 0.0
-        threatCount = detectionData.threat_count || 0
-        console.log(`Parsed detection results: ${totalObjects} objects found, threat level: ${overallThreatLevel}`)
-      } catch (parseError) {
-        console.error("Failed to parse video detection results:", parseError)
-        console.error("Full Python stdout:", pythonResult.stdout)
-        console.error("Python stderr:", pythonResult.stderr)
-      }
-
-      console.log(`Checking for video file at: ${outputVideoPath}`)
-      console.log(`File exists: ${existsSync(outputVideoPath)}`)
-      
-      // Debug: List files in output directory and find the actual output file
-      let actualOutputPath = outputVideoPath
-      try {
-        const outputDir = join(tempDir, "output")
-        const files = await import("fs").then(fs => fs.promises.readdir(outputDir))
-        console.log(`Files in output directory: ${files.join(", ")}`)
-        
-        // If the expected file doesn't exist, look for any .avi file
-        if (!existsSync(outputVideoPath)) {
-          const aviFiles = files.filter(f => f.endsWith('.avi'))
-          if (aviFiles.length > 0) {
-            actualOutputPath = join(outputDir, aviFiles[0])
-            console.log(`Using actual output file: ${actualOutputPath}`)
-          }
-        }
-      } catch (error) {
-        console.log(`Error listing output directory: ${error}`)
-      }
-      
-      if (existsSync(actualOutputPath)) {
-        const outputBuffer = await import("fs").then(fs => fs.promises.readFile(actualOutputPath))
-        const outputBase64 = outputBuffer.toString("base64")
-        
-        console.log(`Video file size: ${outputBuffer.length} bytes`)
-        console.log(`Base64 length: ${outputBase64.length} characters`)
-        
-        result = {
-          success: true,
-          type: "video",
-          originalFileName: fileName,
-          detectedVideo: `data:video/avi;base64,${outputBase64}`,
-          detections: detections,
-          totalObjects: totalObjects,
-          overallThreatLevel: overallThreatLevel,
-          overallThreatScore: overallThreatScore,
-          threatCount: threatCount,
-          processingTime: 15.8
-        }
-      } else {
-        return NextResponse.json({ 
-          error: "Detection video output not found" 
-        }, { status: 500 })
-      }
-    }
-
-    // Cleanup temporary files
+    let uploadRes: Response;
     try {
-      await unlink(inputPath)
-      if (existsSync(join(tempDir, "threat_detection.py"))) {
-        await unlink(join(tempDir, "threat_detection.py"))
-      }
-      if (existsSync(join(tempDir, "video_threat_detection.py"))) {
-        await unlink(join(tempDir, "video_threat_detection.py"))
-      }
-    } catch (error) {
-      console.warn("Failed to cleanup temporary files:", error)
+      uploadRes = await fetch(`${fastApiBaseUrl}/api/surveys/upload`, {
+        method: "POST",
+        body: uploadData,
+      });
+    } catch (netErr: any) {
+      console.error("[Next.js Detection API] Failed to connect to FastAPI backend:", netErr);
+      return NextResponse.json(
+        {
+          error: "Could not connect to Varuna AI FastAPI backend service at " + fastApiBaseUrl,
+          details: netErr.message || String(netErr),
+        },
+        { status: 502 }
+      );
     }
 
-    return NextResponse.json(result)
+    if (!uploadRes.ok) {
+      const errText = await uploadRes.text();
+      console.error("[Next.js Detection API] FastAPI upload returned error:", uploadRes.status, errText);
+      return NextResponse.json(
+        { error: `FastAPI upload error (${uploadRes.status}): ${errText}` },
+        { status: uploadRes.status }
+      );
+    }
 
-  } catch (error) {
-    console.error("Detection processing error:", error)
-    return NextResponse.json({ 
-      error: "Internal server error", 
-      details: error instanceof Error ? error.message : "Unknown error"
-    }, { status: 500 })
+    const surveySummary = await uploadRes.json();
+    const surveyId = surveySummary.id;
+    console.log(`[Next.js Detection API] Survey created: ${surveyId}. Polling for completion...`);
+
+    // Poll survey until processing completes (up to 30s)
+    let surveyDetail: any = null;
+    const maxPolls = 60;
+    const pollIntervalMs = 500;
+
+    for (let i = 0; i < maxPolls; i++) {
+      await new Promise((r) => setTimeout(r, pollIntervalMs));
+      try {
+        const detailRes = await fetch(`${fastApiBaseUrl}/api/surveys/${surveyId}`);
+        if (detailRes.ok) {
+          const data = await detailRes.json();
+          if (data.status === "done" || data.status === "completed" || data.status === "failed") {
+            surveyDetail = data;
+            break;
+          }
+        }
+      } catch (pollErr) {
+        console.warn("[Next.js Detection API] Poll iteration error:", pollErr);
+      }
+    }
+
+    if (!surveyDetail) {
+      return NextResponse.json(
+        { error: "Survey processing timed out in backend pipeline." },
+        { status: 504 }
+      );
+    }
+
+    if (surveyDetail.status === "failed") {
+      return NextResponse.json(
+        { error: surveyDetail.error_message || "Survey processing failed in backend pipeline." },
+        { status: 500 }
+      );
+    }
+
+    // Map detections to frontend contract
+    const rawDetections = surveyDetail.detections || [];
+    const detections = rawDetections.map((d: any, idx: number) => {
+      const confTier = d.confidence_tier || "Low";
+      const confScore = typeof d.confidence_score === "number" ? d.confidence_score : 50.0;
+      const shadowVerified = Boolean(
+        d.filter_details?.shadow_verified ??
+        d.filter_details?.shadow_details?.has_shadow ??
+        false
+      );
+
+      return {
+        id: d.id || `det_${idx + 1}`,
+        class: d.predicted_class || "debris",
+        class_name: d.predicted_class || "debris",
+        name: d.predicted_class || "debris",
+        confidence: Number((confScore / 100.0).toFixed(3)),
+        confidence_score: Number(confScore.toFixed(1)),
+        confidence_tier: confTier,
+        threat_level: confTier === "High" ? "CRITICAL" : (confTier === "Medium" ? "HIGH" : "MEDIUM"),
+        bbox: d.bbox || [0, 0, 0, 0],
+        lat: d.latitude,
+        latitude: d.latitude,
+        lon: d.longitude,
+        longitude: d.longitude,
+        depth_m: d.depth_m,
+        dimensions: d.estimated_size_m || "Unknown",
+        physical_size_m: d.estimated_size_m || "Unknown",
+        estimated_size_m: d.estimated_size_m || "Unknown",
+        color: confTier === "High" ? "#ef4444" : (confTier === "Medium" ? "#f97316" : "#06b6d4"),
+        seabed_facies: d.filter_details?.seabed_facies || "flat_sand",
+        srr_corrected: true,
+        acoustic_shadow_verified: shadowVerified,
+        shadow_verified: shadowVerified,
+        filter_details: d.filter_details || {},
+      };
+    });
+
+    const elapsedSec = Number(((Date.now() - startTime) / 1000).toFixed(2));
+    const totalDets = detections.length;
+    const avgScore = totalDets > 0
+      ? Number((detections.reduce((acc: number, cur: any) => acc + cur.confidence_score, 0) / totalDets).toFixed(1))
+      : 0;
+
+    let overallThreatLevel = "NONE";
+    if (surveyDetail.high_tier_count > 0) overallThreatLevel = "CRITICAL";
+    else if (surveyDetail.medium_tier_count > 0) overallThreatLevel = "HIGH";
+    else if (totalDets > 0) overallThreatLevel = "MEDIUM";
+
+    // Fetch base64 of annotated image or fallback image from FastAPI static
+    const imageEndpoint = surveyDetail.annotated_image_url || surveyDetail.image_url;
+    let detectedImageBase64 = "";
+
+    if (imageEndpoint) {
+      try {
+        const fullImgUrl = `${fastApiBaseUrl}${imageEndpoint}`;
+        const imgRes = await fetch(fullImgUrl);
+        if (imgRes.ok) {
+          const imgBuffer = await imgRes.arrayBuffer();
+          const base64Data = Buffer.from(imgBuffer).toString("base64");
+          const contentType = imgRes.headers.get("content-type") || "image/jpeg";
+          detectedImageBase64 = `data:${contentType};base64,${base64Data}`;
+        }
+      } catch (imgErr) {
+        console.warn("[Next.js Detection API] Could not fetch image as base64:", imgErr);
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      surveyId: surveyId,
+      id: surveyId,
+      type: type,
+      originalFileName: file.name,
+      detectedImage: detectedImageBase64 || `${fastApiBaseUrl}${imageEndpoint}`,
+      annotatedImage: detectedImageBase64 || `${fastApiBaseUrl}${imageEndpoint}`,
+      annotated_image_url: `${fastApiBaseUrl}${imageEndpoint}`,
+      imageUrl: `${fastApiBaseUrl}${imageEndpoint}`,
+      detections: detections,
+      totalObjects: totalDets,
+      overallThreatLevel: overallThreatLevel,
+      overallThreatScore: avgScore,
+      threatCount: totalDets,
+      seafloorFacies: detections[0]?.seabed_facies || "flat_sand",
+      srrApplied: true,
+      processingTime: elapsedSec,
+      nadir_x: surveyDetail.nadir_x,
+      latitude: detections[0]?.latitude,
+      longitude: detections[0]?.longitude,
+      lat: detections[0]?.latitude,
+      lon: detections[0]?.longitude,
+    });
+  } catch (error: any) {
+    console.error("[Next.js Detection API] Internal server error:", error);
+    return NextResponse.json(
+      { error: "Internal server error", details: error?.message || String(error) },
+      { status: 500 }
+    );
   }
 }

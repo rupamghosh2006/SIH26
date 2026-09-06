@@ -94,23 +94,28 @@ def train_crab_pot_sonar_detector(
     raw_data_dir: str = "backend/data/real/crab_pot",
     yolo_data_dir: str = "backend/data/crab_pot_yolo",
     models_dir: str = "backend/models",
+    project_dir: Optional[str] = None,
     epochs: int = 5,
     batch_size: int = 16,
     imgsz: int = 640,
-    base_model: str = "yolov8n.pt"
+    base_model: str = "yolov8n.pt",
+    export_to_production: bool = False
 ) -> Dict[str, Any]:
     """
     Main training execution function on PINGEcosystem Crab Pot SSS data.
+    Separates test/CI execution (which writes to a temporary directory only)
+    from explicit manual production training runs.
     """
     models_path = Path(models_dir)
     models_path.mkdir(parents=True, exist_ok=True)
 
     print("=" * 75)
     print(" Varuna AI: YOLOv8 SSS Crab Pot Detector Training")
-    print(f" Source Data  : {raw_data_dir}")
-    print(f" Normalized   : {yolo_data_dir}")
-    print(f" Base Weights : {base_model}")
-    print(f" Parameters   : Epochs={epochs}, Batch={batch_size}, ImgSize={imgsz}x{imgsz}")
+    print(f" Source Data         : {raw_data_dir}")
+    print(f" Normalized          : {yolo_data_dir}")
+    print(f" Base Weights        : {base_model}")
+    print(f" Export Production   : {export_to_production}")
+    print(f" Parameters          : Epochs={epochs}, Batch={batch_size}, ImgSize={imgsz}x{imgsz}")
     print("=" * 75)
 
     data_yaml_path = prepare_crab_pot_yolo_dataset(Path(raw_data_dir), Path(yolo_data_dir))
@@ -127,7 +132,11 @@ def train_crab_pot_sonar_detector(
     print(f"\n[Varuna AI] Loading base model backbone: {base_model}...")
     model = YOLO(base_model)
 
-    project_dir = os.path.join("backend", "runs", "train")
+    if project_dir is None:
+        if export_to_production:
+            project_dir = os.path.join("backend", "runs", "train")
+        else:
+            project_dir = str(models_path / "runs")
     run_name = "varuna_sss_crab_pot"
 
     # Train
@@ -152,23 +161,33 @@ def train_crab_pot_sonar_detector(
     last_pt = run_weights_dir / "last.pt"
     source_pt = best_pt if best_pt.exists() else last_pt
 
-    # Export to application target locations
+    # Export checkpoint to target models_path
     target_crab_pot = models_path / "yolov8_crab_pot.pt"
-    target_varuna = models_path / "yolov8_varuna.pt"
-    target_root_best = Path("best.pt")
 
     if source_pt.exists():
         shutil.copy2(str(source_pt), str(target_crab_pot))
-        shutil.copy2(str(source_pt), str(target_varuna))
-        shutil.copy2(str(source_pt), str(target_root_best))
-        print(f"\n[Varuna AI] Checkpoints exported successfully:")
-        print(f"  -> {target_crab_pot}")
+        print(f"\n[Varuna AI] Checkpoint saved: {target_crab_pot}")
+    else:
+        model.save(str(target_crab_pot))
+        print(f"\n[Varuna AI] Model saved: {target_crab_pot}")
+
+    # Production export only when explicitly requested (NEVER during tests or CI)
+    if export_to_production:
+        prod_models = Path("backend/models")
+        prod_models.mkdir(parents=True, exist_ok=True)
+        target_varuna = prod_models / "yolov8_varuna.pt"
+        target_prod_crab = prod_models / "yolov8_crab_pot.pt"
+        target_root_best = Path("best.pt")
+
+        shutil.copy2(str(target_crab_pot), str(target_varuna))
+        shutil.copy2(str(target_crab_pot), str(target_prod_crab))
+        shutil.copy2(str(target_crab_pot), str(target_root_best))
+        print(f"\n[Varuna AI] Production checkpoints updated successfully:")
+        print(f"  -> {target_prod_crab}")
         print(f"  -> {target_varuna}")
         print(f"  -> {target_root_best}")
     else:
-        model.save(str(target_crab_pot))
-        shutil.copy2(str(target_crab_pot), str(target_varuna))
-        shutil.copy2(str(target_crab_pot), str(target_root_best))
+        print(f"\n[Varuna AI] Non-production run: production model weights untouched.")
 
     # Evaluate on held-out validation set
     print("\n" + "=" * 75)
@@ -204,6 +223,12 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=5, help="Number of training epochs")
     parser.add_argument("--batch", type=int, default=16, help="Batch size")
     parser.add_argument("--imgsz", type=int, default=640, help="Image resolution")
+    parser.add_argument("--export-production", action="store_true", help="Explicitly export trained weights to production locations")
     args = parser.parse_args()
 
-    train_crab_pot_sonar_detector(epochs=args.epochs, batch_size=args.batch, imgsz=args.imgsz)
+    train_crab_pot_sonar_detector(
+        epochs=args.epochs,
+        batch_size=args.batch,
+        imgsz=args.imgsz,
+        export_to_production=args.export_production
+    )

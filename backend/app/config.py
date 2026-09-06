@@ -19,15 +19,15 @@ class Settings(BaseSettings):
     MODELS_DIR: Path = BASE_DIR / "models"
     SAMPLE_DIR: Path = BASE_DIR / "sample_data"
     
-    # Model checkpoint
-    MODEL_PATH: Path = MODELS_DIR / "yolov8_varuna.pt"
+    # Model checkpoint (Active SSS Multi-Class Detector)
+    MODEL_PATH: Path = MODELS_DIR / "yolov8_varuna_active.pt"
     
     # Database
     DATABASE_URL: str = f"sqlite:///{BASE_DIR}/varuna.db"
     
     # Sonar defaults
     DEFAULT_SLANT_RANGE_M: float = 75.0
-    CONF_THRESHOLD: float = 0.20
+    CONF_THRESHOLD: float = 0.15
     IOU_THRESHOLD: float = 0.40
 
     class Config:

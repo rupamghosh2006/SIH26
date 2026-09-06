@@ -67,6 +67,7 @@ interface DetectionResultProps {
   threatCount?: number;
   seafloorFacies?: string;
   srrApplied?: boolean;
+  surveyId?: string;
   onDelete: (index: number) => void;
   onDownload: (fileData: string, filename: string) => void;
 }
@@ -156,6 +157,7 @@ export default function DetectionResultsEnhanced({
   threatCount,
   seafloorFacies,
   srrApplied = true,
+  surveyId,
   onDelete,
   onDownload,
 }: DetectionResultProps) {
@@ -218,25 +220,54 @@ export default function DetectionResultsEnhanced({
 
   const normalizedThreatScore = normalizeOverallThreatScore(overallThreatScore);
 
-  const downloadJsonReport = () => {
+  const downloadJsonReport = async () => {
+    if (surveyId) {
+      try {
+        const res = await fetch(`/api/surveys/${surveyId}/report?format=json`);
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `varuna_${surveyId}_report.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          return;
+        }
+      } catch (err) {
+        console.warn("Backend report fetch failed, using rich telemetry client export:", err);
+      }
+    }
+
     const report = {
       system: "VARUNA AI — Underwater Marine Debris and Anomaly Intelligence Platform (SIH26057)",
       timestamp: new Date().toISOString(),
+      survey_id: surveyId || `srv_${index + 1}`,
       survey_file: originalFileName || `sss_sonar_log_${index + 1}.png`,
       total_anomalies_detected: totalObjects,
       overall_ecological_risk: overallThreatLevel,
       confidence_score_pct: normalizedThreatScore,
       processing_latency_ms: processingTime,
       detections: items.map((d, i) => ({
-        id: i + 1,
+        id: d.id || i + 1,
         classification: d.class,
         confidence_pct: `${Math.round(d.confidence * 100)}%`,
+        confidence_score: d.confidence_score ?? Math.round(d.confidence * 100),
+        confidence_tier: d.confidence_tier || (d.confidence >= 0.75 ? "High" : "Medium"),
         ecological_risk: d.threat_level || d.ecological_risk || "MEDIUM",
+        latitude: d.latitude ?? null,
+        longitude: d.longitude ?? null,
+        depth_m: d.depth_m ?? null,
+        bounding_box_xywh: d.bbox,
+        physical_dimensions_m: d.estimated_size_m || d.physical_size_m || "Unknown",
+        acoustic_shadow_verified: Boolean(
+          d.acoustic_shadow_verified ??
+          d.filter_details?.shadow_verified ??
+          d.filter_details?.shadow_details?.has_shadow ??
+          false
+        ),
         verification_status: d.verification_status,
         operator_notes: d.operator_notes || "None",
-        bounding_box_xywh: d.bbox,
-        acoustic_shadow_verified: true,
-        verification_record: d.verification_record || null,
       })),
     };
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
@@ -248,12 +279,46 @@ export default function DetectionResultsEnhanced({
     URL.revokeObjectURL(url);
   };
 
-  const downloadCsvReport = () => {
-    const headers = "id,class,confidence,ecological_risk,verification_status,operator_notes,bbox_x,bbox_y,bbox_w,bbox_h,acoustic_shadow_verified\n";
+  const downloadCsvReport = async () => {
+    if (surveyId) {
+      try {
+        const res = await fetch(`/api/surveys/${surveyId}/report?format=csv`);
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `varuna_${surveyId}_report.csv`;
+          a.click();
+          URL.revokeObjectURL(url);
+          return;
+        }
+      } catch (err) {
+        console.warn("Backend report fetch failed, using rich telemetry client export:", err);
+      }
+    }
+
+    const headers = "id,class,confidence_score,confidence_tier,ecological_risk,latitude,longitude,bounding_dimensions_m,bbox_x,bbox_y,bbox_w,bbox_h,acoustic_shadow_verified,operator_notes\n";
     const rows = items
       .map(
-        (d, i) =>
-          `${i + 1},"${d.class}",${d.confidence},"${d.threat_level || 'MEDIUM'}","${d.verification_status}","${d.operator_notes.replace(/"/g, '""')}",${d.bbox ? d.bbox.join(",") : "0,0,0,0"},true`
+        (d, i) => {
+          const shadowOk = Boolean(
+            d.acoustic_shadow_verified ??
+            d.filter_details?.shadow_verified ??
+            d.filter_details?.shadow_details?.has_shadow ??
+            false
+          );
+          const bx = d.bbox ? d.bbox[0] : 0;
+          const by = d.bbox ? d.bbox[1] : 0;
+          const bw = d.bbox ? d.bbox[2] : 0;
+          const bh = d.bbox ? d.bbox[3] : 0;
+          const lat = d.latitude !== undefined && d.latitude !== null ? d.latitude : "";
+          const lng = d.longitude !== undefined && d.longitude !== null ? d.longitude : "";
+          const size = d.estimated_size_m || d.physical_size_m || "Unknown";
+          const tier = d.confidence_tier || (d.confidence >= 0.75 ? "High" : "Medium");
+          const score = d.confidence_score ?? Math.round(d.confidence * 100);
+          return `${d.id || i + 1},"${d.class}",${score},"${tier}","${d.threat_level || 'MEDIUM'}",${lat},${lng},"${size}",${bx},${by},${bw},${bh},${shadowOk},"${(d.operator_notes || 'None').replace(/"/g, '""')}"`;
+        }
       )
       .join("\n");
     const blob = new Blob([headers + rows], { type: "text/csv" });

@@ -452,12 +452,12 @@ export default function TryPage() {
           <RevealSection delay={0.2}>
             <div className="relative mb-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                href="/auth/login"
+                href="/detection"
                 className="relative inline-flex items-center gap-3 px-10 py-4 text-sm font-black text-white bg-gradient-to-r from-cyan-500 via-blue-600 to-cyan-500 rounded-2xl shadow-2xl shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all duration-500 hover:scale-105 focus:outline-none group overflow-hidden font-orbitron tracking-wider border border-cyan-400/20 cursor-pointer"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                 <ShieldCheck className="relative w-5 h-5 text-emerald-300 animate-pulse" />
-                <span className="relative">⚡ INSTANT OPERATOR LOGIN</span>
+                <span className="relative">⚡ ACCESS LIVE DETECTION PORTAL</span>
                 <ArrowRight className="relative w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
 

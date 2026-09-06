@@ -31,14 +31,13 @@ export async function POST(request: NextRequest) {
       }, { status: 404 })
     }
 
-    // Simulate deployment process (in production, this would actually deploy)
-    // For now, return success
     return NextResponse.json({
       success: true,
-      message: `Deployment ${deploymentName} started successfully`,
+      simulated: true,
+      message: `[Simulated — Roadmap Feature] Deployment ${deploymentName} scheduled for edge device`,
       deploymentId: `deploy-${Date.now()}`,
-      status: "DEPLOYING",
-      estimatedTime: "2-3 minutes"
+      status: "ROADMAP_SIMULATION",
+      note: "Targeting NVIDIA Jetson Xavier / Orin NX edge integration"
     })
 
   } catch (error) {

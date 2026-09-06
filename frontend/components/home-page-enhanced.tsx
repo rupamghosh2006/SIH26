@@ -261,22 +261,22 @@ export function HomePageEnhanced() {
               <div
                 className={`flex flex-col sm:flex-row gap-3.5 justify-start items-start sm:items-center transition-all duration-700 delay-[600ms] ${heroLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
               >
-                <Link href="/cnn">
+                <Link href="/detection">
                   <button className="group relative px-7 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-sm rounded-xl shadow-2xl shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all duration-300 hover:scale-[1.03] font-orbitron tracking-wider overflow-hidden cursor-pointer">
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                     <span className="relative z-10 flex items-center gap-2">
-                      <Sparkles className="w-4 h-4" />
-                      START ENHANCEMENT
+                      <Target className="w-4 h-4" />
+                      LAUNCH AI DEBRIS DETECTION & MAP
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </span>
                   </button>
                 </Link>
 
-                <Link href="/detection">
+                <Link href="/command-center">
                   <button className="group px-7 py-3.5 glass-card hover:border-cyan-400/40 text-cyan-300 hover:text-cyan-200 font-black text-sm rounded-xl transition-all duration-300 hover:scale-[1.03] font-orbitron tracking-wider hover-glow cursor-pointer">
                     <span className="flex items-center gap-2">
-                      <Target className="w-4 h-4" />
-                      DEBRIS DETECTION
+                      <Radar className="w-4 h-4" />
+                      GIS OPERATIONS
                     </span>
                   </button>
                 </Link>

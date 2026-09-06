@@ -2,6 +2,7 @@
 
 import type React from "react";
 import { useState, useRef } from "react";
+import dynamic from "next/dynamic";
 import {
   Upload,
   Play,
@@ -12,6 +13,7 @@ import {
   Settings,
   ImageIcon,
   Video,
+  Map,
 } from "lucide-react";
 import HolographicCard from "./holographic-card";
 import DetectionResultsEnhanced from "./detection-results-enhanced";
@@ -24,20 +26,43 @@ import {
   normalizeOverallThreatScore,
 } from "@/lib/detection-storage";
 
+// Dynamic import for Leaflet map to avoid SSR issues
+const AdvancedLeafletMap = dynamic(() => import("./advanced-leaflet-map"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[380px] bg-slate-950 flex items-center justify-center border-2 border-cyan-500/30 rounded-2xl">
+      <div className="text-cyan-400 font-space-mono text-xs animate-pulse flex items-center gap-2">
+        <div className="w-3 h-3 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+        Initializing Hydrographic Map...
+      </div>
+    </div>
+  ),
+});
+
 interface Detection {
+  id?: string | number;
   class: string;
   confidence: number;
+  confidence_score?: number;
+  confidence_tier?: string;
   threat_level?: string;
   bbox: [number, number, number, number];
   color: string;
   physical_size_m?: string;
+  estimated_size_m?: string;
   entangled_area_m2?: number;
   polygon?: number[][];
   seabed_facies?: string;
   srr_corrected?: boolean;
+  latitude?: number;
+  longitude?: number;
+  depth_m?: number;
+  acoustic_shadow_verified?: boolean;
+  filter_details?: any;
 }
 
 interface DetectionResult {
+  surveyId?: string;
   originalImage: string;
   detectedImage: string;
   originalFileName?: string;
@@ -208,6 +233,7 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
 
         const isRawSonar = Boolean(selectedFile.name.match(/\.(xtf|jsf|sdf)$/i));
         const detectionResult: DetectionResult = {
+          surveyId: result.surveyId,
           originalImage: isRawSonar ? (result.detectedImage || URL.createObjectURL(selectedFile)) : URL.createObjectURL(selectedFile),
           detectedImage: result.detectedImage,
           originalFileName: result.originalFileName || selectedFile.name,
@@ -222,6 +248,10 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
           srrApplied: true,
         };
 
+        const primaryDet = result.detections?.[0];
+        const autoLat = primaryDet?.latitude || finalLat || undefined;
+        const autoLng = primaryDet?.longitude || finalLng || undefined;
+
         addDetection({
           originalImage: detectionResult.originalImage,
           detectedImage: detectionResult.detectedImage,
@@ -231,17 +261,30 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
           overallThreatLevel: detectionResult.overallThreatLevel,
           overallThreatScore: detectionResult.overallThreatScore,
           threatCount: detectionResult.threatCount,
-          lat: finalLat || undefined,
-          lng: finalLng || undefined,
+          lat: autoLat,
+          lng: autoLng,
         });
 
         const newResults = [detectionResult, ...results];
         updateResults(newResults);
         
-        // Save to map if coords provided and threat detected
-        if (finalLat && finalLng && normalizedThreatScore > 0) {
-          const mainClass = result.detections[0]?.class || "Unknown Contact";
-          storeThreatForMap(finalLat, finalLng, normalizedThreatScore, mainClass);
+        // Auto-plot real geotagged detections on the map
+        if (typeof window !== "undefined" && result.detections?.length > 0) {
+          window.dispatchEvent(
+            new CustomEvent("varunaSurveyLoaded", {
+              detail: {
+                surveyId: result.surveyId,
+                detections: result.detections,
+              },
+            })
+          );
+          result.detections.forEach((d: any) => {
+            const dLat = d.latitude || autoLat;
+            const dLng = d.longitude || autoLng;
+            if (dLat && dLng) {
+              storeThreatForMap(dLat, dLng, d.confidence_score || (d.confidence * 100), d.class);
+            }
+          });
         }
         
         setSelectedFile(null);
@@ -661,6 +704,36 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
         </TabsContent>
       </Tabs>
 
+      {/* Real-time Map Overlay */}
+      {results.length > 0 && (
+        <HolographicCard>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3">
+              <div>
+                <h2 className="text-xl font-bold text-cyan-300 font-orbitron flex items-center gap-2">
+                  <Map className="w-5 h-5 text-cyan-400" />
+                  Real-Time GIS Sonar Map Overlay
+                </h2>
+                <p className="text-xs text-slate-400 font-space-mono mt-1">
+                  Automated acoustic geotagging • Real-time anomaly positions with slant-to-ground range correction
+                </p>
+              </div>
+              <span className="text-xs font-space-mono text-emerald-400 px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 font-bold">
+                {results[0]?.detections?.length || 0} Targets Plotted
+              </span>
+            </div>
+
+            <div className="h-[420px] w-full rounded-xl overflow-hidden">
+              <AdvancedLeafletMap
+                detections={results[0]?.detections || []}
+                surveyId={results[0]?.surveyId}
+                className="w-full h-full"
+              />
+            </div>
+          </div>
+        </HolographicCard>
+      )}
+
       {/* Results section */}
       {results.length > 0 && (
         <HolographicCard>
@@ -679,6 +752,7 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
                 <DetectionResultsEnhanced
                   key={index}
                   index={index}
+                  surveyId={result.surveyId}
                   originalImage={result.originalImage}
                   detectedImage={result.detectedImage}
                   originalFileName={result.originalFileName}
