@@ -1,7 +1,7 @@
 """
 Active Verification ("Verify Detection") Core Module.
 Provides adaptive secondary sonar observation planning, target association,
-and multi-observation acoustic evidence comparison for VARUNA AI.
+and multi-observation acoustic evidence comparison for VARUNA.
 """
 
 import math

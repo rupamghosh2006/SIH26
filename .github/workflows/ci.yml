@@ -1,4 +1,4 @@
-﻿name: Varuna AI CI Pipeline
+﻿name: Varuna CI Pipeline
 
 on:
   push:

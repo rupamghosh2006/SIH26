@@ -1,7 +1,7 @@
 import { CNNEnhancementView } from "@/components/cnn-enhancement-view"
 
 export const metadata = {
-  title: "CNN Enhancement | Varuna AI",
+  title: "CNN Enhancement | Varuna",
   description: "AI-powered underwater image and video enhancement using Convolutional Neural Networks",
 }
 

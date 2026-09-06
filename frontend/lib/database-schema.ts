@@ -1,4 +1,4 @@
-// Database schema definitions for Varuna AI - Side-Scan Sonar Marine Debris Detection
+// Database schema definitions for Varuna - Side-Scan Sonar Marine Debris Detection
 
 export interface SonarSurvey {
   _id?: string

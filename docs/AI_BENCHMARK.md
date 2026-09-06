@@ -1,6 +1,6 @@
-# VARUNA AI — Model Benchmarks, Datasets & AI Specifications
+# VARUNA — Model Benchmarks, Datasets & AI Specifications
 
-> **Single Source of Truth** for all artificial intelligence benchmarks, neural network metrics, dataset splits, and validation results across the VARUNA AI platform.
+> **Single Source of Truth** for all artificial intelligence benchmarks, neural network metrics, dataset splits, and validation results across the VARUNA platform.
 
 ---
 
@@ -56,7 +56,7 @@ The active production detector ([`backend/models/yolov8_varuna_active.pt`](../ba
 ## 3. Legacy / Alternate Model: FLS Marine Debris Detector (Not in Production)
 
 > [!WARNING]
-> **Non-Production Status:** This model was trained on the Forward-Looking Sonar (FLS) Marine Debris Dataset. It is retained in the repository ([`backend/models/yolov8_varuna.pt`](../backend/models/yolov8_varuna.pt) and `best.pt`) for comparative research, but is **NOT the active production model**. Forward-Looking Sonar operates with forward sector geometry rather than downward/lateral side-scan geometry, and therefore does not produce the cross-track acoustic cast shadows essential for VARUNA AI's physics verification pipeline. Its metrics must not be conflated with the active production system.
+> **Non-Production Status:** This model was trained on the Forward-Looking Sonar (FLS) Marine Debris Dataset. It is retained in the repository ([`backend/models/yolov8_varuna.pt`](../backend/models/yolov8_varuna.pt) and `best.pt`) for comparative research, but is **NOT the active production model**. Forward-Looking Sonar operates with forward sector geometry rather than downward/lateral side-scan geometry, and therefore does not produce the cross-track acoustic cast shadows essential for VARUNA's physics verification pipeline. Its metrics must not be conflated with the active production system.
 
 ### A. Dataset & Training Configuration
 - **Dataset:** Forward-Looking Sonar (FLS) Marine Debris Dataset ([Valdenegro-Toro / Kaggle](https://www.kaggle.com/datasets/era2730/forward-looking-sonar-marine-debris-dataset))
@@ -91,7 +91,7 @@ The active production detector ([`backend/models/yolov8_varuna_active.pt`](../ba
 
 ## 4. Seafloor Geological Interference Classifier (Facies & Ripple Rejection)
 
-To avoid high false-positive rates caused by natural seabed formations, VARUNA AI incorporates a texture and spatial-frequency analyzer ([`backend/ai_pipeline/seabed_classifier.py`](../backend/ai_pipeline/seabed_classifier.py)):
+To avoid high false-positive rates caused by natural seabed formations, VARUNA incorporates a texture and spatial-frequency analyzer ([`backend/ai_pipeline/seabed_classifier.py`](../backend/ai_pipeline/seabed_classifier.py)):
 
 ### A. Algorithmic Foundation
 - **Haralick GLCM (Grey-Level Co-occurrence Matrix):** Computes contrast, dissimilarity, homogeneity, energy, and correlation across four spatial angles ($0^\circ, 45^\circ, 90^\circ, 135^\circ$).
@@ -113,4 +113,4 @@ To avoid high false-positive rates caused by natural seabed formations, VARUNA A
 In accordance with rigorous scientific transparency:
 - **60-Band Sonar Frequency MLP:** An early experimental classifier trained on the UCI Connectionist Bench Sonar Mines vs. Rocks dataset was evaluated in exploratory phases. Because real-world side-scan sonar waterfall data consists of 2D spatial acoustic backscatter maps rather than 60-band beamformed spectrum vectors, this standalone MLP was explicitly removed from the production pipeline in commit `480b363`.
 - **Grad-CAM Heatmaps:** Feature attribution via Grad-CAM was evaluated conceptually in early project presentations, but is not implemented in the active application. In side-scan sonar hydrography, classical physics-guided acoustic ray-tracing (highlight, shadow length, and towfish altitude) provides deterministic, auditable explainability that outperforms heuristic gradient heatmaps.
-- **Current Single Source of Truth:** Only the 4-class SSS YOLOv8 detector, the PyTorch U-Net segmenter, and the Haralick/FFT seabed facies analyzer represent the active, verified AI components of VARUNA AI.
+- **Current Single Source of Truth:** Only the 4-class SSS YOLOv8 detector, the PyTorch U-Net segmenter, and the Haralick/FFT seabed facies analyzer represent the active, verified AI components of VARUNA.

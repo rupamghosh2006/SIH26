@@ -1,5 +1,5 @@
 ﻿/**
- * Varuna AI - Subsea Acoustic Physics & Telemetry Engine
+ * Varuna - Subsea Acoustic Physics & Telemetry Engine
  * Problem Statement: SIH26057 (Ministry of Earth Sciences)
  * 
  * Provides mathematical formulas for Side-Scan Sonar (SSS) across-track 

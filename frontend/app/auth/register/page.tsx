@@ -342,7 +342,7 @@ export default function RegisterPage() {
               <div className="flex items-center justify-center gap-2 mb-3">
                 <div className="h-px flex-1 max-w-16 bg-gradient-to-r from-transparent to-cyan-500/30" />
                 <span className="text-[9px] font-space-mono text-cyan-300/50 uppercase tracking-[0.4em]">
-                  Varuna AI Oceanographic System
+                  Varuna Oceanographic System
                 </span>
                 <div className="h-px flex-1 max-w-16 bg-gradient-to-l from-transparent to-cyan-500/30" />
               </div>

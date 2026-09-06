@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="./public/logos/varuna-logo.png" alt="Varuna AI Logo" width="180" style="background-color: #ffffff; padding: 10px; border-radius: 50%; border: 3px solid #00F0FF; box-shadow: 0 0 35px rgba(0, 240, 255, 0.5); margin-bottom: 14px;" />
+<img src="./public/logos/varuna-logo.png" alt="Varuna Logo" width="180" style="background-color: #ffffff; padding: 10px; border-radius: 50%; border: 3px solid #00F0FF; box-shadow: 0 0 35px rgba(0, 240, 255, 0.5); margin-bottom: 14px;" />
 
-# VARUNA AI
+# VARUNA
 ### AI-Powered Automated Underwater Marine Debris and Anomaly Detection System using Side-Scan Sonar Imagery
 #### Smart India Hackathon (SIH 2026) | Problem Statement ID: SIH26057
 
@@ -33,7 +33,7 @@ To survey large benthic expanses, marine researchers and hydrographic survey tea
 
 ## 2. Executive Overview
 
-**VARUNA AI** is an automated deep-ocean acoustic intelligence platform engineered for **SIH26057** under the auspices of the **Ministry of Earth Sciences (MoES), Government of India**.
+**VARUNA** is an automated deep-ocean acoustic intelligence platform engineered for **SIH26057** under the auspices of the **Ministry of Earth Sciences (MoES), Government of India**.
 
 The platform ingests raw dual-channel side-scan sonar waterfall logs, applies automated CLAHE gain equalization and bilateral speckle filtering, detects 4 primary categories of underwater debris and navigation hazards (`shipwreck`, `pipe_or_cylinder`, `net_or_entangled_debris`, and `unknown_anomaly`) using fine-tuned **YOLOv8 and U-Net architectures**, cross-validates detections via **physics-based acoustic cast shadow verification**, and generates georeferenced audit reports with GPS coordinate projections.
 
@@ -59,7 +59,7 @@ The platform ingests raw dual-channel side-scan sonar waterfall logs, applies au
 
 ## 4. Documentation Index
 
-The complete technical documentation for VARUNA AI is organized in dedicated reference guides:
+The complete technical documentation for VARUNA is organized in dedicated reference guides:
 
 | Document | Primary Focus | Key Contents |
 | :--- | :--- | :--- |
@@ -72,7 +72,7 @@ The complete technical documentation for VARUNA AI is organized in dedicated ref
 
 ## 5. System Architecture & Processing Pipeline
 
-VARUNA AI processes raw side-scan sonar waterfall logs through a modular four-stage pipeline: (1) acoustic preprocessing with CLAHE gain equalization and bilateral speckle filtering; (2) tiled multi-scale YOLOv8 object detection paired with PyTorch U-Net ghost net segmentation; (3) physics-based acoustic cast shadow verification with 3D relief estimation ($H = \frac{h \cdot L_s}{R_s + L_s}$); and (4) geospatial trackline splining for GPS coordinate projection.
+VARUNA processes raw side-scan sonar waterfall logs through a modular four-stage pipeline: (1) acoustic preprocessing with CLAHE gain equalization and bilateral speckle filtering; (2) tiled multi-scale YOLOv8 object detection paired with PyTorch U-Net ghost net segmentation; (3) physics-based acoustic cast shadow verification with 3D relief estimation ($H = \frac{h \cdot L_s}{R_s + L_s}$); and (4) geospatial trackline splining for GPS coordinate projection.
 
 > *For complete pipeline diagrams, ray-tracing equations, and module breakdowns, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).*
 
@@ -88,7 +88,7 @@ The live production model operates on dual-channel Side-Scan Sonar (SSS) imagery
 
 ## 7. Physics-Based Acoustic Shadow Validation
 
-To suppress false alarms from natural seabed topography and planar mineral deposits, VARUNA AI implements a deterministic acoustic shadow validation filter:
+To suppress false alarms from natural seabed topography and planar mineral deposits, VARUNA implements a deterministic acoustic shadow validation filter:
 
 $$\text{Confidence Score} = 0.50 \cdot \mathcal{S}_{\text{YOLO}} + 0.35 \cdot \mathcal{S}_{\text{Shadow}} + 0.15 \cdot \mathcal{S}_{\text{Morphology}}$$
 
@@ -118,7 +118,7 @@ All production detection metrics are evaluated on a clean, unified sonar dataset
 
 ## 9. Explainable Sonar & Active Verification
 
-VARUNA AI provides hydrographers with transparent forensic explainability: specular highlight reflections (cyan), expected cast shadows (orange), nadir propagation vectors, and 3D protrusion height telemetry ($H$) are rendered directly on the sonar canvas. When detections fall into ambiguous tiers, the platform's **Active Verification** engine autonomously calculates secondary survey trajectories ($\pm 45^\circ$ orthogonal headings, $15-35\,\text{m}$ CPA offsets) to resolve candidate anomalies through multi-look acoustic evidence.
+VARUNA provides hydrographers with transparent forensic explainability: specular highlight reflections (cyan), expected cast shadows (orange), nadir propagation vectors, and 3D protrusion height telemetry ($H$) are rendered directly on the sonar canvas. When detections fall into ambiguous tiers, the platform's **Active Verification** engine autonomously calculates secondary survey trajectories ($\pm 45^\circ$ orthogonal headings, $15-35\,\text{m}$ CPA offsets) to resolve candidate anomalies through multi-look acoustic evidence.
 
 > *For forensic overlay specifications and adaptive rescan geometry, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#4-explainable-sonar-forensic-analysis).*
 
@@ -126,7 +126,7 @@ VARUNA AI provides hydrographers with transparent forensic explainability: specu
 
 ## 10. Technology Stack & Platform Capabilities
 
-VARUNA AI is built on Next.js 14 App Router (React 18, TypeScript, Tailwind CSS, Leaflet GIS) and a high-speed asynchronous FastAPI backend (Python 3.11+, PyTorch, Ultralytics YOLOv8, OpenCV, SQLAlchemy). Core modules include the Acoustic Sonar Enhancement Lab (`/cnn`), Debris Detection & Sonar Map Center (`/detection`), Watchlist Anomaly Registry (`/watchlist`), Analytics Dashboard (`/analytics`), and automated export of GeoJSON, CSV, and hydrographic PDF inspection dossiers.
+VARUNA is built on Next.js 14 App Router (React 18, TypeScript, Tailwind CSS, Leaflet GIS) and a high-speed asynchronous FastAPI backend (Python 3.11+, PyTorch, Ultralytics YOLOv8, OpenCV, SQLAlchemy). Core modules include the Acoustic Sonar Enhancement Lab (`/cnn`), Debris Detection & Sonar Map Center (`/detection`), Watchlist Anomaly Registry (`/watchlist`), Analytics Dashboard (`/analytics`), and automated export of GeoJSON, CSV, and hydrographic PDF inspection dossiers.
 
 > *For complete architectural component listings, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#6-technology-stack).*
 
@@ -142,7 +142,7 @@ In its current demonstration and evaluation state, UI authentication has been de
 
 ## 12. Quickstart & Installation Guide
 
-Run VARUNA AI locally in minutes:
+Run VARUNA locally in minutes:
 
 ```bash
 # Backend Service (Terminal 1)
@@ -215,5 +215,5 @@ For technical evaluations, collaborative research, or institutional deployments:
 ---
 
 <div align="center">
-  <b>VARUNA AI</b> | Autonomous Sonar Marine Debris Intelligence Platform | Ministry of Earth Sciences (MoES)
+  <b>VARUNA</b> | Autonomous Sonar Marine Debris Intelligence Platform | Ministry of Earth Sciences (MoES)
 </div>

@@ -1,5 +1,5 @@
 """
-Varuna AI - Main FastAPI Application.
+Varuna - Main FastAPI Application.
 """
 
 import os
@@ -38,9 +38,9 @@ async def lifespan(app: FastAPI):
     \_//_/   \_\_| \_\\___/|_| \_/_/   \_/_/   \_\___|
   MoES SIH26057: Autonomous Acoustic Debris Intelligence
     """)
-    print(f"[VARUNA AI - MoES] Starting backend service...")
-    print(f"[VARUNA AI - MoES] Uploads directory: {settings.UPLOADS_DIR}")
-    print(f"[VARUNA AI - MoES] Model path: {settings.MODEL_PATH} (exists={os.path.exists(settings.MODEL_PATH)})")
+    print(f"[VARUNA - MoES] Starting backend service...")
+    print(f"[VARUNA - MoES] Uploads directory: {settings.UPLOADS_DIR}")
+    print(f"[VARUNA - MoES] Model path: {settings.MODEL_PATH} (exists={os.path.exists(settings.MODEL_PATH)})")
     yield
     # Shutdown actions
     print(f"[{settings.PROJECT_NAME}] Shutting down...")

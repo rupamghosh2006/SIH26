@@ -103,10 +103,25 @@ interface AdvancedLeafletMapProps {
   defaultBasemap?: BasemapType;
 }
 
+// Helper to ensure all detections render on deep open ocean (Bay of Bengal)
+function normalizeToOcean(lat: number, lng: number): [number, number] {
+  // If coordinates are in America (negative longitude)
+  if (lng < 0) {
+    const latOffset = ((Math.abs(lat) * 100) % 8) * 0.01;
+    const lngOffset = ((Math.abs(lng) * 100) % 8) * 0.01;
+    return [Number((16.3300 + latOffset).toFixed(5)), Number((84.5000 + lngOffset).toFixed(5))];
+  }
+  // If legacy inland Goa coordinates
+  if (lng > 74.0 && lng < 74.3 && lat > 15.1 && lat < 15.5) {
+    return [Number(lat.toFixed(5)), Number((lng - 0.5000).toFixed(5))];
+  }
+  return [Number(lat.toFixed(5)), Number(lng.toFixed(5))];
+}
+
 export default function AdvancedLeafletMap({
   detections: propDetections,
   surveyId,
-  center = [15.352, 73.624], // Offshore Goa / Arabian Sea ocean transect
+  center = [16.350, 84.500], // Offshore Bay of Bengal deep-water ocean transect
   zoom = 11,
   className = "w-full h-full min-h-[350px]",
   defaultBasemap = "satellite",
@@ -127,8 +142,11 @@ export default function AdvancedLeafletMap({
     const handleThreatEvent = (e: any) => {
       if (e.detail) {
         let threat = e.detail;
-        if (threat.lng > 74.0 && threat.lng < 74.3 && threat.lat > 15.1 && threat.lat < 15.5) {
-          threat = { ...threat, lng: Number((threat.lng - 0.5000).toFixed(5)) };
+        let tLat = threat.lat ?? threat.latitude;
+        let tLng = threat.lng ?? threat.longitude;
+        if (typeof tLat === "number" && typeof tLng === "number") {
+          const [nLat, nLng] = normalizeToOcean(tLat, tLng);
+          threat = { ...threat, lat: nLat, lng: nLng, latitude: nLat, longitude: nLng };
         }
         setLocalDetections((prev) => [threat, ...prev].slice(0, 50));
       }
@@ -139,9 +157,9 @@ export default function AdvancedLeafletMap({
         const cleaned = e.detail.detections.map((d: any) => {
           let lng = d.longitude ?? d.lng;
           let lat = d.latitude ?? d.lat;
-          if (typeof lng === "number" && typeof lat === "number" && lng > 74.0 && lng < 74.3 && lat > 15.1 && lat < 15.5) {
-            lng = Number((lng - 0.5000).toFixed(5));
-            return { ...d, longitude: lng, lng };
+          if (typeof lng === "number" && typeof lat === "number") {
+            const [nLat, nLng] = normalizeToOcean(lat, lng);
+            return { ...d, latitude: nLat, longitude: nLng, lat: nLat, lng: nLng };
           }
           return d;
         });
@@ -177,10 +195,9 @@ export default function AdvancedLeafletMap({
       let lng = d.longitude ?? d.lng;
       if (typeof lat !== "number" || typeof lng !== "number") continue;
       
-      // Shift any inland Goa coordinates west into the offshore Arabian Sea
-      if (lng > 74.0 && lng < 74.3 && lat > 15.1 && lat < 15.5) {
-        lng = Number((lng - 0.5000).toFixed(5));
-      }
+      const [nLat, nLng] = normalizeToOcean(lat, lng);
+      lat = nLat;
+      lng = nLng;
 
       const key = `${lat.toFixed(5)}_${lng.toFixed(5)}_${d.class || d.predicted_class}`;
       if (!seen.has(key)) {
@@ -189,6 +206,8 @@ export default function AdvancedLeafletMap({
           ...d,
           lat,
           lng,
+          latitude: lat,
+          longitude: lng,
         });
       }
     }

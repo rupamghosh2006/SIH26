@@ -42,6 +42,27 @@ export function normalizeOverallThreatScore(score?: number): number | undefined 
   return Math.round(boundedScore * 10) / 10
 }
 
+function sanitizeToBayOfBengalSea(lat?: number, lng?: number): { lat?: number; lng?: number } {
+  if (typeof lat !== "number" || typeof lng !== "number" || Number.isNaN(lat) || Number.isNaN(lng)) {
+    return { lat, lng };
+  }
+  if (lng < 0) {
+    const latOffset = ((Math.abs(lat) * 100) % 8) * 0.01;
+    const lngOffset = ((Math.abs(lng) * 100) % 8) * 0.01;
+    return {
+      lat: Number((16.3300 + latOffset).toFixed(5)),
+      lng: Number((84.5000 + lngOffset).toFixed(5)),
+    };
+  }
+  if (lng > 74.0 && lng < 74.3 && lat > 15.1 && lat < 15.5) {
+    return {
+      lat: Number(lat.toFixed(5)),
+      lng: Number((lng - 0.5000).toFixed(5)),
+    };
+  }
+  return { lat, lng };
+}
+
 export function loadDetections(): StoredDetection[] {
   if (typeof window === "undefined") return []
   try {
@@ -51,11 +72,16 @@ export function loadDetections(): StoredDetection[] {
     const parsed: StoredDetection[] = JSON.parse(stored)
     if (!Array.isArray(parsed)) return []
 
-    // Support both legacy 0-1 and current 0-100 threat-score formats.
-    const normalized = parsed.map((detection) => ({
-      ...detection,
-      overallThreatScore: normalizeOverallThreatScore(detection.overallThreatScore),
-    }))
+    // Support both legacy 0-1 and current 0-100 threat-score formats and sanitize coordinates to Bay of Bengal open sea
+    const normalized = parsed.map((detection) => {
+      const sanitized = sanitizeToBayOfBengalSea(detection.lat, detection.lng);
+      return {
+        ...detection,
+        lat: sanitized.lat,
+        lng: sanitized.lng,
+        overallThreatScore: normalizeOverallThreatScore(detection.overallThreatScore),
+      };
+    })
 
     // Persist migrated scores once to keep subsequent reads consistent.
     if (JSON.stringify(parsed) !== JSON.stringify(normalized)) {

@@ -18,7 +18,7 @@ export function Chatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
-      content: "Hello! I'm your AI assistant for the Varuna AI Marine Security Platform. How can I help you with marine security operations today?",
+      content: "Hello! I'm your AI assistant for the Varuna Marine Security Platform. How can I help you with marine security operations today?",
       sender: "bot",
       timestamp: new Date()
     }
@@ -92,7 +92,7 @@ export function Chatbot() {
         },
         body: JSON.stringify({
           message: inputMessage,
-          context: "Varuna AI - Automated Underwater Marine Debris and Ghost Net Detection System using Side-Scan Sonar (SSS) Imagery (SIH26057 / MoES)"
+          context: "Varuna - Automated Underwater Marine Debris and Ghost Net Detection System using Side-Scan Sonar (SSS) Imagery (SIH26057 / MoES)"
         })
       })
 

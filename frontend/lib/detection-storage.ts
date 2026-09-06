@@ -46,6 +46,29 @@ export function normalizeOverallThreatScore(score?: number): number | undefined 
   return Math.round(boundedScore * 10) / 10
 }
 
+function sanitizeToBayOfBengalSea(lat?: number, lng?: number): { lat?: number; lng?: number } {
+  if (typeof lat !== "number" || typeof lng !== "number" || Number.isNaN(lat) || Number.isNaN(lng)) {
+    return { lat, lng };
+  }
+  // If coordinates are in America (negative longitude)
+  if (lng < 0) {
+    const latOffset = ((Math.abs(lat) * 100) % 8) * 0.01;
+    const lngOffset = ((Math.abs(lng) * 100) % 8) * 0.01;
+    return {
+      lat: Number((16.3300 + latOffset).toFixed(5)),
+      lng: Number((84.5000 + lngOffset).toFixed(5)),
+    };
+  }
+  // If legacy inland Goa coordinates
+  if (lng > 74.0 && lng < 74.3 && lat > 15.1 && lat < 15.5) {
+    return {
+      lat: Number(lat.toFixed(5)),
+      lng: Number((lng - 0.5000).toFixed(5)),
+    };
+  }
+  return { lat, lng };
+}
+
 export function loadDetections(): StoredDetection[] {
   if (typeof window === "undefined") return []
   try {
@@ -56,21 +79,19 @@ export function loadDetections(): StoredDetection[] {
     if (!Array.isArray(parsed)) return []
 
     // Support both legacy 0-1 and current 0-100 threat-score formats,
-    // and automatically shift any legacy inland coordinates west into the ocean offshore Goa
+    // and automatically migrate any American or inland coordinates into the Bay of Bengal open sea
     const normalized = parsed.map((detection) => {
-      let lat = detection.lat;
-      let lng = detection.lng;
-      if (typeof lng === "number" && typeof lat === "number" && lng > 74.0 && lng < 74.3 && lat > 15.1 && lat < 15.5) {
-        lng = Number((lng - 0.5000).toFixed(5));
-      }
+      const sanitizedRoot = sanitizeToBayOfBengalSea(detection.lat, detection.lng);
+      const lat = sanitizedRoot.lat;
+      const lng = sanitizedRoot.lng;
+
       const updatedDets = (detection.detections || []).map((d: any) => {
         let dLat = d.latitude ?? d.lat;
         let dLng = d.longitude ?? d.lng ?? d.lon;
-        if (typeof dLng === "number" && typeof dLat === "number" && dLng > 74.0 && dLng < 74.3 && dLat > 15.1 && dLat < 15.5) {
-          dLng = Number((dLng - 0.5000).toFixed(5));
-          return { ...d, latitude: dLat, longitude: dLng, lat: dLat, lon: dLng, lng: dLng };
-        }
-        return d;
+        const sanitizedDet = sanitizeToBayOfBengalSea(dLat, dLng);
+        dLat = sanitizedDet.lat;
+        dLng = sanitizedDet.lng;
+        return { ...d, latitude: dLat, longitude: dLng, lat: dLat, lon: dLng, lng: dLng };
       });
 
       return {
@@ -82,7 +103,7 @@ export function loadDetections(): StoredDetection[] {
       };
     });
 
-    // Also migrate activeThreats in localStorage to ocean if needed
+    // Also migrate activeThreats in localStorage to Bay of Bengal ocean if needed
     try {
       const activeRaw = localStorage.getItem("activeThreats");
       if (activeRaw) {
@@ -90,9 +111,10 @@ export function loadDetections(): StoredDetection[] {
         if (Array.isArray(threats)) {
           let modified = false;
           const updatedThreats = threats.map((t: any) => {
-            if (t.lng > 74.0 && t.lng < 74.3 && t.lat > 15.1 && t.lat < 15.5) {
+            const sanitized = sanitizeToBayOfBengalSea(t.lat, t.lng);
+            if (sanitized.lat !== t.lat || sanitized.lng !== t.lng) {
               modified = true;
-              return { ...t, lng: Number((t.lng - 0.5000).toFixed(5)) };
+              return { ...t, lat: sanitized.lat, lng: sanitized.lng };
             }
             return t;
           });

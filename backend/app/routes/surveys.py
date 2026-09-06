@@ -364,7 +364,7 @@ def create_demo(
     """
     survey = create_sample_demo_survey(
         db=db,
-        title=req.title or "Demo Mission: Monterey Canyon",
+        title=req.title or "Demo Mission: Bay of Bengal Survey",
         scenario=req.scenario or "coastal",
         num_debris=req.num_debris or 4
     )

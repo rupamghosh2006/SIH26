@@ -1,5 +1,5 @@
 ﻿/**
- * Varuna AI - GeoJSON FeatureCollection Export Service
+ * Varuna - GeoJSON FeatureCollection Export Service
  * Problem Statement: SIH26057 (Ministry of Earth Sciences)
  * 
  * Generates RFC 7946 compliant GeoJSON objects from sonar detections
@@ -58,7 +58,7 @@ export interface GeoJsonFeatureCollection {
  */
 export function generateGeoJsonFeatureCollection(
   detections: GeoJsonDetectionInput[],
-  surveyTitle: string = 'Varuna AI SSS Survey'
+  surveyTitle: string = 'Varuna SSS Survey'
 ): GeoJsonFeatureCollection {
   const features: GeoJsonFeature[] = detections.map((det) => ({
     type: 'Feature',
@@ -79,7 +79,7 @@ export function generateGeoJsonFeatureCollection(
       depthMeters: det.depthMeters ?? null,
       timestamp: det.timestamp,
       agency: 'Ministry of Earth Sciences (MoES)',
-      platform: 'Varuna AI Deep-Ocean Sonar System',
+      platform: 'Varuna Deep-Ocean Sonar System',
     },
   }));
 

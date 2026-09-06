@@ -72,7 +72,7 @@ export function SecurityFooter() {
   return (
     <div className="relative z-20 border-t border-cyan-500/20 bg-slate-950/90 backdrop-blur-md">
       <div className="classified-bar bg-cyan-950/60 text-cyan-400/80 text-[10px] py-0.5 text-center font-mono">
-        HYDROGRAPHIC ACOUSTIC RESEARCH // SIH26057 • VARUNA AI PLATFORM // UNDERWATER SONAR DEBRIS INTELLIGENCE
+        HYDROGRAPHIC ACOUSTIC RESEARCH // SIH26057 • VARUNA PLATFORM // UNDERWATER SONAR DEBRIS INTELLIGENCE
       </div>
       <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between">
         <div className="flex items-center gap-3">
@@ -83,7 +83,7 @@ export function SecurityFooter() {
           </div>
           <div>
             <p className="text-[10px] text-cyan-300/80 font-space-mono uppercase tracking-wider">
-              Ministry of Earth Sciences (MoES) • Netaji Subhash Engineering College, Kolkata • Varuna AI Platform
+              Ministry of Earth Sciences (MoES) • Netaji Subhash Engineering College, Kolkata • Varuna Platform
             </p>
             <p className="text-[8px] text-cyan-500/60 font-space-mono">
               SIH26057: Automated Underwater Marine Debris and Anomaly Detection System

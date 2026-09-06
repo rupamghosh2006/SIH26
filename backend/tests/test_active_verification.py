@@ -1,7 +1,7 @@
 """
 Active Verification Test Suite.
 Verifies adaptive rescan planning, target association, multi-observation evidence comparison,
-and deterministic simulation scenarios for VARUNA AI.
+and deterministic simulation scenarios for VARUNA.
 """
 
 import unittest

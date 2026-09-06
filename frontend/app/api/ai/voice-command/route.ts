@@ -358,7 +358,7 @@ function generateOfflineResponse(
     cmd.includes("report") ||
     cmd.includes("sitrep")
   ) {
-    return `Sir, Varuna AI Marine Debris Detection System is fully operational. We are monitoring ${totalZones} ocean survey zones spanning from Kochi in the south to Port Blair in the east. Average threat level is at ${avgThreat} percent with fleet readiness at ${readiness} percent. All AI detection systems are online and scanning.`;
+    return `Sir, Varuna Marine Debris Detection System is fully operational. We are monitoring ${totalZones} ocean survey zones spanning from Kochi in the south to Port Blair in the east. Average threat level is at ${avgThreat} percent with fleet readiness at ${readiness} percent. All AI detection systems are online and scanning.`;
   }
   if (
     cmd.includes("ready") ||

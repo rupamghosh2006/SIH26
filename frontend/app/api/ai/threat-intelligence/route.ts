@@ -89,7 +89,7 @@ Provide a comprehensive ecological survey intelligence report with:
 
 Format the response in clear sections with bullet points.`
 
-        context = "Varuna AI Marine Debris & Ecological Hazard Assessment - Autonomous Underwater SSS Classification"
+        context = "Varuna Marine Debris & Ecological Hazard Assessment - Autonomous Underwater SSS Classification"
         break
 
       case "recommendations":
@@ -114,7 +114,7 @@ Provide strategic recommendations in the following categories:
 
 Format with clear sections and actionable bullet points.`
 
-        context = "Varuna AI Marine Debris Remediation and Ecosystem Recovery Strategy"
+        context = "Varuna Marine Debris Remediation and Ecosystem Recovery Strategy"
         break
 
       case "prediction":
@@ -140,7 +140,7 @@ Provide predictive debris modeling including:
 4. **Acoustic Backscatter Anomalies**: Sub-seabed partial burial predictions
 5. **Targeted AUV Interception Coordinates**: Best waypoints for cleanup dispatch`
 
-        context = "Varuna AI Predictive Marine Debris Drift & Accumulation Modeling"
+        context = "Varuna Predictive Marine Debris Drift & Accumulation Modeling"
         break
 
       case "query":

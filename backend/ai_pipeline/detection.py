@@ -256,7 +256,7 @@ class SonarDetector:
                 or "entangled" in det["class_name"].lower()
             )
             if is_net_class:
-                print(f"[Varuna AI] Triggering U-Net semantic segmentation for net class '{det['class_name']}' at ({gx}, {gy}, {gw}, {gh})")
+                print(f"[Varuna] Triggering U-Net semantic segmentation for net class '{det['class_name']}' at ({gx}, {gy}, {gw}, {gh})")
                 patch = image[gy:gy+gh, gx:gx+gw]
                 m_px = dim_info.get("effective_m_per_px_x", geo_info["meters_per_pixel"])
                 seg_res = self.unet_segmenter.segment_patch(patch, meters_per_pixel=m_px)

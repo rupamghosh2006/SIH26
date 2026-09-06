@@ -331,7 +331,7 @@ export default function TryPage() {
                   AI-DRIVEN
                 </h3>
                 <p className="text-sm text-cyan-200/60 font-space-mono font-bold tracking-widest">
-                  VARUNA AI
+                  VARUNA
                 </p>
               </div>
             </div>

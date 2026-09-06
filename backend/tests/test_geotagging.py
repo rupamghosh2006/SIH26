@@ -14,7 +14,7 @@ def test_destination_point():
 
 
 def test_synthetic_trackline_generation():
-    geotagger = SonarGeotagger.generate_synthetic_trackline(num_pings=500, start_lat=36.6, start_lon=-121.9)
+    geotagger = SonarGeotagger.generate_synthetic_trackline(num_pings=500, start_lat=16.35, start_lon=84.50)
     assert len(geotagger.pings) == 500
     assert geotagger.pings[0].ping_index == 0
     assert geotagger.pings[-1].ping_index == 499
@@ -23,8 +23,8 @@ def test_synthetic_trackline_generation():
 def test_pixel_geotagging():
     geotagger = SonarGeotagger.generate_synthetic_trackline(
         num_pings=1000,
-        start_lat=24.55,
-        start_lon=-81.78,
+        start_lat=16.35,
+        start_lon=84.50,
         heading_deg=90.0,  # Heading East
         slant_range_m=75.0
     )

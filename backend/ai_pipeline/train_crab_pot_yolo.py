@@ -110,7 +110,7 @@ def train_crab_pot_sonar_detector(
     models_path.mkdir(parents=True, exist_ok=True)
 
     print("=" * 75)
-    print(" Varuna AI: YOLOv8 SSS Crab Pot Detector Training")
+    print(" Varuna: YOLOv8 SSS Crab Pot Detector Training")
     print(f" Source Data         : {raw_data_dir}")
     print(f" Normalized          : {yolo_data_dir}")
     print(f" Base Weights        : {base_model}")
@@ -121,7 +121,7 @@ def train_crab_pot_sonar_detector(
     data_yaml_path = prepare_crab_pot_yolo_dataset(Path(raw_data_dir), Path(yolo_data_dir))
 
     if YOLO is None:
-        print("[Varuna AI] Ultralytics YOLO not installed in current environment. Returning dataset configuration.")
+        print("[Varuna] Ultralytics YOLO not installed in current environment. Returning dataset configuration.")
         return {
             "status": "dataset_prepared",
             "data_yaml": str(data_yaml_path),
@@ -129,7 +129,7 @@ def train_crab_pot_sonar_detector(
         }
 
     # Initialize model
-    print(f"\n[Varuna AI] Loading base model backbone: {base_model}...")
+    print(f"\n[Varuna] Loading base model backbone: {base_model}...")
     model = YOLO(base_model)
 
     if project_dir is None:
@@ -140,7 +140,7 @@ def train_crab_pot_sonar_detector(
     run_name = "varuna_sss_crab_pot"
 
     # Train
-    print(f"\n[Varuna AI] Launching training on {data_yaml_path}...")
+    print(f"\n[Varuna] Launching training on {data_yaml_path}...")
     results = model.train(
         data=str(data_yaml_path),
         epochs=epochs,
@@ -166,10 +166,10 @@ def train_crab_pot_sonar_detector(
 
     if source_pt.exists():
         shutil.copy2(str(source_pt), str(target_crab_pot))
-        print(f"\n[Varuna AI] Checkpoint saved: {target_crab_pot}")
+        print(f"\n[Varuna] Checkpoint saved: {target_crab_pot}")
     else:
         model.save(str(target_crab_pot))
-        print(f"\n[Varuna AI] Model saved: {target_crab_pot}")
+        print(f"\n[Varuna] Model saved: {target_crab_pot}")
 
     # Production export only when explicitly requested (NEVER during tests or CI)
     if export_to_production:
@@ -182,16 +182,16 @@ def train_crab_pot_sonar_detector(
         shutil.copy2(str(target_crab_pot), str(target_varuna))
         shutil.copy2(str(target_crab_pot), str(target_prod_crab))
         shutil.copy2(str(target_crab_pot), str(target_root_best))
-        print(f"\n[Varuna AI] Production checkpoints updated successfully:")
+        print(f"\n[Varuna] Production checkpoints updated successfully:")
         print(f"  -> {target_prod_crab}")
         print(f"  -> {target_varuna}")
         print(f"  -> {target_root_best}")
     else:
-        print(f"\n[Varuna AI] Non-production run: production model weights untouched.")
+        print(f"\n[Varuna] Non-production run: production model weights untouched.")
 
     # Evaluate on held-out validation set
     print("\n" + "=" * 75)
-    print(" Varuna AI: Validation Metrics on SSS Crab Pot Sonar Data")
+    print(" Varuna: Validation Metrics on SSS Crab Pot Sonar Data")
     print("=" * 75)
     
     val_model = YOLO(str(target_crab_pot))

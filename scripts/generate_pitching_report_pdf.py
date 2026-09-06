@@ -35,7 +35,7 @@ class NumberedCanvas(canvas.Canvas):
 
         # Header (Pages 2+)
         if self._pageNumber > 1:
-            self.drawString(54, 750, "VARUNA AI  |  SIH 2026 PITCH DECK & TECHNICAL DOSSIER")
+            self.drawString(54, 750, "VARUNA  |  SIH 2026 PITCH DECK & TECHNICAL DOSSIER")
             self.drawRightString(558, 750, "PROBLEM ID: SIH26057  •  MoES / INCOIS")
             self.setStrokeColor(colors.HexColor("#0f2438"))
             self.setLineWidth(0.75)
@@ -48,7 +48,7 @@ class NumberedCanvas(canvas.Canvas):
 
         self.setFont("Helvetica", 7.5)
         self.setFillColor(colors.HexColor("#64748b"))
-        self.drawString(54, 30, "CONFIDENTIAL  •  SMART INDIA HACKATHON 2026 GRAND FINALE  •  VARUNA AI")
+        self.drawString(54, 30, "CONFIDENTIAL  •  SMART INDIA HACKATHON 2026 GRAND FINALE  •  VARUNA")
         page_str = f"Slide / Page {self._pageNumber} of {page_count}"
         self.drawRightString(558, 30, page_str)
         self.restoreState()
@@ -153,7 +153,7 @@ def build_pitching_pdf(output_filename="VARUNA_AI_Pitching_Report.pdf"):
     # ==========================================
     # HEADER / TITLE BLOCK
     # ==========================================
-    story.append(Paragraph("VARUNA AI : OFFICIAL PITCH DECK & TECHNICAL DOSSIER", title_style))
+    story.append(Paragraph("VARUNA : OFFICIAL PITCH DECK & TECHNICAL DOSSIER", title_style))
     story.append(Paragraph("Automated Underwater Marine Debris & Ghost Net Detection System using Side-Scan Sonar Imagery | Smart India Hackathon (SIH 2026)", subtitle_style))
     story.append(HRFlowable(width="100%", thickness=1.5, color=PRIMARY, spaceBefore=0, spaceAfter=8))
 
@@ -199,7 +199,7 @@ def build_pitching_pdf(output_filename="VARUNA_AI_Pitching_Report.pdf"):
     story.append(Paragraph(p_s1_prob, body_style))
 
     p_s1_sol = (
-        "<b>Our Solution:</b> VARUNA AI is India's first end-to-end, physics-validated, and fully explainable underwater acoustic "
+        "<b>Our Solution:</b> VARUNA is India's first end-to-end, physics-validated, and fully explainable underwater acoustic "
         "intelligence platform. We replace slow, error-prone manual screening with an automated, sub-second multi-stage pipeline. "
         "The platform ingests raw dual-channel SSS waterfalls, applies real-time CLAHE and bilateral despeckling, detects 8 discrete "
         "benthic debris classes with fine-tuned YOLOv8 neural networks, validates targets using acoustic cast shadow physics, provides "
@@ -253,7 +253,7 @@ def build_pitching_pdf(output_filename="VARUNA_AI_Pitching_Report.pdf"):
     story.append(Paragraph("3. Operational Readiness, Hardware Compatibility & Cost Viability", h1_style))
 
     p_s3_feas = (
-        "<b>Technology Readiness Level (TRL-6):</b> VARUNA AI is fully engineered and validated. The backend is powered by high-performance "
+        "<b>Technology Readiness Level (TRL-6):</b> VARUNA is fully engineered and validated. The backend is powered by high-performance "
         "FastAPI asynchronous microservices running PyTorch 2.6 and ONNX Runtime, and the frontend is an ultra-fast Next.js 14 App Router portal "
         "with military sonar dark-mode aesthetics. The system is 100% hardware-agnostic, supporting standard sonar formats (XTF, GeoTIFF, TIFF, PNG) "
         "from EdgeTech, Klein Marine, Lowrance, and Tritech sonar systems."
@@ -263,7 +263,7 @@ def build_pitching_pdf(output_filename="VARUNA_AI_Pitching_Report.pdf"):
     p_s3_viab = (
         "<b>Edge Compute & Deployment Viability:</b> Optimized lightweight YOLOv8 models achieve sub-45ms per-tile inference on edge hardware "
         "(NVIDIA Jetson Orin Nano, Xavier NX, and Raspberry Pi 5), enabling direct on-board integration inside AUV and USV payload canisters. "
-        "Because it operates entirely on open-source frameworks without expensive proprietary GIS software licenses, VARUNA AI can be deployed "
+        "Because it operates entirely on open-source frameworks without expensive proprietary GIS software licenses, VARUNA can be deployed "
         "at a fraction of commercial sonar suite costs, delivering instantaneous operational feasibility to naval fleets, coast guards, and marine research institutes."
     )
     story.append(Paragraph(p_s3_viab, body_style))
@@ -276,7 +276,7 @@ def build_pitching_pdf(output_filename="VARUNA_AI_Pitching_Report.pdf"):
     story.append(Paragraph("4. Quantitative Impact, Ecological Preservation & Maritime Security", h1_style))
 
     p_s4_impact = (
-        "<b>Measurable Operational & Economic Impact:</b> VARUNA AI slashes acoustic inspection turnaround time by <b>95%</b>—compressing "
+        "<b>Measurable Operational & Economic Impact:</b> VARUNA slashes acoustic inspection turnaround time by <b>95%</b>—compressing "
         "24 to 48 hours of manual video analysis into under 60 seconds of automated waterfall processing. The physics-guided acoustic cast shadow "
         "filter delivers an <b>80% reduction in false alarm triggers</b>, eliminating unnecessary diver hazard dispatches and saving hundreds of thousands "
         "of dollars in recovery mission budgets. Furthermore, every single classification is accompanied by 100% auditable explainability metrics, "
@@ -300,7 +300,7 @@ def build_pitching_pdf(output_filename="VARUNA_AI_Pitching_Report.pdf"):
     story.append(Paragraph("5. Scientific Datasets, Rigorous Benchmarks & Literature Grounding", h1_style))
 
     p_s5_data = (
-        "<b>Acoustic Datasets & Empirical Benchmarks:</b> The neural models in VARUNA AI are trained and cross-validated on authoritative underwater "
+        "<b>Acoustic Datasets & Empirical Benchmarks:</b> The neural models in VARUNA are trained and cross-validated on authoritative underwater "
         "sonar datasets: (1) <i>PING Ecosystem SSS Crab Pot Dataset</i> (Hugging Face) with 6,674 real SSS captures of derelict fishing gear; "
         "(2) <i>Forward-Looking Sonar (FLS) Marine Debris Dataset</i> (Valdenegro-Toro / Kaggle) with 1,868 acoustic captures across 8 debris classes, "
         "achieving a held-out validation <b>mAP@50 of 92.17%</b> (99.0% on ghost chain/entanglements, 97.5% on hooks/longlines, 97.1% on containers); "
@@ -320,7 +320,7 @@ def build_pitching_pdf(output_filename="VARUNA_AI_Pitching_Report.pdf"):
     # Closing Executive Callout Panel
     story.append(HRFlowable(width="100%", thickness=1, color=PRIMARY, spaceBefore=4, spaceAfter=6))
     closing_p = (
-        "<b>Executive Summary:</b> VARUNA AI combines state-of-the-art computer vision with acoustic physics, "
+        "<b>Executive Summary:</b> VARUNA combines state-of-the-art computer vision with acoustic physics, "
         "delivering a robust, explainable, and production-ready solution that transforms maritime debris clearance "
         "from a slow manual bottleneck into an autonomous, scalable national capability."
     )

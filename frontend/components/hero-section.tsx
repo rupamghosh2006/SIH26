@@ -99,7 +99,7 @@ export function HeroSection() {
             {/* Premium headline */}
             <div className="space-y-6">
               <h1 className="text-6xl md:text-7xl lg:text-8xl font-orbitron font-black text-balance leading-tight tracking-wider">
-                <span className="block text-white drop-shadow-2xl">VARUNA AI</span>
+                <span className="block text-white drop-shadow-2xl">VARUNA</span>
                 <span className="block bg-gradient-to-r from-cyan-300 via-blue-300 to-cyan-300 bg-clip-text text-transparent animate-pulse duration-4000">
                   COMMAND CENTER
                 </span>

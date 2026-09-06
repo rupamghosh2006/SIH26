@@ -24,7 +24,7 @@ def train_fls_sonar_detector(
     models_path.mkdir(parents=True, exist_ok=True)
 
     print("=" * 75)
-    print(" Varuna AI: YOLOv8 Sonar Marine Debris Detector Training")
+    print(" Varuna: YOLOv8 Sonar Marine Debris Detector Training")
     print(f" Dataset YAML : {data_yaml}")
     print(f" Base Weights : {base_model}")
     print(f" Parameters   : Epochs={epochs}, Batch={batch_size}, ImgSize={imgsz}x{imgsz}")
@@ -34,14 +34,14 @@ def train_fls_sonar_detector(
         raise FileNotFoundError(f"data.yaml not found at {data_yaml}")
 
     # Initialize model
-    print(f"\n[Varuna AI] Loading base model backbone: {base_model}...")
+    print(f"\n[Varuna] Loading base model backbone: {base_model}...")
     model = YOLO(base_model)
 
     project_dir = os.path.join("backend", "runs", "train")
     run_name = "varuna_fls_marine_debris"
 
     # Train
-    print(f"\n[Varuna AI] Launching training...")
+    print(f"\n[Varuna] Launching training...")
     results = model.train(
         data=data_yaml,
         epochs=epochs,
@@ -69,7 +69,7 @@ def train_fls_sonar_detector(
     if source_pt.exists():
         shutil.copy2(str(source_pt), str(target_varuna))
         shutil.copy2(str(source_pt), str(target_root_best))
-        print(f"\n[Varuna AI] Checkpoints exported successfully:")
+        print(f"\n[Varuna] Checkpoints exported successfully:")
         print(f"  -> {target_varuna}")
         print(f"  -> {target_root_best}")
     else:
@@ -78,7 +78,7 @@ def train_fls_sonar_detector(
 
     # Evaluate on held-out validation set
     print("\n" + "=" * 75)
-    print(" Varuna AI: Validation Metrics Evaluation on Sonar Imagery")
+    print(" Varuna: Validation Metrics Evaluation on Sonar Imagery")
     print("=" * 75)
     
     val_model = YOLO(str(target_varuna))

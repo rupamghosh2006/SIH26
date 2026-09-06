@@ -203,7 +203,7 @@ export function HomePageEnhanced() {
               >
                 <h1 className="text-5xl md:text-7xl lg:text-[5.5rem] font-black leading-[0.95] mb-4 text-left font-orbitron">
                   <span className="block gradient-text-ocean animate-gradient bg-[length:200%_200%] tracking-normal">
-                    VARUNA AI
+                    VARUNA
                   </span>
                   <span className="block text-2xl md:text-4xl lg:text-5xl mt-3 text-white/90 font-orbitron tracking-normal">
                     SONAR DEBRIS INTELLIGENCE

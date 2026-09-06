@@ -21,7 +21,7 @@ export function Navigation() {
         <Link
           href="/"
           className="no-underline flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
-          aria-label="Varuna AI home"
+          aria-label="Varuna home"
         >
           <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-xl border border-cyan-300/35 bg-cyan-400/10 shadow-[0_0_24px_rgba(34,211,238,0.12)]">
             <img src="/logos/varuna-logo.png" alt="" className="h-full w-full object-cover" />
@@ -74,7 +74,7 @@ export function Navigation() {
           </Link>
           <Link
             href="/contact"
-            aria-label="Contact Varuna AI"
+            aria-label="Contact Varuna"
             className="no-underline hidden rounded-lg p-2 text-slate-400 transition-colors hover:bg-white/5 hover:text-cyan-200 lg:block"
           >
             <CircleHelp className="h-4 w-4" />

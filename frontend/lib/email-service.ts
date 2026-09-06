@@ -55,7 +55,7 @@ export async function sendOTPEmail(email: string, otp: string, name?: string) {
   const mailOptions = {
     from: process.env.HOST_EMAIL,
     to: email,
-    subject: 'OTP Verification - Varuna AI Security Platform',
+    subject: 'OTP Verification - Varuna Security Platform',
     text: `Your verification code is: ${otp}\n\nThis code expires in 10 minutes. If you did not request this, you can ignore this email.`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0891b2 100%); padding: 40px; border-radius: 20px; color: white;">
@@ -63,7 +63,7 @@ export async function sendOTPEmail(email: string, otp: string, name?: string) {
           <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #06b6d4, #3b82f6); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 32px;">
             🌊
           </div>
-          <h1 style="color: #06b6d4; margin: 0; font-size: 28px;">Varuna AI Security Platform</h1>
+          <h1 style="color: #06b6d4; margin: 0; font-size: 28px;">Varuna Security Platform</h1>
           <p style="color: #94a3b8; margin: 10px 0 0; font-size: 16px;">Marine Security Technology</p>
         </div>
         
@@ -87,7 +87,7 @@ export async function sendOTPEmail(email: string, otp: string, name?: string) {
         </div>
         
         <div style="text-align: center; color: #94a3b8; font-size: 14px;">
-          <p style="margin: 0;">© 2025 Varuna AI Security. All rights reserved.</p>
+          <p style="margin: 0;">© 2025 Varuna Security. All rights reserved.</p>
           <p style="margin: 10px 0 0;">Protecting marine environments through advanced technology</p>
         </div>
       </div>
@@ -119,14 +119,14 @@ export async function sendWelcomeEmail(email: string, name: string) {
   const mailOptions = {
     from: process.env.HOST_EMAIL,
     to: email,
-    subject: '🎉 Welcome to Varuna AI Security!',
+    subject: '🎉 Welcome to Varuna Security!',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0891b2 100%); padding: 40px; border-radius: 20px; color: white;">
         <div style="text-align: center; margin-bottom: 30px;">
           <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #06b6d4, #3b82f6); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 32px;">
             🎉
           </div>
-          <h1 style="color: #06b6d4; margin: 0; font-size: 28px;">Welcome to Varuna AI Security!</h1>
+          <h1 style="color: #06b6d4; margin: 0; font-size: 28px;">Welcome to Varuna Security!</h1>
           <p style="color: #94a3b8; margin: 10px 0 0; font-size: 16px;">Marine Security Technology</p>
         </div>
         
@@ -157,7 +157,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
         </div>
         
         <div style="text-align: center; color: #94a3b8; font-size: 14px;">
-          <p style="margin: 0;">© 2025 Varuna AI Security. All rights reserved.</p>
+          <p style="margin: 0;">© 2025 Varuna Security. All rights reserved.</p>
           <p style="margin: 10px 0 0;">Thank you for joining our mission to protect marine environments!</p>
         </div>
       </div>

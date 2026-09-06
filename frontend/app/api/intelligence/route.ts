@@ -378,7 +378,7 @@ function generateIntelBrief(zones: any[]) {
   let brief = `FLASH // MoES OCEAN RESEARCH INTELLIGENCE // ${timestamp} IST\n`;
   brief += `═══════════════════════════════════════════════════════\n`;
   brief += `SUBJECT: Maritime Domain Awareness — Operational Summary\n`;
-  brief += `CLASSIFICATION: SECRET // NOFORN // VARUNA AI-AI\n`;
+  brief += `CLASSIFICATION: SECRET // NOFORN // VARUNA\n`;
   brief += `═══════════════════════════════════════════════════════\n\n`;
 
   brief += `1. SITUATION OVERVIEW:\n`;
@@ -415,7 +415,7 @@ function generateIntelBrief(zones: any[]) {
   brief += `   Next intelligence update: T+60 minutes.\n\n`;
 
   brief += `═══════════════════════════════════════════════════════\n`;
-  brief += `VARUNA AI AI MARINE DEBRIS DETECTION SYSTEM // MINISTRY OF EARTH SCIENCES (MoES)\n`;
+  brief += `VARUNA MARINE DEBRIS DETECTION SYSTEM // MINISTRY OF EARTH SCIENCES (MoES)\n`;
   brief += `END OF REPORT // ${timestamp} IST\n`;
 
   return brief;

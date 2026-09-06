@@ -151,7 +151,7 @@ export function DeepSeaBorderEffect({
           />
         </div>
         <span className="text-[10px] font-orbitron text-cyan-300 tracking-[0.2em] uppercase">
-          Varuna AI Listening
+          Varuna Listening
         </span>
         <div className="flex gap-1">
           <div

@@ -26,14 +26,14 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Varuna AI - Underwater Marine Debris & Anomaly Detection System",
+  title: "Varuna - Underwater Marine Debris & Anomaly Detection System",
   description:
     "Advanced AI-powered platform for deep-sea underwater marine debris detection (ghost nets, shipwrecks, pipe cylinders) using side-scan sonar, water quality monitoring, and conservation insights using cutting-edge machine learning and environmental DNA analysis.",
   keywords:
-    "marine debris detection, ghost nets, side-scan sonar, YOLOv8, acoustic shadow validation, Varuna AI, AI, environmental DNA, water quality, conservation, marine biology",
+    "marine debris detection, ghost nets, side-scan sonar, YOLOv8, acoustic shadow validation, Varuna, AI, environmental DNA, water quality, conservation, marine biology",
   authors: [{ name: "AI-Driven Biodiversity Research Team" }],
   openGraph: {
-    title: "Varuna AI - Underwater Marine Debris & Anomaly Detection System",
+    title: "Varuna - Underwater Marine Debris & Anomaly Detection System",
     description:
       "Revolutionary AI platform for marine conservation and species discovery",
     type: "website",

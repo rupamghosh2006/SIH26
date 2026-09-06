@@ -327,7 +327,7 @@ function LoginFormContent() {
             Ministry of Earth Sciences (MoES)
           </h1>
           <p className="text-[10px] font-space-mono text-cyan-300/60 uppercase tracking-[0.3em] mt-0.5">
-            VARUNA AI Benthic Sonar System
+            VARUNA Benthic Sonar System
           </p>
           <div className="text-[9px] font-space-mono text-slate-500 mt-1">
             {currentTime} • SECURE PORTAL

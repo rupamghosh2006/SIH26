@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Varuna AI"
+    PROJECT_NAME: str = "Varuna"
     API_V1_STR: str = "/api"
     
     # Base directories

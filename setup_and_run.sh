@@ -2,7 +2,7 @@
 set -e
 
 echo "========================================================"
-echo "      VARUNA AI - Full Stack Initialization"
+echo "      VARUNA - Full Stack Initialization"
 echo "   Ministry of Earth Sciences (MoES) | SIH26057"
 echo "========================================================"
 

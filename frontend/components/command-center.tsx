@@ -287,7 +287,7 @@ function LiveFeedPanel() {
           </div>
         </div>
         <h2 className="font-orbitron text-lg font-bold tracking-[0.2em] text-cyan-200 uppercase mb-2">
-          VARUNA AI LIVE CAMERA FEED
+          VARUNA LIVE CAMERA FEED
         </h2>
         <p className="text-[10px] font-space-mono text-slate-400 uppercase tracking-wider mb-6">
           ESP32-CAM + YOLOv8 Real-Time Debris Detection
@@ -362,7 +362,7 @@ function LiveFeedPanel() {
 
             {/* HUD overlay */}
             <div className="absolute top-3 left-3 text-[8px] font-space-mono text-cyan-400/50 uppercase tracking-wider">
-              <div>VARUNA AI CAM-01</div>
+              <div>VARUNA CAM-01</div>
               <div>YOLOv8 INFERENCE</div>
             </div>
             <div className="absolute top-3 right-3 text-[8px] font-space-mono text-cyan-400/50 uppercase tracking-wider text-right">

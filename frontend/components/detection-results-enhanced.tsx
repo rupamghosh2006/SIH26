@@ -240,7 +240,7 @@ export default function DetectionResultsEnhanced({
     }
 
     const report = {
-      system: "VARUNA AI — Underwater Marine Debris and Anomaly Intelligence Platform (SIH26057)",
+      system: "VARUNA — Underwater Marine Debris and Anomaly Intelligence Platform (SIH26057)",
       timestamp: new Date().toISOString(),
       survey_id: surveyId || `srv_${index + 1}`,
       survey_file: originalFileName || `sss_sonar_log_${index + 1}.png`,
@@ -337,7 +337,7 @@ export default function DetectionResultsEnhanced({
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Varuna AI — Sonar Marine Debris Survey Report #${index + 1}</title>
+        <title>Varuna — Sonar Marine Debris Survey Report #${index + 1}</title>
         <style>
           body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0b1120; color: #f8fafc; padding: 24px; margin: 0; }
           h1, h2, h3 { color: #38bdf8; }
@@ -359,7 +359,7 @@ export default function DetectionResultsEnhanced({
       </head>
       <body>
         <div class="header">
-          <h1>🌊 VARUNA AI — Sonar Marine Debris Survey Report</h1>
+          <h1>🌊 VARUNA — Sonar Marine Debris Survey Report</h1>
           <p>Autonomous Underwater Vehicle Side-Scan Sonar (SSS) Classification</p>
           <p><strong>Log File:</strong> ${originalFileName || `survey_${index + 1}.png`} | <strong>Generated:</strong> ${new Date().toLocaleString()}</p>
         </div>
@@ -401,7 +401,7 @@ export default function DetectionResultsEnhanced({
           </tbody>
         </table>
         <div class="footer">
-          Varuna AI Platform | SIH26057: AI-Powered Automated Underwater Marine Debris and Anomaly Detection System
+          Varuna Platform | SIH26057: AI-Powered Automated Underwater Marine Debris and Anomaly Detection System
         </div>
       </body>
       </html>

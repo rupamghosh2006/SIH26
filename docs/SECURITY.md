@@ -1,4 +1,4 @@
-# VARUNA AI — Security Policy, Configuration & Known Limitations
+# VARUNA — Security Policy, Configuration & Known Limitations
 
 > **Document Status:** Operational Security Baseline  
 > **Context:** Smart India Hackathon (SIH 2026) Demonstration & Research Evaluation
@@ -7,7 +7,7 @@
 
 ## 1. Executive Summary & Philosophy
 
-This document outlines the security posture, operational configuration, and known limitations of the VARUNA AI platform in its current evaluation state. 
+This document outlines the security posture, operational configuration, and known limitations of the VARUNA platform in its current evaluation state. 
 
 We maintain a policy of complete technical honesty: **no fabricated certifications (such as SOC 2, ISO 27001, or FedRAMP) are claimed**. The system is an open research and hackathon prototype engineered for evaluation by the Ministry of Earth Sciences (MoES) and hydrographic survey researchers.
 

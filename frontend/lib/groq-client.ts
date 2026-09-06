@@ -39,7 +39,7 @@ export async function generateGroqResponse(message: string, context: string = ""
   // Ensure the SDK sees GROQ_API_KEY
   process.env.GROQ_API_KEY = key
 
-  const systemPrompt = `You are an AI assistant for Varuna AI — an advanced AI-powered platform for SIH26057: Automated Underwater Marine Debris and Anomaly Detection System using Side-Scan Sonar (SSS) Imagery.
+  const systemPrompt = `You are an AI assistant for Varuna — an advanced AI-powered platform for SIH26057: Automated Underwater Marine Debris and Anomaly Detection System using Side-Scan Sonar (SSS) Imagery.
 
 ${context}
 

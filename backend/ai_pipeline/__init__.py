@@ -1,5 +1,5 @@
 """
-VARUNA AI - AI & CV Pipeline for Side-Scan Sonar Marine Debris Detection.
+VARUNA - AI & CV Pipeline for Side-Scan Sonar Marine Debris Detection.
 """
 
 from .synthetic_generator import SyntheticSonarGenerator, CLASSES, CLASS_TO_IDX, IDX_TO_CLASS

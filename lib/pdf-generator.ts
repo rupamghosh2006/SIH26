@@ -105,7 +105,7 @@ export async function generateAnalyticsPDF(
     // Title Page
     doc.setFontSize(24)
     doc.setTextColor(0, 150, 255)
-    doc.text('Varuna AI CNN Enhancement', pageWidth / 2, 40, { align: 'center' })
+    doc.text('Varuna CNN Enhancement', pageWidth / 2, 40, { align: 'center' })
     
     doc.setFontSize(18)
     doc.setTextColor(0, 0, 0)
@@ -390,7 +390,7 @@ export async function generateAnalyticsPDF(
       doc.setFontSize(8)
       doc.setTextColor(150, 150, 150)
       doc.text(
-        `Page ${i} of ${totalPages} - Varuna AI CNN Enhancement Analytics`,
+        `Page ${i} of ${totalPages} - Varuna CNN Enhancement Analytics`,
         pageWidth / 2,
         pageHeight - 10,
         { align: 'center' }

@@ -23,7 +23,7 @@ def main():
     args = parser.parse_args()
     
     print(f"==================================================")
-    print(f" VARUNA AI: Generating Synthetic Sonar Dataset ")
+    print(f" VARUNA: Generating Synthetic Sonar Dataset ")
     print(f" Target Directory: {args.output}")
     print(f" Train Images: {args.train}, Val Images: {args.val}, Size: {args.size}x{args.size}")
     print(f"==================================================")

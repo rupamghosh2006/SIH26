@@ -1,5 +1,5 @@
 """
-Unified Dataset Normalization and YOLO Converter for VARUNA AI.
+Unified Dataset Normalization and YOLO Converter for VARUNA.
 Merges and converts three sonar imagery sources:
 1. AI4Shipwrecks (Binary segmentation masks -> Connected component bounding boxes -> Class 0: shipwreck)
 2. NOMBO/MILCO (Mine/Object detection annotations -> Class 1: pipe_or_cylinder, Class 3: unknown_anomaly)
@@ -281,7 +281,7 @@ def convert_all_datasets_to_yolo(
     # Generate data.yaml and classes.yaml
     classes_yaml = out_path / "classes.yaml"
     with open(classes_yaml, "w") as f:
-        f.write("# Unified VARUNA AI Class Taxonomy\n")
+        f.write("# Unified VARUNA Class Taxonomy\n")
         for i, c in enumerate(UNIFIED_CLASSES):
             f.write(f"{i}: {c}\n")
 
@@ -304,7 +304,7 @@ def convert_all_datasets_to_yolo(
     }
 
     print("=" * 70)
-    print(" VARUNA AI: Unified YOLO Dataset Generated ")
+    print(" VARUNA: Unified YOLO Dataset Generated ")
     print(f" Output: {out_path.resolve()}")
     print(f" Train Images: {len(train_set)} (Real: {source_counts['real']['train']}, Synth: {source_counts['synthetic']['train']})")
     print(f" Val Images: {len(val_set)} (Real: {source_counts['real']['val']}, Synth: {source_counts['synthetic']['val']})")

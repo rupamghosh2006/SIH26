@@ -1,6 +1,6 @@
-# VARUNA AI — Quickstart & Execution Guide
+# VARUNA — Quickstart & Execution Guide
 
-> Step-by-step guide to installing, configuring, running, and testing the VARUNA AI platform locally or via Docker Compose.
+> Step-by-step guide to installing, configuring, running, and testing the VARUNA platform locally or via Docker Compose.
 
 ---
 
@@ -80,7 +80,7 @@ Confirm both microservices are responsive:
    ```json
    {
      "status": "healthy",
-     "service": "Varuna AI",
+     "service": "Varuna",
      "model_loaded": true,
      "model_path": ".../backend/models/yolov8_varuna_active.pt"
    }
@@ -113,7 +113,7 @@ Confirm both microservices are responsive:
 
 ## 5. Running the Automated Test Suite
 
-VARUNA AI includes 50 automated backend unit and integration tests covering the entire acoustic pipeline:
+VARUNA includes 50 automated backend unit and integration tests covering the entire acoustic pipeline:
 
 ```bash
 python -m pytest backend/tests -v

@@ -1,5 +1,5 @@
 """
-Reporting Module for VARUNA AI.
+Reporting Module for VARUNA.
 Generates structured JSON and CSV reports conforming to the standard survey detection schema.
 """
 

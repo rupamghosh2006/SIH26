@@ -28,8 +28,8 @@ def generate_sample_suite(output_dir: str = "backend/sample_data"):
             "w": 1024,
             "h": 1280,
             "objects": 4,
-            "start_lat": 24.5505,
-            "start_lon": -81.7800,
+            "start_lat": 15.8500,
+            "start_lon": 83.9500,
             "heading": 60.0
         },
         {
@@ -39,8 +39,8 @@ def generate_sample_suite(output_dir: str = "backend/sample_data"):
             "w": 1024,
             "h": 1400,
             "objects": 5,
-            "start_lat": 36.6025,
-            "start_lon": -121.8970,
+            "start_lat": 16.5000,
+            "start_lon": 85.2000,
             "heading": 135.0
         }
     ]

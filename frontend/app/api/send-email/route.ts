@@ -233,7 +233,7 @@ The file is attached to this email and can be downloaded.
 
     // Prepare email options
     const mailOptions: any = {
-      from: `"Varuna AI Support" <${hostEmail}>`,
+      from: `"Varuna Support" <${hostEmail}>`,
       to: hostEmail,
       replyTo: replyTo, // Allow direct reply to the sender
       subject: subject,

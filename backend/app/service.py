@@ -1,5 +1,5 @@
 """
-Pipeline Orchestration Service for VARUNA AI.
+Pipeline Orchestration Service for VARUNA.
 Coordinates survey ingestion, async AI pipeline execution, thumbnail extraction,
 and instant demo survey generation.
 """
@@ -55,7 +55,7 @@ def run_survey_pipeline(db: Session, survey_id: str) -> None:
         sonar_pings = None
 
         if file_ext in [".xtf", ".jsf", ".sdf"]:
-            print(f"[VARUNA AI] Parsing raw hydrographic sonar stream: {survey.image_path}")
+            print(f"[VARUNA] Parsing raw hydrographic sonar stream: {survey.image_path}")
             sonar_data = SonarFormatReader.read_sonar_file(survey.image_path)
             image = sonar_data.waterfall_image
             if sonar_data.sensor_altitude_m > 0:
@@ -136,7 +136,7 @@ def run_survey_pipeline(db: Session, survey_id: str) -> None:
                     cv2.putText(ann_img, label, (bx + 2, max(12, by - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 0), 1, cv2.LINE_AA)
                 cv2.imwrite(annotated_path, ann_img)
         except Exception as ann_err:
-            print(f"[VARUNA AI] Warning: Failed to generate annotated image: {ann_err}")
+            print(f"[VARUNA] Warning: Failed to generate annotated image: {ann_err}")
 
         # 5. Save results to database
         crud.save_survey_results(
@@ -147,18 +147,18 @@ def run_survey_pipeline(db: Session, survey_id: str) -> None:
             image_width=w,
             image_height=h
         )
-        print(f"[VARUNA AI] Successfully processed survey {survey_id}: {len(detections)} detections.")
+        print(f"[VARUNA] Successfully processed survey {survey_id}: {len(detections)} detections.")
 
     except Exception as e:
         import traceback
         traceback.print_exc()
         crud.update_survey_status(db, survey_id, status="failed", error_message=str(e))
-        print(f"[VARUNA AI] Failed processing survey {survey_id}: {e}")
+        print(f"[VARUNA] Failed processing survey {survey_id}: {e}")
 
 
 def create_sample_demo_survey(
     db: Session,
-    title: str = "Demo Mission: Monterey Canyon Survey",
+    title: str = "Demo Mission: Bay of Bengal Survey",
     scenario: str = "coastal",
     num_debris: int = 4
 ) -> models.Survey:

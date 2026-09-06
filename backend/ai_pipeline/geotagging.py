@@ -143,8 +143,8 @@ class SonarGeotagger:
     def generate_synthetic_trackline(
         cls,
         num_pings: int = 1024,
-        start_lat: float = 36.6025,
-        start_lon: float = -121.8970,
+        start_lat: float = 16.3500,
+        start_lon: float = 84.5000,
         heading_deg: float = 45.0,
         speed_knots: float = 3.5,
         ping_rate_hz: float = 5.0,
@@ -153,7 +153,7 @@ class SonarGeotagger:
     ) -> "SonarGeotagger":
         """
         Generates a realistic vessel trackline for surveys without explicit GPS logs.
-        Default location: Monterey Bay National Marine Sanctuary.
+        Default location: Bay of Bengal Deep-Water Marine Survey Corridor.
         """
         pings = []
         speed_mps = speed_knots * 0.514444

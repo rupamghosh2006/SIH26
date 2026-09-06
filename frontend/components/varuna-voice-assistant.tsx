@@ -744,7 +744,7 @@ export function VarunaVoiceAssistant() {
                   )}
                 </div>
                 <span className="text-xs font-orbitron text-cyan-300 tracking-wider">
-                  VARUNA AI VOICE
+                  VARUNA VOICE
                 </span>
                 <div
                   className={`w-1.5 h-1.5 rounded-full animate-pulse ${dotColor[state]}`}
@@ -838,7 +838,7 @@ export function VarunaVoiceAssistant() {
                 <div className="text-center py-6">
                   <Shield className="w-8 h-8 text-cyan-500/20 mx-auto mb-2" />
                   <p className="text-[10px] text-cyan-500/40 font-orbitron">
-                    SAY &quot;VARUNA AI&quot; TO ACTIVATE
+                    SAY &quot;VARUNA&quot; TO ACTIVATE
                   </p>
                   <p className="text-[9px] text-cyan-500/25 font-space-mono mt-1">
                     Then ask about threats, readiness, or status
@@ -876,7 +876,7 @@ export function VarunaVoiceAssistant() {
             {/* Hint */}
             <div className="px-4 py-2 border-t border-cyan-500/10 bg-slate-900/30">
               <p className="text-[8px] text-cyan-500/30 font-space-mono text-center">
-                &quot;Varuna AI, current threat level?&quot; &bull; &quot;Varuna AI,
+                &quot;Varuna, current threat level?&quot; &bull; &quot;Varuna,
                 give me a sitrep&quot;
               </p>
             </div>
