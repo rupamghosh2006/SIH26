@@ -86,7 +86,7 @@ def convert_all_datasets_to_yolo(
     include_synthetic: bool = True,
     num_synthetic: int = 300,
     val_ratio: float = 0.20,
-    val_mode: str = "real_only",  # 'real_only', 'all', 'synthetic'
+    val_mode: str = "all",  # 'all' (balanced real + synthetic), 'real_only', 'synthetic'
     seed: int = 42
 ) -> Dict[str, Any]:
     """
@@ -102,9 +102,20 @@ def convert_all_datasets_to_yolo(
     train_lbl_dir = out_path / "labels" / "train"
     val_lbl_dir = out_path / "labels" / "val"
 
-    # Reset/prepare directories
+    # Reset/prepare directories cleanly before regenerating to prevent stale files leaking across splits/runs
     for d in [train_img_dir, val_img_dir, train_lbl_dir, val_lbl_dir]:
+        if d.exists():
+            shutil.rmtree(d)
         os.makedirs(d, exist_ok=True)
+
+    # Remove any existing YOLO label cache files
+    for cache_path in [out_path / "labels" / "train.cache", out_path / "labels" / "val.cache",
+                       out_path / "images" / "train.cache", out_path / "images" / "val.cache"]:
+        if cache_path.exists():
+            try:
+                cache_path.unlink()
+            except OSError:
+                pass
 
     records: List[Dict[str, Any]] = []
 
@@ -249,9 +260,10 @@ def convert_all_datasets_to_yolo(
             src_type = "real" if item["is_real"] else "synthetic"
             source_counts[src_type][split_name] += 1
 
+            orig_stem = Path(item["image_path"]).stem
             orig_ext = os.path.splitext(item["image_path"])[1]
-            out_filename = f"{prefix}{item['source']}_{idx:05d}{orig_ext}"
-            out_lblname = f"{prefix}{item['source']}_{idx:05d}.txt"
+            out_filename = f"{prefix}{orig_stem}{orig_ext}"
+            out_lblname = f"{prefix}{orig_stem}.txt"
 
             shutil.copy2(item["image_path"], str(img_dest_dir / out_filename))
 
