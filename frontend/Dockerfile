@@ -23,13 +23,15 @@ RUN echo 'server { \
         try_files $uri $uri/ /index.html; \
     } \
     location /api/ { \
-        proxy_pass http://backend:8000/api/; \
-        proxy_set_header Host $host; \
+        proxy_pass https://varuna-sonar-backend.onrender.com/api/; \
+        proxy_set_header Host varuna-sonar-backend.onrender.com; \
         proxy_set_header X-Real-IP $remote_addr; \
+        proxy_ssl_server_name on; \
     } \
     location /static/ { \
-        proxy_pass http://backend:8000/static/; \
-        proxy_set_header Host $host; \
+        proxy_pass https://varuna-sonar-backend.onrender.com/static/; \
+        proxy_set_header Host varuna-sonar-backend.onrender.com; \
+        proxy_ssl_server_name on; \
     } \
 }' > /etc/nginx/conf.d/default.conf
 

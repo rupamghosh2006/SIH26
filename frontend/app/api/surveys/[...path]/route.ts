@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const FASTAPI_BASE_URL = process.env.FASTAPI_BASE_URL || "http://127.0.0.1:8000";
-
+const FASTAPI_BASE_URL =
+  process.env.FASTAPI_BASE_URL &&
+  !process.env.FASTAPI_BASE_URL.includes("127.0.0.1") &&
+  !process.env.FASTAPI_BASE_URL.includes("localhost")
+    ? process.env.FASTAPI_BASE_URL
+    : "https://varuna-sonar-backend.onrender.com";
 export async function GET(
   request: NextRequest,
   { params }: { params: any }

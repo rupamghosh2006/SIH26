@@ -26,8 +26,27 @@ const nextConfig = {
   },
   // Configure for Render deployment
   env: {
+    FASTAPI_BASE_URL: "https://varuna-sonar-backend.onrender.com",
+    NEXT_PUBLIC_API_URL: "https://varuna-sonar-backend.onrender.com",
+    NEXT_PUBLIC_BACKEND_URL: "https://varuna-sonar-backend.onrender.com",
     CUSTOM_KEY: process.env.CUSTOM_KEY,
     PORT: process.env.PORT,
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/static/uploads/:path*",
+        destination: "https://varuna-sonar-backend.onrender.com/static/uploads/:path*",
+      },
+      {
+        source: "/static/thumbnails/:path*",
+        destination: "https://varuna-sonar-backend.onrender.com/static/thumbnails/:path*",
+      },
+      {
+        source: "/backend-api/:path*",
+        destination: "https://varuna-sonar-backend.onrender.com/api/:path*",
+      },
+    ];
   },
 }
 

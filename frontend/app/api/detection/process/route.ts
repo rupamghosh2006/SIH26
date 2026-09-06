@@ -11,7 +11,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const fastApiBaseUrl = process.env.FASTAPI_BASE_URL || "http://127.0.0.1:8000";
+    const fastApiBaseUrl =
+      process.env.FASTAPI_BASE_URL &&
+      !process.env.FASTAPI_BASE_URL.includes("127.0.0.1") &&
+      !process.env.FASTAPI_BASE_URL.includes("localhost")
+        ? process.env.FASTAPI_BASE_URL
+        : "https://varuna-sonar-backend.onrender.com";
 
     // Build multipart/form-data for FastAPI /api/surveys/upload
     const uploadData = new FormData();
@@ -49,10 +54,10 @@ export async function POST(request: NextRequest) {
     const surveyId = surveySummary.id;
     console.log(`[Next.js Detection API] Survey created: ${surveyId}. Polling for completion...`);
 
-    // Poll survey until processing completes (up to 30s)
+    // Poll survey until processing completes (up to 90s for cloud inference)
     let surveyDetail: any = null;
-    const maxPolls = 60;
-    const pollIntervalMs = 500;
+    const maxPolls = 90;
+    const pollIntervalMs = 1000;
 
     for (let i = 0; i < maxPolls; i++) {
       await new Promise((r) => setTimeout(r, pollIntervalMs));
