@@ -14,6 +14,9 @@ import {
   ImageIcon,
   Video,
   Map,
+  AlertTriangle,
+  Info,
+  X,
 } from "lucide-react";
 import HolographicCard from "./holographic-card";
 import DetectionResultsEnhanced from "./detection-results-enhanced";
@@ -162,6 +165,8 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
   const [activeTab, setActiveTab] = useState("image");
   const [latitude, setLatitude] = useState<string>("");
   const [longitude, setLongitude] = useState<string>("");
+  const [backendNotice, setBackendNotice] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSelectSample = async (sample: typeof DEMO_SAMPLES[0]) => {
@@ -360,15 +365,20 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
           });
         }
         
+        if (result.notice || result.isEdgeFallback) {
+          setBackendNotice(result.notice || "Processed via Varuna Edge Sonar Pipeline (FastAPI backend service offline).");
+        } else {
+          setBackendNotice(null);
+        }
+        setErrorMessage(null);
         setSelectedFile(null);
       } else {
         throw new Error("Detection failed");
       }
     } catch (error) {
       console.error("Detection error:", error);
-      alert(
-        `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      setErrorMessage(`Detection notice: ${msg}`);
     } finally {
       setIsProcessing(false);
       setProcessingProgress(0);
@@ -474,9 +484,8 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
       }
     } catch (error) {
       console.error("Video detection error:", error);
-      alert(
-        `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      setErrorMessage(`Video detection notice: ${msg}`);
     } finally {
       setIsProcessing(false);
       setProcessingProgress(0);
@@ -513,6 +522,41 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
 
   return (
     <div className="space-y-6">
+      {/* Tactical Status & Diagnostics Banners */}
+      {backendNotice && (
+        <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center justify-between text-xs text-amber-300 font-space-mono shadow-md backdrop-blur-sm">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
+            <span className="font-bold text-amber-400 uppercase tracking-wider">[EDGE INTELLIGENCE ACTIVE]</span>
+            <span>{backendNotice}</span>
+          </div>
+          <button
+            onClick={() => setBackendNotice(null)}
+            className="text-amber-400 hover:text-white p-1 rounded transition-colors ml-2 flex-shrink-0"
+            title="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center justify-between text-xs text-red-300 font-space-mono shadow-md backdrop-blur-sm">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
+            <span className="font-bold text-red-400 uppercase tracking-wider">[SYSTEM NOTICE]</span>
+            <span>{errorMessage}</span>
+          </div>
+          <button
+            onClick={() => setErrorMessage(null)}
+            className="text-red-400 hover:text-white p-1 rounded transition-colors ml-2 flex-shrink-0"
+            title="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* System metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <TacticalStat
