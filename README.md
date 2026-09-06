@@ -80,9 +80,22 @@ VARUNA processes raw side-scan sonar waterfall logs through a modular four-stage
 
 ## 6. Marine Debris Classification Taxonomy
 
-The live production model operates on dual-channel Side-Scan Sonar (SSS) imagery and detects 4 primary benthic hazard categories: `shipwreck` (high navigational hazard), `pipe_or_cylinder` (subsea infrastructure risk), `net_or_entangled_debris` (critical ALDFG ghost net ecological threat), and `unknown_anomaly` (flagged for hydrographer review). An earlier 8-class taxonomy evaluated on Forward-Looking Sonar (FLS) is retained for research comparison but is not part of the active production pipeline due to sensor geometry differences.
+VARUNA classifies acoustic echoes into 8 benthic hazard categories:
 
-> *For the full taxonomy table and sensor geometry distinctions, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#2-marine-debris-classification-taxonomy).*
+| Class ID | Category Name | Acoustic Characteristics | Ecological / Economic Risk |
+| :---: | :--- | :--- | :---: |
+| `0` | **Ghost Net (ALDFG)** | High acoustic backscatter with entangled, diffuse cast shadows | ![Critical Risk](https://img.shields.io/badge/Critical%20Risk-EA3943?style=flat-square) |
+| `1` | **Fishing Gear and Lines** | Linear cordage, longlines, buoy ropes, anchor cables | ![High Risk](https://img.shields.io/badge/High%20Risk-F97316?style=flat-square) |
+| `2` | **Rubber Tires** | Circular specular highlight with central void acoustic shadow | ![Medium Risk](https://img.shields.io/badge/Medium%20Risk-EAB308?style=flat-square) |
+| `3` | **Containers and Drums** | Rectangular hard edges with elongated geometric cast shadows | ![Critical Risk](https://img.shields.io/badge/Critical%20Risk-EA3943?style=flat-square) |
+| `4` | **Metal Debris** | Strong specular reflectance with sharp acoustic blockage | ![High Risk](https://img.shields.io/badge/High%20Risk-F97316?style=flat-square) |
+| `5` | **Shipwreck Fragments** | Multi-structural acoustic scatter and extensive shadow fields | ![Moderate Risk](https://img.shields.io/badge/Moderate%20Risk-F59E0B?style=flat-square) |
+| `6` | **Rock Clusters** | Natural geological formations (Shadow-filtered to suppress false triggers) | ![Non-Hazardous](https://img.shields.io/badge/Non--Hazardous-10B981?style=flat-square) |
+| `7` | **Unknown Anomalies** | Unidentified acoustic targets flagged for human operator review | ![Review Required](https://img.shields.io/badge/Review%20Required-EAB308?style=flat-square) |
+
+The live production model operates on dual-channel Side-Scan Sonar (SSS) imagery and detects 4 consolidated hazard categories (`shipwreck`, `pipe_or_cylinder`, `net_or_entangled_debris`, and `unknown_anomaly`), while the 8-class taxonomy is evaluated across benchmark Forward-Looking Sonar (FLS) datasets.
+
+> *For the full taxonomy breakdown and sensor geometry distinctions, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#2-marine-debris-classification-taxonomy).*
 
 ---
 
