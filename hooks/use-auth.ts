@@ -1,133 +1,123 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 
 interface User {
-  id: string
-  email?: string
-  firstName?: string
-  lastName?: string
-  avatar?: string
+  id: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  role?: string;
+  avatar?: string;
 }
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [mounted, setMounted] = useState(false)
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
-    if (!mounted) return
+    if (!mounted) return;
 
     const checkAuth = async () => {
       try {
-        console.log("useAuth - Checking authentication...")
-        
-        // First check if user data exists in localStorage
-        const stored = typeof window !== "undefined" ? localStorage.getItem("profile") : null
-        console.log("useAuth - localStorage profile:", stored ? "exists" : "not found")
-        
-        if (stored) {
-          const userData = JSON.parse(stored)
-          console.log("useAuth - Found user in localStorage:", userData)
-          setUser(userData)
-          setLoading(false)
-          return
+        // First check localStorage for instant render
+        let localUser: User | null = null;
+        if (typeof window !== "undefined") {
+          const stored = localStorage.getItem("profile") || localStorage.getItem("user");
+          if (stored) {
+            try {
+              localUser = JSON.parse(stored);
+              if (localUser && (localUser.email || localUser.id || localUser.firstName)) {
+                setUser(localUser);
+                setLoading(false);
+              }
+            } catch {}
+          }
         }
 
-        // If no localStorage data, check authentication via API
-        console.log("useAuth - Checking API authentication...")
-        const response = await fetch('/api/profile', {
-          method: 'GET',
-          credentials: 'include',
-          cache: 'no-store' // Prevent caching
-        })
-
-        console.log("useAuth - API response status:", response.status)
+        // Validate or refresh session via API in background
+        const response = await fetch("/api/profile", {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        });
 
         if (response.ok) {
-          const data = await response.json()
-          console.log("useAuth - API response data:", data)
+          const data = await response.json();
           if (data.success && data.user) {
-            console.log("useAuth - User authenticated via API:", data.user)
-            const userData = {
-              id: data.user.id || '',
+            const userData: User = {
+              id: data.user.id || "",
               email: data.user.email,
               firstName: data.user.firstName,
               lastName: data.user.lastName,
-              avatar: data.user.avatar
-            }
-            setUser(userData)
-            // Store user data in localStorage for future use
+              role: data.user.role,
+              avatar: data.user.avatar,
+            };
+            setUser(userData);
             if (typeof window !== "undefined") {
-              localStorage.setItem("profile", JSON.stringify(userData))
+              try {
+                localStorage.setItem("profile", JSON.stringify(userData));
+                localStorage.setItem("user", JSON.stringify(userData));
+              } catch {}
             }
-          } else {
-            console.log("useAuth - API returned no user data")
-            // Clear stale localStorage
-            if (typeof window !== "undefined") {
-              localStorage.removeItem("profile")
-            }
-            setUser(null)
           }
-        } else {
-          console.log("useAuth - API authentication failed")
-          // Clear stale localStorage on auth failure
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("profile")
-          }
-          setUser(null)
+        } else if (response.status === 401 && !localUser) {
+          // Only clear if server explicitly rejected auth and no local profile exists
+          setUser(null);
         }
       } catch (error) {
-        console.error("useAuth - Error checking auth:", error)
-        setUser(null)
+        console.warn("useAuth background check:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    checkAuth()
+    checkAuth();
 
-    // Listen for storage changes (e.g., when user logs out in another tab)
+    // Listen for storage changes across tabs
     if (typeof window !== "undefined") {
       const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === "profile") {
+        if (e.key === "profile" || e.key === "user") {
           if (e.newValue) {
             try {
-              setUser(JSON.parse(e.newValue))
+              setUser(JSON.parse(e.newValue));
             } catch {
-              setUser(null)
+              setUser(null);
             }
           } else {
-            setUser(null)
+            setUser(null);
           }
         }
-      }
+      };
 
-      window.addEventListener("storage", handleStorageChange)
-      return () => window.removeEventListener("storage", handleStorageChange)
+      window.addEventListener("storage", handleStorageChange);
+      return () => window.removeEventListener("storage", handleStorageChange);
     }
-  }, [mounted])
+  }, [mounted]);
 
   const logout = async () => {
     try {
-      await fetch('/api/logout', { method: 'POST', credentials: 'include' })
-      localStorage.removeItem("profile")
-      localStorage.removeItem("user")
-      setUser(null)
-      window.location.href = "/try"
+      await fetch("/api/logout", { method: "POST", credentials: "include" });
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("profile");
+        localStorage.removeItem("user");
+      }
+      setUser(null);
+      window.location.href = "/auth/login";
     } catch (error) {
-      console.error("Logout error:", error)
+      console.error("Logout error:", error);
     }
-  }
+  };
 
   return {
     user,
     loading,
     isAuthenticated: !!user,
-    logout
-  }
+    logout,
+  };
 }

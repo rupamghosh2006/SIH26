@@ -13,27 +13,21 @@ export function middleware(request: NextRequest) {
     "/analytics",
     "/watchlist",
   ];
-  const authPages = ["/auth/login", "/auth/register"];
 
   const isProtectedRoute = protectedRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
-  const isAuthPage = authPages.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
 
+  // If visiting protected route without an auth token, redirect smoothly to login
   if (isProtectedRoute && !authToken) {
-    return NextResponse.redirect(new URL("/try", request.url));
-  }
-
-  if (isAuthPage && authToken) {
-    return NextResponse.redirect(new URL("/profile", request.url));
+    const loginUrl = new URL("/auth/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|public|logos|docs).*)"],
 };
-

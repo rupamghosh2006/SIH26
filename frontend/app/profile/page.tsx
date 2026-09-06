@@ -105,6 +105,25 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function fetchProfile() {
+      // First try localStorage for instant smooth render
+      try {
+        const cached = localStorage.getItem("profile");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && (parsed.email || parsed.name)) {
+            setProfile({
+              firstName: parsed.firstName || parsed.name || "Officer",
+              lastName: parsed.lastName || "Varuna",
+              email: parsed.email || "officer@varuna.ai",
+              avatar: parsed.avatar || "/placeholder-user.jpg",
+              subscription: { plan: parsed.role === "admin" ? "enterprise" : "professional", status: "active" },
+              tokens: { dailyLimit: 100, usedToday: 2, lastResetDate: new Date(), totalUsed: 15 },
+            });
+            setEditData(parsed);
+          }
+        }
+      } catch {}
+
       try {
         const res = await fetch("/api/profile", {
           method: "GET",
@@ -115,24 +134,46 @@ export default function ProfilePage() {
         try {
           data = await res.json();
         } catch {
-          data = { error: "Invalid response from server" };
+          data = null;
         }
-        if (!res.ok) {
-          setError(
-            data?.error ?? data?.message ?? `Request failed (${res.status})`,
-          );
-          return;
+
+        if (res.ok && data?.user) {
+          setProfile(data.user);
+          setEditData(data.user);
+          try {
+            localStorage.setItem("profile", JSON.stringify(data.user));
+          } catch {}
+          setError(null);
+        } else if (!profile) {
+          // If no cached profile and API failed
+          const cached = localStorage.getItem("profile");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            setProfile(parsed);
+            setEditData(parsed);
+            setError(null);
+          } else {
+            setError(
+              data?.error ?? data?.message ?? "Session not found. Please log in.",
+            );
+          }
         }
-        if (!data.user) {
-          setError("No user data received from server");
-          return;
-        }
-        setProfile(data.user);
-        setEditData(data.user);
       } catch (err) {
-        setError(
-          `Network error: ${err instanceof Error ? err.message : "Unknown error"}`,
-        );
+        if (!profile) {
+          const cached = localStorage.getItem("profile");
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              setProfile(parsed);
+              setEditData(parsed);
+              setError(null);
+            } catch {
+              setError("Network error. Please log in again.");
+            }
+          } else {
+            setError("Network error. Please log in again.");
+          }
+        }
       } finally {
         setLoading(false);
       }

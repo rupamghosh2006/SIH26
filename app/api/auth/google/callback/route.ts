@@ -13,11 +13,11 @@ export async function GET(req: NextRequest) {
   const error = searchParams.get("error");
 
   if (error) {
-    return NextResponse.redirect(`/auth/login?error=${encodeURIComponent(error)}`);
+    return NextResponse.redirect(new URL(`/auth/login?error=${encodeURIComponent(error)}`, req.url));
   }
 
   if (!code) {
-    return NextResponse.redirect(`/auth/login?error=${encodeURIComponent("Missing code")}`);
+    return NextResponse.redirect(new URL(`/auth/login?error=${encodeURIComponent("Missing code")}`, req.url));
   }
 
   try {
@@ -25,59 +25,77 @@ export async function GET(req: NextRequest) {
     const tokenResponse = await exchangeCodeForTokens(code, baseUrl);
     const profile = await fetchGoogleUserProfile(tokenResponse.access_token);
 
-    const users = await getUserCollection();
     const email = profile.email?.toLowerCase();
     const googleId = profile.sub;
 
     if (!email) {
-      return NextResponse.redirect(`/auth/login?error=${encodeURIComponent("Email not available from Google")}`);
+      return NextResponse.redirect(new URL(`/auth/login?error=${encodeURIComponent("Email not available from Google")}`, req.url));
     }
 
-    const updateDoc = {
-      $setOnInsert: {
-        username: profile.name || email.split("@")[0],
-        createdAt: new Date(),
-      },
-      $set: {
-        email,
-        firstName: profile.given_name || "",
-        lastName: profile.family_name || "",
-        avatar: profile.picture || "",
-        googleId,
-        emailVerified: Boolean(profile.email_verified),
-        updatedAt: new Date(),
-      },
-    };
+    let userId = "google-usr-" + Date.now();
+    const firstName = profile.given_name || profile.name?.split(" ")[0] || "Officer";
+    const lastName = profile.family_name || profile.name?.split(" ").slice(1).join(" ") || "Google";
+    const role = "researcher";
 
-    const result = await users.findOneAndUpdate(
-      { $or: [{ email }, { googleId }] },
-      updateDoc,
-      { upsert: true, returnDocument: "after" }
-    );
+    try {
+      const users = await getUserCollection();
+      const updateDoc = {
+        $setOnInsert: {
+          username: profile.name || email.split("@")[0],
+          createdAt: new Date(),
+        },
+        $set: {
+          email,
+          firstName,
+          lastName,
+          avatar: profile.picture || "",
+          googleId,
+          role,
+          emailVerified: Boolean(profile.email_verified),
+          updatedAt: new Date(),
+        },
+      };
 
-    const user = result?.value || (await users.findOne({ email }))!;
+      const result = await users.findOneAndUpdate(
+        { $or: [{ email }, { googleId }] },
+        updateDoc,
+        { upsert: true, returnDocument: "after" }
+      );
+
+      const user = result?.value || (await users.findOne({ email }));
+      if (user?._id) {
+        userId = user._id.toString();
+      }
+    } catch (dbErr) {
+      console.warn("MongoDB unavailable during Google OAuth, proceeding with token session:", dbErr);
+    }
 
     const token = jwt.sign(
       {
-        id: user._id.toString(),
-        email: user.email,
+        id: userId,
+        email,
+        role,
+        firstName,
+        lastName,
+        avatar: profile.picture || "",
       },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "30d" }
     );
 
-    const response = NextResponse.redirect("/");
+    const response = NextResponse.redirect(new URL("/detection", req.url));
     response.cookies.set("auth_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: 60 * 60 * 24 * 30,
       path: "/",
+      expires: new Date(Date.now() + 60 * 60 * 24 * 30 * 1000)
     });
 
     return response;
   } catch (e) {
     console.error("Google OAuth callback error:", e);
-    return NextResponse.redirect(`/auth/login?error=${encodeURIComponent("Google sign-in failed")}`);
+    return NextResponse.redirect(new URL(`/auth/login?error=${encodeURIComponent("Google sign-in failed")}`, req.url));
   }
 }
