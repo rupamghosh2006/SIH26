@@ -97,9 +97,9 @@ export function HomePageEnhanced() {
       icon: Target,
       title: "YOLOv8 & U-Net Debris Detection",
       description:
-        "Automated bounding box detection and semantic segmentation for ghost nets, shipwrecks, cylindrical pipes, and submerged hazards",
+        "Automated detection and segmentation for ghost nets / entangled debris, pipes and cylinders, shipwrecks, and unknown seafloor anomalies",
       color: "emerald",
-      highlights: ["Ghost Nets", "Pipe Cylinders", "Shipwreck Frags"],
+      highlights: ["Ghost Nets", "Pipe Cylinders", "Shipwreck Frags", "Unknown Anomaly"],
       href: "/detection",
     },
     {
@@ -109,7 +109,7 @@ export function HomePageEnhanced() {
         "Physics-based acoustic shadow validation and speckle noise suppression minimizing false alarms from rock clusters and sand ripples",
       color: "cyan",
       highlights: ["Shadow Physics", "Speckle Reduction", "0-100% Score"],
-      href: "/cnn",
+      href: "/detection",
     },
     {
       icon: BarChart3,
@@ -133,9 +133,15 @@ export function HomePageEnhanced() {
 
   const techStack = [
     { icon: Brain, label: "YOLOv8", desc: "Debris Detection" },
-    { icon: Layers, label: "Acoustic CNN", desc: "Waterfall Enhancement" },
     { icon: Globe, label: "Next.js 14", desc: "Tactical Dashboard" },
     { icon: Cpu, label: "FastAPI / ONNX", desc: "Edge Inference" },
+  ];
+
+  const validationMetrics = [
+    { label: "mAP@50", value: "95.9%", detail: "Detection accuracy" },
+    { label: "mAP@50–95", value: "85.2%", detail: "Across IoU thresholds" },
+    { label: "Precision", value: "86.7%", detail: "Positive predictions" },
+    { label: "Recall", value: "91.8%", detail: "Targets recovered" },
   ];
 
   return (
@@ -210,7 +216,7 @@ export function HomePageEnhanced() {
                 className={`w-full transition-all duration-700 delay-300 ${heroLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
               >
                 <p className="text-base md:text-lg text-cyan-200/70 max-w-xl text-left leading-relaxed font-space-mono">
-                  Automated Underwater Marine Debris & Anomaly Detection System using Side-Scan Sonar Imagery (Ghost Nets, Fishing Gear, Tires, Industrial Containers, Subsea Metal, Shipwrecks)
+                  Automated underwater debris and anomaly detection from side-scan sonar: ghost nets / entangled debris, pipes and cylinders, shipwrecks, and unknown seafloor anomalies.
                 </p>
               </div>
 
@@ -266,17 +272,8 @@ export function HomePageEnhanced() {
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                     <span className="relative z-10 flex items-center gap-2">
                       <Target className="w-4 h-4" />
-                      LAUNCH AI DEBRIS DETECTION & MAP
+                      LAUNCH DEBRIS DETECTION
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </span>
-                  </button>
-                </Link>
-
-                <Link href="/detection">
-                  <button className="group px-7 py-3.5 glass-card hover:border-cyan-400/40 text-cyan-300 hover:text-cyan-200 font-black text-sm rounded-xl transition-all duration-300 hover:scale-[1.03] font-orbitron tracking-wider hover-glow cursor-pointer">
-                    <span className="flex items-center gap-2">
-                      <Target className="w-4 h-4" />
-                      SONAR PIPELINE & MAP
                     </span>
                   </button>
                 </Link>
@@ -545,6 +542,59 @@ export function HomePageEnhanced() {
       </section>
 
       {/* ═══════════════════════════════════════════════ */}
+      {/* MODEL PERFORMANCE SECTION                       */}
+      {/* ═══════════════════════════════════════════════ */}
+      <section id="model-performance" className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-cyan-950/25 to-slate-950 py-24 lg:py-28">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/30 to-transparent" />
+        <div className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-400/[0.05] blur-[120px]" />
+
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <RevealSection>
+            <div className="mx-auto mb-12 max-w-3xl text-center">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/[0.06] px-3 py-1">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />
+                <span className="font-space-mono text-[10px] font-bold uppercase tracking-widest text-emerald-200/80">
+                  Validated results
+                </span>
+              </div>
+              <h2 className="font-orbitron text-4xl font-black gradient-text-ocean md:text-5xl">
+                MODEL PERFORMANCE
+              </h2>
+              <p className="mt-4 text-base font-space-mono text-cyan-100/55">
+                Measured performance from a clean, leak-free validation split.
+              </p>
+            </div>
+          </RevealSection>
+
+          <RevealSection delay={0.1}>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {validationMetrics.map((metric, index) => (
+                <div key={metric.label} className="group relative overflow-hidden rounded-2xl border border-cyan-400/15 bg-slate-900/60 p-5 backdrop-blur-xl transition-colors duration-300 hover:border-emerald-300/40">
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-300/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                  <div className="mb-5 flex items-center justify-between">
+                    <span className="font-space-mono text-[10px] font-bold uppercase tracking-widest text-cyan-200/55">
+                      {metric.label}
+                    </span>
+                    <Gauge className={`h-4 w-4 ${index % 2 === 0 ? "text-cyan-300" : "text-emerald-300"}`} />
+                  </div>
+                  <div className="font-orbitron text-3xl font-black text-emerald-300">
+                    {metric.value}
+                  </div>
+                  <p className="mt-2 font-space-mono text-xs text-slate-400">{metric.detail}</p>
+                </div>
+              ))}
+            </div>
+          </RevealSection>
+
+          <RevealSection delay={0.2}>
+            <p className="mx-auto mt-7 max-w-4xl rounded-xl border border-cyan-400/10 bg-slate-950/40 px-5 py-4 text-center font-space-mono text-sm leading-relaxed text-cyan-100/65">
+              Validated on a clean, leak-free split of real AUV sonar imagery (AI4Shipwrecks, NOMBO/MILCO) and physics-modeled synthetic sonar for ghost net detection.
+            </p>
+          </RevealSection>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════ */}
       {/* SOLUTIONS SECTION                               */}
       {/* ═══════════════════════════════════════════════ */}
       <section className="relative py-24 lg:py-32 bg-gradient-to-br from-slate-950 via-blue-950/30 to-slate-950 overflow-hidden">
@@ -563,60 +613,14 @@ export function HomePageEnhanced() {
                 AI-POWERED SOLUTIONS
               </h2>
               <p className="text-base text-cyan-200/50 max-w-2xl mx-auto font-space-mono">
-                Advanced platform combining CNN image processing and object
-                detection
+                Debris detection and geotagged reporting for side-scan sonar surveys.
               </p>
             </div>
           </RevealSection>
 
-          <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-            {/* CNN Card */}
-            <RevealSection delay={0.1}>
-              <Link href="/cnn" className="block h-full">
-                <div className="group relative glass-card rounded-2xl p-7 hover:border-cyan-400/50 transition-all duration-500 hover-lift overflow-hidden h-full">
-                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
-
-                  <div className="relative z-10">
-                    <div className="w-16 h-16 mb-5 bg-gradient-to-br from-cyan-500/15 to-blue-500/15 rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 border border-cyan-500/20">
-                      <Brain className="w-8 h-8 text-cyan-400" />
-                    </div>
-
-                    <h3 className="text-2xl font-black text-white mb-3 font-orbitron group-hover:text-cyan-100 transition-colors">
-                      CNN ENHANCEMENT
-                    </h3>
-                    <p className="text-sm text-cyan-200/50 mb-5 leading-relaxed">
-                      Advanced Convolutional Neural Network for underwater image
-                      and video enhancement with real-time processing
-                    </p>
-
-                    <div className="space-y-2 mb-5">
-                      {[
-                        "Image Enhancement",
-                        "Video Processing",
-                        "Quality Metrics",
-                        "Real-time Analysis",
-                      ].map((f, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center text-emerald-400/70 group-hover:text-emerald-300/80 transition-colors"
-                        >
-                          <CheckCircle2 className="w-4 h-4 mr-2.5 flex-shrink-0" />
-                          <span className="text-sm font-space-mono">{f}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center text-cyan-400/60 group-hover:text-cyan-300 font-bold font-orbitron text-sm tracking-wider transition-colors">
-                      <span>Explore</span>
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1.5 transition-transform" />
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </RevealSection>
-
+          <div className="max-w-2xl mx-auto">
             {/* Detection Card */}
-            <RevealSection delay={0.25}>
+            <RevealSection delay={0.1}>
               <Link href="/detection" className="block h-full">
                 <div className="group relative glass-card rounded-2xl p-7 hover:border-emerald-400/50 transition-all duration-500 hover-lift overflow-hidden h-full">
                   <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
@@ -630,14 +634,14 @@ export function HomePageEnhanced() {
                       DEBRIS DETECTION
                     </h3>
                     <p className="text-sm text-cyan-200/50 mb-5 leading-relaxed">
-                      AI-powered object detection for ghost nets, discarded fishing gear, tires, containers, metal debris, and shipwrecks with YOLOv8 technology
+                      YOLOv8 detects ghost nets / entangled debris, pipe or cylinder targets, shipwrecks, and unknown seafloor anomalies.
                     </p>
 
                     <div className="space-y-2 mb-5">
                       {[
                         "YOLOv8 Detection",
                         "Acoustic Shadow Verification",
-                        "8 Debris Categories",
+                        "4 Debris Categories",
                         "Ecological Risk Assessment",
                       ].map((f, i) => (
                         <div
