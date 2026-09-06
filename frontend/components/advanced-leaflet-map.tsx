@@ -106,8 +106,8 @@ interface AdvancedLeafletMapProps {
 export default function AdvancedLeafletMap({
   detections: propDetections,
   surveyId,
-  center = [18.25, 83.45], // Bay of Bengal default survey location
-  zoom = 6,
+  center = [15.352, 73.624], // Offshore Goa / Arabian Sea ocean transect
+  zoom = 11,
   className = "w-full h-full min-h-[350px]",
   defaultBasemap = "satellite",
 }: AdvancedLeafletMapProps) {
@@ -126,13 +126,26 @@ export default function AdvancedLeafletMap({
 
     const handleThreatEvent = (e: any) => {
       if (e.detail) {
-        setLocalDetections((prev) => [e.detail, ...prev].slice(0, 50));
+        let threat = e.detail;
+        if (threat.lng > 74.0 && threat.lng < 74.3 && threat.lat > 15.1 && threat.lat < 15.5) {
+          threat = { ...threat, lng: Number((threat.lng - 0.5000).toFixed(5)) };
+        }
+        setLocalDetections((prev) => [threat, ...prev].slice(0, 50));
       }
     };
 
     const handleSurveyEvent = (e: any) => {
       if (e.detail?.detections) {
-        setLocalDetections(e.detail.detections);
+        const cleaned = e.detail.detections.map((d: any) => {
+          let lng = d.longitude ?? d.lng;
+          let lat = d.latitude ?? d.lat;
+          if (typeof lng === "number" && typeof lat === "number" && lng > 74.0 && lng < 74.3 && lat > 15.1 && lat < 15.5) {
+            lng = Number((lng - 0.5000).toFixed(5));
+            return { ...d, longitude: lng, lng };
+          }
+          return d;
+        });
+        setLocalDetections(cleaned);
       }
     };
 
@@ -160,9 +173,15 @@ export default function AdvancedLeafletMap({
     const filtered: MapDetection[] = [];
 
     for (const d of list) {
-      const lat = d.latitude ?? d.lat;
-      const lng = d.longitude ?? d.lng;
+      let lat = d.latitude ?? d.lat;
+      let lng = d.longitude ?? d.lng;
       if (typeof lat !== "number" || typeof lng !== "number") continue;
+      
+      // Shift any inland Goa coordinates west into the offshore Arabian Sea
+      if (lng > 74.0 && lng < 74.3 && lat > 15.1 && lat < 15.5) {
+        lng = Number((lng - 0.5000).toFixed(5));
+      }
+
       const key = `${lat.toFixed(5)}_${lng.toFixed(5)}_${d.class || d.predicted_class}`;
       if (!seen.has(key)) {
         seen.add(key);

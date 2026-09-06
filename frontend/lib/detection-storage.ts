@@ -51,15 +51,59 @@ export function loadDetections(): StoredDetection[] {
     const parsed: StoredDetection[] = JSON.parse(stored)
     if (!Array.isArray(parsed)) return []
 
-    // Support both legacy 0-1 and current 0-100 threat-score formats.
-    const normalized = parsed.map((detection) => ({
-      ...detection,
-      overallThreatScore: normalizeOverallThreatScore(detection.overallThreatScore),
-    }))
+    // Support both legacy 0-1 and current 0-100 threat-score formats,
+    // and automatically shift any legacy inland coordinates west into the ocean offshore Goa
+    const normalized = parsed.map((detection) => {
+      let lat = detection.lat;
+      let lng = detection.lng;
+      if (typeof lng === "number" && typeof lat === "number" && lng > 74.0 && lng < 74.3 && lat > 15.1 && lat < 15.5) {
+        lng = Number((lng - 0.5000).toFixed(5));
+      }
+      const updatedDets = (detection.detections || []).map((d: any) => {
+        let dLat = d.latitude ?? d.lat;
+        let dLng = d.longitude ?? d.lng ?? d.lon;
+        if (typeof dLng === "number" && typeof dLat === "number" && dLng > 74.0 && dLng < 74.3 && dLat > 15.1 && dLat < 15.5) {
+          dLng = Number((dLng - 0.5000).toFixed(5));
+          return { ...d, latitude: dLat, longitude: dLng, lat: dLat, lon: dLng, lng: dLng };
+        }
+        return d;
+      });
 
-    // Persist migrated scores once to keep subsequent reads consistent.
+      return {
+        ...detection,
+        lat,
+        lng,
+        detections: updatedDets,
+        overallThreatScore: normalizeOverallThreatScore(detection.overallThreatScore),
+      };
+    });
+
+    // Also migrate activeThreats in localStorage to ocean if needed
+    try {
+      const activeRaw = localStorage.getItem("activeThreats");
+      if (activeRaw) {
+        const threats = JSON.parse(activeRaw);
+        if (Array.isArray(threats)) {
+          let modified = false;
+          const updatedThreats = threats.map((t: any) => {
+            if (t.lng > 74.0 && t.lng < 74.3 && t.lat > 15.1 && t.lat < 15.5) {
+              modified = true;
+              return { ...t, lng: Number((t.lng - 0.5000).toFixed(5)) };
+            }
+            return t;
+          });
+          if (modified) {
+            localStorage.setItem("activeThreats", JSON.stringify(updatedThreats));
+          }
+        }
+      }
+    } catch (threatErr) {
+      console.warn("Could not migrate activeThreats:", threatErr);
+    }
+
+    // Persist migrated scores and ocean coordinates once to keep subsequent reads consistent.
     if (JSON.stringify(parsed) !== JSON.stringify(normalized)) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
     }
 
     return normalized

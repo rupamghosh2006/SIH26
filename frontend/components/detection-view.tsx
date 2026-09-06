@@ -86,56 +86,56 @@ export const DEMO_SAMPLES = [
     label: "Ghost Net #1",
     category: "Net / ALDFG",
     badge: "98% Conf",
-    lat: "15.2993",
-    lng: "74.1240",
+    lat: "15.3520",
+    lng: "73.6240",
   },
   {
     filename: "ghost_net_sample_sss_02.jpg",
     label: "Ghost Net #2",
     category: "Net / ALDFG",
     badge: "84% Conf",
-    lat: "15.3120",
-    lng: "74.1355",
+    lat: "15.3650",
+    lng: "73.6355",
   },
   {
     filename: "shipwreck_sample_sss_01.jpg",
     label: "Shipwreck #1",
     category: "Shipwreck Hull",
     badge: "91% Conf",
-    lat: "15.2811",
-    lng: "74.1082",
+    lat: "15.3311",
+    lng: "73.6082",
   },
   {
     filename: "shipwreck_sample_sss_02.jpg",
     label: "Shipwreck #2",
     category: "Shipwreck Keel",
     badge: "79% Conf",
-    lat: "15.2750",
-    lng: "74.0990",
+    lat: "15.3250",
+    lng: "73.5990",
   },
   {
     filename: "pipe_cylinder_sample_sss_01.jpg",
     label: "Pipeline #1",
     category: "Subsea Pipe",
     badge: "73% Conf",
-    lat: "15.3250",
-    lng: "74.1520",
+    lat: "15.3850",
+    lng: "73.6520",
   },
   {
     filename: "pipe_cylinder_sample_sss_02.jpg",
     label: "Pipeline #2",
     category: "Subsea Pipe",
     badge: "70% Conf",
-    lat: "15.3310",
-    lng: "74.1610",
+    lat: "15.3910",
+    lng: "73.6610",
   },
   {
     filename: "multi_debris_field_sample_01.jpg",
     label: "Multi-Debris",
     category: "Debris Field",
     badge: "Multi-Target",
-    lat: "15.3050",
-    lng: "74.1410",
+    lat: "15.3580",
+    lng: "73.6410",
   },
 ];
 
@@ -696,7 +696,7 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
                     <input 
                       type="number" 
                       step="any"
-                      placeholder="e.g. 15.2993"
+                      placeholder="e.g. 15.3520"
                       value={latitude}
                       onChange={(e) => setLatitude(e.target.value)}
                       className="w-full bg-slate-900 border border-cyan-500/30 rounded-lg px-3 py-2 text-cyan-100 placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 font-space-mono text-sm"
@@ -707,7 +707,7 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
                     <input 
                       type="number" 
                       step="any"
-                      placeholder="e.g. 74.1240"
+                      placeholder="e.g. 73.6240"
                       value={longitude}
                       onChange={(e) => setLongitude(e.target.value)}
                       className="w-full bg-slate-900 border border-cyan-500/30 rounded-lg px-3 py-2 text-cyan-100 placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 font-space-mono text-sm"
@@ -805,7 +805,7 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
                     <input 
                       type="number" 
                       step="any"
-                      placeholder="e.g. 15.2993"
+                      placeholder="e.g. 15.3520"
                       value={latitude}
                       onChange={(e) => setLatitude(e.target.value)}
                       className="w-full bg-slate-900 border border-cyan-500/30 rounded-lg px-3 py-2 text-cyan-100 placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 font-space-mono text-sm"
@@ -816,7 +816,7 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
                     <input 
                       type="number" 
                       step="any"
-                      placeholder="e.g. 74.1240"
+                      placeholder="e.g. 73.6240"
                       value={longitude}
                       onChange={(e) => setLongitude(e.target.value)}
                       className="w-full bg-slate-900 border border-cyan-500/30 rounded-lg px-3 py-2 text-cyan-100 placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 font-space-mono text-sm"
