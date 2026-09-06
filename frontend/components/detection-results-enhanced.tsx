@@ -42,6 +42,11 @@ interface Detection {
   confidence_score?: number;
   confidence_tier?: string;
   estimated_size_m?: string;
+  physical_size_m?: string;
+  entangled_area_m2?: number;
+  polygon?: number[][];
+  seabed_facies?: string;
+  srr_corrected?: boolean;
   latitude?: number;
   longitude?: number;
   thumbnail_url?: string;
@@ -60,6 +65,8 @@ interface DetectionResultProps {
   overallThreatLevel?: string;
   overallThreatScore?: number;
   threatCount?: number;
+  seafloorFacies?: string;
+  srrApplied?: boolean;
   onDelete: (index: number) => void;
   onDownload: (fileData: string, filename: string) => void;
 }
@@ -147,6 +154,8 @@ export default function DetectionResultsEnhanced({
   overallThreatLevel = "MEDIUM",
   overallThreatScore,
   threatCount,
+  seafloorFacies,
+  srrApplied = true,
   onDelete,
   onDownload,
 }: DetectionResultProps) {
@@ -351,6 +360,14 @@ export default function DetectionResultsEnhanced({
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
                 ACTIVE
               </span>
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-space-mono">
+                SRR GROUND-RANGE: ACTIVE
+              </span>
+              {seafloorFacies && (
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 font-space-mono uppercase">
+                  FACIES: {seafloorFacies.replace(/_/g, " ")}
+                </span>
+              )}
             </div>
             <h3 className="text-xl font-bold font-orbitron text-foreground tracking-wide mt-1">
               Side-Scan Sonar Telemetry Log
@@ -559,7 +576,17 @@ export default function DetectionResultsEnhanced({
                             )}
                           </div>
                           <p className="text-[11px] text-slate-400 font-mono mt-0.5">
-                            Acoustic Shadow: <span className="text-emerald-400">Verified</span> | Box: [{detection.bbox ? detection.bbox.map(n => Math.round(n)).join(", ") : "—"}]
+                            Acoustic Shadow: <span className="text-emerald-400 font-semibold">Verified</span>
+                            {detection.physical_size_m && (
+                              <span> | Physical Size: <span className="text-cyan-300 font-bold">{detection.physical_size_m}</span></span>
+                            )}
+                            {detection.entangled_area_m2 ? (
+                              <span> | Net Area: <span className="text-purple-300 font-bold">{detection.entangled_area_m2} m²</span></span>
+                            ) : null}
+                            {detection.seabed_facies && (
+                              <span> | Facies: <span className="text-indigo-300">{detection.seabed_facies.replace(/_/g, " ")}</span></span>
+                            )}
+                            <span> | Box: [{detection.bbox ? detection.bbox.map(n => Math.round(n)).join(", ") : "—"}]</span>
                           </p>
                         </div>
                       </div>

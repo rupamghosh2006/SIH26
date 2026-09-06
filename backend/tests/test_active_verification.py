@@ -6,13 +6,22 @@ and deterministic simulation scenarios for VARUNA AI.
 
 import unittest
 import numpy as np
-from backend.ai_pipeline.active_verification import (
-    assess_verification_need,
-    plan_secondary_rescan,
-    match_secondary_detection,
-    compare_observations,
-    generate_synthetic_rescan_image
-)
+try:
+    from backend.ai_pipeline.active_verification import (
+        assess_verification_need,
+        plan_secondary_rescan,
+        match_secondary_detection,
+        compare_observations,
+        generate_synthetic_rescan_image
+    )
+except ImportError:
+    from ai_pipeline.active_verification import (
+        assess_verification_need,
+        plan_secondary_rescan,
+        match_secondary_detection,
+        compare_observations,
+        generate_synthetic_rescan_image
+    )
 
 
 class TestVerificationNeed(unittest.TestCase):

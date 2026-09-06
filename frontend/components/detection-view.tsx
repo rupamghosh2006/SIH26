@@ -30,6 +30,11 @@ interface Detection {
   threat_level?: string;
   bbox: [number, number, number, number];
   color: string;
+  physical_size_m?: string;
+  entangled_area_m2?: number;
+  polygon?: number[][];
+  seabed_facies?: string;
+  srr_corrected?: boolean;
 }
 
 interface DetectionResult {
@@ -43,6 +48,8 @@ interface DetectionResult {
   overallThreatScore?: number;
   threatCount?: number;
   timestamp?: Date;
+  seafloorFacies?: string;
+  srrApplied?: boolean;
 }
 
 interface DetectionViewProps {
@@ -199,10 +206,11 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
           } catch (e) {}
         }
 
+        const isRawSonar = Boolean(selectedFile.name.match(/\.(xtf|jsf|sdf)$/i));
         const detectionResult: DetectionResult = {
-          originalImage: URL.createObjectURL(selectedFile),
+          originalImage: isRawSonar ? (result.detectedImage || URL.createObjectURL(selectedFile)) : URL.createObjectURL(selectedFile),
           detectedImage: result.detectedImage,
-          originalFileName: result.originalFileName,
+          originalFileName: result.originalFileName || selectedFile.name,
           detections: result.detections,
           processingTime: result.processingTime,
           totalObjects: result.detections.length,
@@ -210,6 +218,8 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
           overallThreatScore: normalizedThreatScore,
           threatCount: result.threatCount,
           timestamp: new Date(),
+          seafloorFacies: result.seafloorFacies || "flat_sand",
+          srrApplied: true,
         };
 
         addDetection({
@@ -451,16 +461,16 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/*,.xtf,.jsf,.sdf"
                   onChange={handleFileUpload}
                   className="hidden"
                 />
                 <Upload className="w-12 h-12 text-cyan-300 mx-auto mb-4" />
                 <p className="text-foreground mb-2 font-semibold">
-                  Click to upload or drag and drop SSS waterfall log
+                  Click to upload or drag and drop SSS waterfall log or raw sonar stream
                 </p>
                 <p className="text-sm text-slate-400">
-                  Supports PNG, JPG, TIFF, BMP sonar records
+                  Supports Raw Hydrographic Streams (.XTF, .JSF, .SDF) and Image records (PNG, JPG, TIFF, BMP)
                 </p>
                 {selectedFile && (
                   <div className="mt-4 p-3 rounded-lg bg-primary/10 border border-primary/30">
@@ -678,6 +688,8 @@ export default function DetectionView({ onResultsUpdate }: DetectionViewProps) {
                   overallThreatLevel={result.overallThreatLevel}
                   overallThreatScore={result.overallThreatScore}
                   threatCount={result.threatCount}
+                  seafloorFacies={result.seafloorFacies}
+                  srrApplied={result.srrApplied}
                   onDelete={deleteResult}
                   onDownload={downloadFile}
                 />

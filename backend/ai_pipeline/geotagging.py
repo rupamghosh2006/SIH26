@@ -57,16 +57,44 @@ class SonarGeotagger:
     def __init__(
         self,
         pings: Optional[List[NavigationPing]] = None,
-        slant_range_m: float = 75.0
+        slant_range_m: float = 75.0,
+        altitude_m: float = 15.0
     ):
         self.slant_range_m = slant_range_m
+        self.altitude_m = altitude_m
         self.pings: List[NavigationPing] = sorted(pings, key=lambda p: p.ping_index) if pings else []
+
+    def set_altitude(self, altitude_m: float) -> None:
+        """Update sensor altitude for SRR calculations."""
+        self.altitude_m = max(0.5, float(altitude_m))
+
+    @classmethod
+    def from_ping_records(
+        cls,
+        ping_dicts: List[Dict[str, Any]],
+        slant_range_m: float = 75.0,
+        altitude_m: float = 15.0
+    ) -> "SonarGeotagger":
+        """Builds geotagger directly from parsed sonar packet records (XTF, JSF, SDF)."""
+        pings = []
+        for p in ping_dicts:
+            pings.append(NavigationPing(
+                ping_index=p.get("ping_index", len(pings)),
+                latitude=float(p.get("lat", p.get("latitude", 0.0))),
+                longitude=float(p.get("lon", p.get("longitude", 0.0))),
+                timestamp=str(p.get("timestamp", "")),
+                depth_m=float(p.get("depth_m", p.get("depth", 20.0))),
+                heading_deg=float(p.get("heading_deg", p.get("heading", 0.0))),
+                speed_knots=float(p.get("speed_knots", p.get("speed", 3.5)))
+            ))
+        return cls(pings=pings, slant_range_m=slant_range_m, altitude_m=altitude_m)
 
     @classmethod
     def from_csv_or_json(
         cls,
         file_path_or_str: str,
-        slant_range_m: float = 75.0
+        slant_range_m: float = 75.0,
+        altitude_m: float = 15.0
     ) -> "SonarGeotagger":
         """
         Loads navigation pings from a CSV or JSON file.
@@ -109,7 +137,7 @@ class SonarGeotagger:
         except Exception as e:
             print(f"Warning: Failed to parse navigation metadata ({e}). Using synthetic trackline.")
             
-        return cls(pings=pings, slant_range_m=slant_range_m)
+        return cls(pings=pings, slant_range_m=slant_range_m, altitude_m=altitude_m)
 
     @classmethod
     def generate_synthetic_trackline(
@@ -120,7 +148,8 @@ class SonarGeotagger:
         heading_deg: float = 45.0,
         speed_knots: float = 3.5,
         ping_rate_hz: float = 5.0,
-        slant_range_m: float = 75.0
+        slant_range_m: float = 75.0,
+        altitude_m: float = 15.0
     ) -> "SonarGeotagger":
         """
         Generates a realistic vessel trackline for surveys without explicit GPS logs.
@@ -152,7 +181,7 @@ class SonarGeotagger:
                 heading_deg=round(sway_heading, 1)
             ))
             
-        return cls(pings=pings, slant_range_m=slant_range_m)
+        return cls(pings=pings, slant_range_m=slant_range_m, altitude_m=altitude_m)
 
     def geotag_pixel(
         self,
@@ -163,25 +192,25 @@ class SonarGeotagger:
         nadir_x: Optional[int] = None
     ) -> Dict[str, Any]:
         """
-        Maps a 2D waterfall image pixel (pixel_x, pixel_y) to geospatial coordinates:
+        Maps a 2D waterfall image pixel (pixel_x, pixel_y) to geospatial coordinates
+        using true Slant-Range to Ground-Range (SRR) geometric correction:
         1. Vertical y-coordinate -> ping index along trackline.
         2. Interpolates vessel lat, lon, heading, timestamp at that ping.
-        3. Horizontal x-coordinate -> across-track range & port/starboard bearing.
+        3. Horizontal x-coordinate -> across-track ground range R_g = sqrt(max(0, R_s^2 - H^2)).
         4. Calculates target (lat, lon) using forward geodetic projection.
         """
         if not self.pings:
-            # Fallback if no pings loaded
-            self.pings = self.generate_synthetic_trackline(num_pings=max(1024, image_height)).pings
+            self.pings = self.generate_synthetic_trackline(
+                num_pings=max(1024, image_height),
+                slant_range_m=self.slant_range_m,
+                altitude_m=self.altitude_m
+            ).pings
 
         if nadir_x is None:
             nadir_x = image_width // 2
 
         # Map y to ping index
-        max_ping_idx = self.pings[-1].ping_index
-        min_ping_idx = self.pings[0].ping_index
         total_pings = len(self.pings)
-        
-        # Relative y ratio in image (0 = start of survey, image_height = end)
         ratio = max(0.0, min(1.0, pixel_y / float(image_height)))
         ping_pos = ratio * (total_pings - 1)
         
@@ -200,13 +229,23 @@ class SonarGeotagger:
         timestamp = p1.timestamp
         ping_index = int(p1.ping_index + frac * (p2.ping_index - p1.ping_index))
 
-        # Across-track distance calculation
-        # Channel half-width in pixels
+        # True Across-Track Ground Range Calculation (SRR)
         half_width_px = image_width / 2.0
         pixel_offset = pixel_x - nadir_x
+        norm_r = abs(pixel_offset) / max(1.0, half_width_px)
+        slant_r = norm_r * self.slant_range_m
         
-        # Distance in meters from nadir trackline
-        across_track_m = (pixel_offset / half_width_px) * self.slant_range_m
+        # R_g = sqrt(max(0, R_s^2 - H^2))
+        alt = getattr(self, "altitude_m", 15.0) or 15.0
+        if slant_r >= alt:
+            ground_r = math.sqrt(slant_r**2 - alt**2)
+            in_water_column = False
+        else:
+            # Target located in nadir water column
+            ground_r = 0.0
+            in_water_column = True
+            
+        across_track_m = (1.0 if pixel_offset >= 0 else -1.0) * ground_r
         
         # Sonar beam is perpendicular to vessel heading:
         # Starboard (positive offset): heading + 90 deg
@@ -221,8 +260,9 @@ class SonarGeotagger:
         # Target lat/lon via forward geodetic calculation
         det_lat, det_lon = destination_point(vessel_lat, vessel_lon, target_dist, target_bearing)
 
-        # Approximate physical size per pixel at this range
-        m_per_pixel = self.slant_range_m / half_width_px
+        # Ground-range resolution at this offset
+        max_gr = math.sqrt(max(0.0, self.slant_range_m**2 - alt**2))
+        m_per_pixel = max_gr / max(1.0, half_width_px)
 
         return {
             "latitude": round(det_lat, 7),
@@ -232,7 +272,56 @@ class SonarGeotagger:
             "vessel_lon": round(vessel_lon, 7),
             "vessel_heading": round(vessel_heading, 1),
             "across_track_distance_m": round(across_track_m, 2),
+            "slant_range_m": round(slant_r, 2),
+            "ground_range_m": round(ground_r, 2),
+            "sensor_altitude_m": round(alt, 2),
+            "in_water_column": in_water_column,
             "ping_index": ping_index,
             "timestamp": timestamp,
             "meters_per_pixel": round(m_per_pixel, 4)
+        }
+
+    def calculate_physical_dimensions(
+        self,
+        bbox_w_px: float,
+        bbox_h_px: float,
+        pixel_x: int,
+        image_width: int,
+        nadir_x: Optional[int] = None
+    ) -> Dict[str, float]:
+        """
+        Calculates physical length, width, and area (in meters) of a detected object,
+        correcting for non-linear across-track ground-range scaling and along-track resolution.
+        """
+        if nadir_x is None:
+            nadir_x = image_width // 2
+            
+        half_w = image_width / 2.0
+        px_offset = abs(pixel_x - nadir_x)
+        norm_r = px_offset / max(1.0, half_w)
+        slant_r = norm_r * self.slant_range_m
+        alt = getattr(self, "altitude_m", 15.0) or 15.0
+        
+        # Ground range derivative d(R_g)/d(R_s) = R_s / sqrt(R_s^2 - H^2)
+        if slant_r > (alt + 0.5):
+            gr_scale = slant_r / math.sqrt(slant_r**2 - alt**2)
+        else:
+            gr_scale = 1.0
+            
+        max_gr = math.sqrt(max(0.0, self.slant_range_m**2 - alt**2))
+        base_m_per_px = max_gr / max(1.0, half_w)
+        width_m = bbox_w_px * base_m_per_px * min(2.5, max(0.5, gr_scale))
+        
+        # Along track resolution (ping interval, typically 0.08 - 0.15 m)
+        along_track_res = 0.10
+        length_m = bbox_h_px * along_track_res
+        
+        return {
+            "width_meters": round(float(width_m), 2),
+            "length_meters": round(float(length_m), 2),
+            "area_sq_meters": round(float(width_m * length_m), 2),
+            "physical_width_m": round(float(width_m), 2),
+            "physical_height_m": round(float(length_m), 2),
+            "effective_m_per_px_x": round(float(base_m_per_px * min(2.5, max(0.5, gr_scale))), 4),
+            "effective_m_per_px_y": round(float(along_track_res), 4)
         }

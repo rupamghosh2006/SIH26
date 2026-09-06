@@ -38,9 +38,16 @@ def test_trained_yolo_checkpoints_exist():
     """Verify that the trained YOLOv8 sonar weights exist and are non-empty."""
     checkpoints = [
         "best.pt",
-        "backend/models/yolov8_varuna.pt",
-        "backend/models/yolov8_seaguard.pt"
+        "models/yolov8_varuna.pt",
+        "models/yolov8_seaguard.pt"
     ]
     for cp in checkpoints:
-        assert os.path.exists(cp), f"Checkpoint {cp} must exist"
-        assert os.path.getsize(cp) > 1_000_000, f"Checkpoint {cp} must have valid size"
+        candidates = [
+            cp,
+            os.path.join("backend", cp),
+            os.path.join("..", cp),
+            os.path.join(os.path.dirname(__file__), "..", cp),
+            os.path.join(os.path.dirname(__file__), "..", "..", cp),
+        ]
+        found = any(os.path.exists(p) and os.path.getsize(p) > 1_000_000 for p in candidates)
+        assert found, f"Checkpoint {cp} must exist"

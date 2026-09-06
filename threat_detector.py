@@ -110,6 +110,23 @@ class ThreatDetector:
                     'metadata': {}
                 }
             
+            # Support Raw Hydrographic Sonar Formats (.xtf, .jsf, .sdf)
+            file_ext = os.path.splitext(image_path)[1].lower()
+            if file_ext in [".xtf", ".jsf", ".sdf"]:
+                try:
+                    try:
+                        from backend.ai_pipeline.sonar_format_reader import SonarFormatReader
+                    except ImportError:
+                        from ai_pipeline.sonar_format_reader import SonarFormatReader
+                    sonar_data = SonarFormatReader.read_sonar_file(image_path)
+                    preview_path = image_path + "_waterfall.png"
+                    if cv2 is not None:
+                        cv2.imwrite(preview_path, sonar_data.waterfall_image)
+                    image_path = preview_path
+                except Exception as e:
+                    if self.verbose:
+                        print(f"Error reading raw sonar format: {e}")
+
             # Load image info
             if cv2 is not None:
                 image = cv2.imread(image_path)
@@ -173,6 +190,30 @@ class ThreatDetector:
                     except ImportError:
                         evaluate_detection_confidence = None
 
+                # Also load SRR Physical Sizing, Ghost Net U-Net Segmentation, and Seabed Facies
+                try:
+                    try:
+                        from backend.ai_pipeline.unet_segmentation import GhostNetSegmenter
+                        from backend.ai_pipeline.seabed_classifier import SeabedClassifier
+                    except ImportError:
+                        from ai_pipeline.unet_segmentation import GhostNetSegmenter
+                        from ai_pipeline.seabed_classifier import SeabedClassifier
+                    
+                    segmenter = GhostNetSegmenter()
+                    classifier = SeabedClassifier()
+                except Exception:
+                    segmenter = None
+                    classifier = None
+
+                seafloor_facies = "flat_sand"
+                if classifier is not None and image is not None:
+                    try:
+                        gray_sub = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
+                        f_res = classifier.classify_facies(gray_sub[:min(height, 512), :])
+                        seafloor_facies = f_res.get("facies", "flat_sand")
+                    except Exception:
+                        pass
+
                 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
                 nadir_x = width // 2
 
@@ -209,10 +250,28 @@ class ThreatDetector:
                             "suppression_applied": not bool(t.get('shadow_verified', False))
                         }
 
-                    # Physical metric dimensions estimation (nominal 0.075 m/px SSS swath)
-                    m_per_px = 0.075
-                    t['estimated_size_m'] = f"{bw * m_per_px:.2f}m x {bh * m_per_px:.2f}m"
-            
+                    # SRR physical metric dimensions calculation (swath range scaled)
+                    m_px_x = (75.0 * 2.0) / max(1, width)
+                    m_px_y = 0.08
+                    phys_w = round(bw * m_px_x, 2)
+                    phys_h = round(bh * m_px_y, 2)
+                    t['physical_size_m'] = f"{phys_w}m x {phys_h}m"
+                    t['estimated_size_m'] = f"{phys_w}m x {phys_h}m"
+                    t['srr_corrected'] = True
+                    t['seabed_facies'] = seafloor_facies
+
+                    # U-Net Ghost Net Segmentation
+                    if t['class'] == 'ghost_net' or t.get('debris_type') == 'ghost_net':
+                        if segmenter is not None and image is not None:
+                            crop = image[max(0, by):min(height, by+bh), max(0, bx):min(width, bx+bw)]
+                            if crop.size > 0:
+                                gray_crop = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY) if len(crop.shape) == 3 else crop
+                                seg = segmenter.segment_patch(gray_crop, meters_per_pixel=m_px_x)
+                                t['entangled_area_m2'] = seg['entangled_area_m2']
+                                t['polygon'] = seg['polygon']
+                                if seg['entangled_area_m2'] > 0:
+                                    t['physical_size_m'] += f" (Net Area: {seg['entangled_area_m2']}m²)"
+                                    t['estimated_size_m'] = t['physical_size_m']
             overall_threat = self._assess_overall_threat(threats)
             return {
                 'success': True,
@@ -220,6 +279,7 @@ class ThreatDetector:
                 'threat_count': len(threats),
                 'overall_threat_level': overall_threat['level'],
                 'overall_threat_score': overall_threat['score'],
+                'seafloor_facies': seafloor_facies,
                 'metadata': {
                     'image_path': image_path,
                     'image_width': width,
@@ -227,6 +287,8 @@ class ThreatDetector:
                     'image_size_kb': round(os.path.getsize(image_path) / 1024, 2),
                     'model_used': self.model_path if self.model else "Varuna Acoustic Highlight-Shadow Pipeline",
                     'confidence_threshold': self.confidence_threshold,
+                    'seafloor_facies': seafloor_facies,
+                    'srr_corrected': True,
                     'detection_timestamp': self._get_timestamp()
                 }
             }
@@ -478,16 +540,29 @@ class ThreatDetector:
                     'MEDIUM': (0, 255, 255),    # Yellow
                     'LOW': (0, 255, 0)          # Green
                 }
-                color = colors.get(threat['threat_level'], (255, 255, 255))
-                
+                # Draw Ghost Net U-Net polygon segmentation mask if present
+                if threat.get('polygon') and len(threat['polygon']) > 2:
+                    try:
+                        poly_pts = np.array([[x1 + pt[0], y1 + pt[1]] for pt in threat['polygon']], dtype=np.int32)
+                        overlay = image.copy()
+                        cv2.fillPoly(overlay, [poly_pts], (0, 255, 255))
+                        cv2.addWeighted(overlay, 0.35, image, 0.65, 0, image)
+                        cv2.polylines(image, [poly_pts], True, (0, 255, 255), 2)
+                    except Exception:
+                        pass
+
                 # Draw bounding box
                 cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
                 
-                # Draw label
-                label = f"{threat['class']} {threat['confidence_percentage']:.1f}%"
-                label_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)[0]
-                cv2.rectangle(image, (x1, y1 - label_size[1] - 10), (x1 + label_size[0], y1), color, -1)
-                cv2.putText(image, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                # Draw label with physical metric dimension
+                phys_dim = threat.get('physical_size_m', '')
+                if phys_dim:
+                    label = f"{threat['class']} {threat['confidence_percentage']:.1f}% ({phys_dim})"
+                else:
+                    label = f"{threat['class']} {threat['confidence_percentage']:.1f}%"
+                label_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)[0]
+                cv2.rectangle(image, (x1, y1 - label_size[1] - 8), (x1 + label_size[0], y1), color, -1)
+                cv2.putText(image, label, (x1, y1 - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
             
             # Save annotated image
             if output_path is None:

@@ -177,15 +177,18 @@ def evaluate_detection_confidence(
     image: np.ndarray,
     bbox: Tuple[int, int, int, int],
     yolo_confidence: float,
-    nadir_x: int
+    nadir_x: int,
+    seabed_classifier: Optional[Any] = None
 ) -> ConfidenceResult:
     """
-    Blends YOLO detector confidence with physics-based acoustic shadow consistency
-    and morphological shape metrics into a final 0-100 score and tier.
+    Blends YOLO detector confidence with physics-based acoustic shadow consistency,
+    morphological shape metrics, and seabed geological interference suppression.
     
     Formula:
     Score = 0.50 * detector_score + 0.35 * shadow_score + 0.15 * shape_score
-    If no acoustic shadow is detected, applies a heavy suppression factor (0.45x).
+    If no acoustic shadow is detected, applies a heavy suppression factor (0.48x).
+    If seabed geological interference is detected (e.g. natural rock reef or sand ripple crest),
+    applies targeted geological suppression.
     """
     detector_score = float(np.clip(yolo_confidence * 100.0, 0.0, 100.0))
     
@@ -198,6 +201,23 @@ def evaluate_detection_confidence(
     # If acoustic shadow is missing for a candidate, heavily suppress confidence
     if not has_shadow:
         composite = composite * 0.48
+
+    # Geological Interference Suppression (GLCM Haralick + Sand Ripple Harmonics)
+    geo_details = None
+    if seabed_classifier is not None:
+        try:
+            geo_details = seabed_classifier.evaluate_geological_interference(
+                image,
+                bbox,
+                has_shadow=has_shadow,
+                shadow_score=shadow_score / 100.0,
+                shape_score=shape_score / 100.0
+            )
+            if geo_details.get("is_geological_risk", False):
+                penalty = float(geo_details.get("penalty", 0.0))
+                composite = composite * (1.0 - penalty)
+        except Exception as e:
+            geo_details = {"error": str(e)}
 
     final_score = float(np.clip(round(composite, 1), 0.0, 100.0))
     
@@ -212,7 +232,8 @@ def evaluate_detection_confidence(
     details = {
         "shadow_details": shadow_details,
         "shape_details": shape_details,
-        "suppression_applied": not has_shadow
+        "suppression_applied": not has_shadow,
+        "geological_analysis": geo_details
     }
 
     return ConfidenceResult(

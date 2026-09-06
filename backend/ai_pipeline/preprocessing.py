@@ -203,3 +203,101 @@ def reconstruct_from_tiles(
     weight_map[weight_map == 0] = 1.0
     reconstructed = (canvas / weight_map).astype(np.uint8)
     return reconstructed
+
+
+def apply_slant_to_ground_range_correction(
+    image: np.ndarray,
+    altitude_m: float,
+    max_slant_range_m: float,
+    nadir_x: Optional[int] = None
+) -> Tuple[np.ndarray, Dict[str, Any]]:
+    """
+    True Slant-Range to Ground-Range (SRR) Correction.
+    
+    Transforms the acoustic slant-range image into a true horizontal ground-range
+    seafloor representation by solving:
+        R_g = sqrt(max(0, R_s^2 - H^2))
+    where:
+        R_s is the acoustic slant range (distance along wave ray),
+        H is the sensor altitude above the seafloor,
+        R_g is the true horizontal distance on the seabed.
+
+    Near the nadir (R_s < H), acoustic energy is traveling through the water column.
+    Once R_s >= H, the bottom return begins. This function remaps pixels from slant range
+    to a uniform, equidistant ground-range spatial grid, removing the water-column blind zone
+    distortion and restoring correct physical aspect ratios (length x width) for detected debris.
+
+    Returns:
+        corrected_image: 2D np.ndarray warped to uniform ground range
+        srr_info: metadata including max_ground_range_m, ground_res_m_per_pixel, nadir_offset_m
+    """
+    import math
+
+    if len(image.shape) == 3:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = image.copy()
+
+    h, w = gray.shape[:2]
+    if nadir_x is None:
+        nadir_x = w // 2
+
+    # If altitude is 0 or invalid, estimate altitude from nadir width
+    if altitude_m <= 0.5:
+        nadir_info = detect_nadir_gap(gray)
+        nadir_half_px = nadir_info["nadir_width"] / 2.0
+        altitude_m = max(3.0, (nadir_half_px / (w / 2.0)) * max_slant_range_m)
+
+    # Altitude cannot exceed slant range
+    altitude_m = min(altitude_m, max_slant_range_m * 0.95)
+
+    # Maximum ground range on each side (Port and Starboard)
+    max_ground_range_m = math.sqrt(max(0.0, max_slant_range_m**2 - altitude_m**2))
+    
+    port_w = max(1, nadir_x)
+    stbd_w = max(1, w - nadir_x)
+    
+    # Construct remapping coordinate grid for cv2.remap
+    map_x = np.zeros((h, w), dtype=np.float32)
+    map_y = np.zeros((h, w), dtype=np.float32)
+    
+    for row in range(h):
+        map_y[row, :] = row
+
+    # Port channel: x ranges from 0 to port_w - 1
+    # At x = port_w - 1 (near nadir), ground range R_g = 0 -> slant range R_s = H
+    # At x = 0 (far port), ground range R_g = max_ground_range_m -> slant range R_s = max_slant_range_m
+    for col in range(port_w):
+        norm_gr = (port_w - 1 - col) / max(1.0, float(port_w - 1))
+        rg = norm_gr * max_ground_range_m
+        rs = math.sqrt(rg**2 + altitude_m**2)
+        norm_sr = rs / max_slant_range_m
+        src_x = port_w - 1 - (norm_sr * (port_w - 1))
+        map_x[:, col] = max(0.0, min(float(w - 1), src_x))
+
+    # Starboard channel: x ranges from nadir_x to w - 1
+    # At x = nadir_x (near nadir), ground range R_g = 0 -> slant range R_s = H
+    # At x = w - 1 (far starboard), ground range R_g = max_ground_range_m -> slant range R_s = max_slant_range_m
+    for col in range(nadir_x, w):
+        norm_gr = (col - nadir_x) / max(1.0, float(w - 1 - nadir_x))
+        rg = norm_gr * max_ground_range_m
+        rs = math.sqrt(rg**2 + altitude_m**2)
+        norm_sr = rs / max_slant_range_m
+        src_x = nadir_x + (norm_sr * (w - 1 - nadir_x))
+        map_x[:, col] = max(0.0, min(float(w - 1), src_x))
+
+    # Remap slant-range image to ground-range image using bilinear interpolation
+    corrected = cv2.remap(gray, map_x, map_y, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
+
+    ground_res = max_ground_range_m / max(1.0, float(w / 2.0))
+
+    srr_info = {
+        "max_ground_range_m": round(max_ground_range_m, 2),
+        "max_slant_range_m": round(max_slant_range_m, 2),
+        "sensor_altitude_m": round(altitude_m, 2),
+        "ground_resolution_m_per_px": round(ground_res, 4),
+        "srr_corrected": True
+    }
+
+    return corrected, srr_info
+

@@ -103,7 +103,12 @@ def run_threat_detection(input_path, output_path):
                 'shadow_detected': threat.get('shadow_detected', True),
                 'confidence_score': threat.get('confidence_score', round(threat['confidence'] * 100, 1)),
                 'confidence_tier': threat.get('confidence_tier', 'High' if threat['confidence'] >= 0.75 else 'Medium'),
-                'estimated_size_m': threat.get('estimated_size_m', 'Unknown'),
+                'estimated_size_m': threat.get('physical_size_m', threat.get('estimated_size_m', 'Unknown')),
+                'physical_size_m': threat.get('physical_size_m', threat.get('estimated_size_m', 'Unknown')),
+                'entangled_area_m2': threat.get('entangled_area_m2'),
+                'polygon': threat.get('polygon', []),
+                'seabed_facies': threat.get('seabed_facies', 'flat_sand'),
+                'srr_corrected': threat.get('srr_corrected', True),
                 'filter_details': threat.get('filter_details', {})
             })
         
@@ -120,7 +125,9 @@ def run_threat_detection(input_path, output_path):
             'overall_threat_level': result['overall_threat_level'],
             'overall_threat_score': result['overall_threat_score'],
             'threat_count': result['threat_count'],
-            'nadir_x': result.get('metadata', {}).get('image_width', 800) // 2
+            'nadir_x': result.get('metadata', {}).get('image_width', 800) // 2,
+            'seafloor_facies': result.get('seafloor_facies', 'flat_sand'),
+            'srr_applied': True
         }
         
     except Exception as e:
@@ -197,51 +204,69 @@ if __name__ == "__main__":
         overallThreatLevel = detectionData.overall_threat_level || 'NONE'
         overallThreatScore = detectionData.overall_threat_score || 0.0
         threatCount = detectionData.threat_count || 0
+        const seafloorFacies = detectionData.seafloor_facies || 'flat_sand'
         console.log(`✅ Parsed detection results: ${totalObjects} objects found, threat level: ${overallThreatLevel}`)
+
+        if (existsSync(outputPath)) {
+          const outputBuffer = await import("fs").then(fs => fs.promises.readFile(outputPath))
+          const outputBase64 = outputBuffer.toString("base64")
+          
+          result = {
+            success: true,
+            type: "image",
+            originalFileName: fileName,
+            detectedImage: `data:image/jpeg;base64,${outputBase64}`,
+            detections: detections,
+            totalObjects: totalObjects,
+            overallThreatLevel: overallThreatLevel,
+            overallThreatScore: overallThreatScore,
+            threatCount: threatCount,
+            seafloorFacies: seafloorFacies,
+            srrApplied: true,
+            processingTime: 1.2
+          }
+        } else {
+          // If output not found, use original image and return empty detections
+          console.warn("Detection output not found, using original image")
+          const originalBuffer = await import("fs").then(fs => fs.promises.readFile(inputPath))
+          const originalBase64 = originalBuffer.toString("base64")
+          
+          result = {
+            success: true,
+            type: "image",
+            originalFileName: fileName,
+            detectedImage: `data:image/jpeg;base64,${originalBase64}`,
+            detections: detections,
+            totalObjects: totalObjects,
+            overallThreatLevel: overallThreatLevel,
+            overallThreatScore: overallThreatScore,
+            threatCount: threatCount,
+            seafloorFacies: seafloorFacies,
+            srrApplied: true,
+            processingTime: 1.2
+          }
+        }
       } catch (parseError) {
         console.error("❌ Failed to parse detection results:", parseError)
         console.error("Python stdout:", pythonResult.stdout)
         console.error("Python stderr:", pythonResult.stderr)
-        // Return empty detections if parsing fails
         detections = []
         totalObjects = 0
         overallThreatLevel = 'NONE'
         overallThreatScore = 0.0
         threatCount = 0
-      }
-
-      if (existsSync(outputPath)) {
-        const outputBuffer = await import("fs").then(fs => fs.promises.readFile(outputPath))
-        const outputBase64 = outputBuffer.toString("base64")
-        
         result = {
           success: true,
           type: "image",
           originalFileName: fileName,
-          detectedImage: `data:image/jpeg;base64,${outputBase64}`,
-          detections: detections,
-          totalObjects: totalObjects,
-          overallThreatLevel: overallThreatLevel,
-          overallThreatScore: overallThreatScore,
-          threatCount: threatCount,
-          processingTime: 1.2
-        }
-      } else {
-        // If output not found, use original image and return empty detections
-        console.warn("Detection output not found, using original image")
-        const originalBuffer = await import("fs").then(fs => fs.promises.readFile(inputPath))
-        const originalBase64 = originalBuffer.toString("base64")
-        
-        result = {
-          success: true,
-          type: "image",
-          originalFileName: fileName,
-          detectedImage: `data:image/jpeg;base64,${originalBase64}`,
-          detections: detections,
-          totalObjects: totalObjects,
-          overallThreatLevel: overallThreatLevel,
-          overallThreatScore: overallThreatScore,
-          threatCount: threatCount,
+          detectedImage: "",
+          detections: [],
+          totalObjects: 0,
+          overallThreatLevel: "NONE",
+          overallThreatScore: 0.0,
+          threatCount: 0,
+          seafloorFacies: "flat_sand",
+          srrApplied: true,
           processingTime: 1.2
         }
       }

@@ -58,13 +58,13 @@ async def upload_survey(
     Upload a side-scan sonar waterfall image (PNG/JPG) along with an optional
     navigation metadata file (CSV or JSON with ping_index, lat, lon, timestamp).
     """
-    # 1. Validate Image File
-    allowed_extensions = [".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"]
+    # 1. Validate Image / Sonar File
+    allowed_extensions = [".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp", ".xtf", ".jsf", ".sdf"]
     file_ext = os.path.splitext(image_file.filename)[1].lower()
     if file_ext not in allowed_extensions:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid file type '{file_ext}'. Allowed sonar image formats: {allowed_extensions}"
+            detail=f"Invalid file type '{file_ext}'. Allowed formats: {allowed_extensions}"
         )
 
     survey_id = f"srv_{uuid.uuid4().hex[:10]}"

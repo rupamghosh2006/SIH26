@@ -16,10 +16,12 @@ try:
 except ImportError:
     ULTRALYTICS_AVAILABLE = False
 
-from .preprocessing import preprocess_sonar_image, create_image_tiles
+from .preprocessing import preprocess_sonar_image, create_image_tiles, apply_slant_to_ground_range_correction
 from .confidence_filter import evaluate_detection_confidence
 from .geotagging import SonarGeotagger
 from .synthetic_generator import CLASSES, IDX_TO_CLASS
+from .unet_segmentation import GhostNetSegmenter
+from .seabed_classifier import SeabedClassifier
 
 
 def calculate_iou(box1: List[int], box2: List[int]) -> float:
@@ -101,6 +103,11 @@ class SonarDetector:
             except Exception as e:
                 print(f"Warning: Could not load base YOLO model: {e}")
 
+        # Dedicated U-Net Segmenter for Ghost Nets (ALDFG)
+        self.unet_segmenter = GhostNetSegmenter()
+        # Seafloor Texture & Facies Geological Interference Classifier
+        self.seabed_classifier = SeabedClassifier()
+
     def detect_on_tile(self, tile_img: np.ndarray) -> List[Dict[str, Any]]:
         """
         Runs YOLOv8 detection on a single 640x640 tile.
@@ -149,25 +156,39 @@ class SonarDetector:
         image: np.ndarray,
         geotagger: Optional[SonarGeotagger] = None,
         thumbnails_dir: Optional[str] = None,
-        survey_id: Optional[str] = None
+        survey_id: Optional[str] = None,
+        altitude_m: Optional[float] = None,
+        apply_srr: bool = True
     ) -> Dict[str, Any]:
         """
         Full end-to-end processing:
         1. Preprocessing & Nadir detection
         2. Tiling & YOLO inference
         3. Global coordinate re-projection & NMS
-        4. Physics-based acoustic confidence evaluation
-        5. Geotagging & real-world size estimation
-        6. Thumbnail extraction
+        4. Physics-based acoustic confidence evaluation + Seabed geological interference suppression
+        5. Geotagging & True Slant-to-Ground Range (SRR) physical dimensions (m)
+        6. Dedicated U-Net Ghost Net (ALDFG) semantic segmentation & entangled area (m²)
+        7. Thumbnail extraction
         """
         h, w = image.shape[:2]
         processed_img, nadir_info = preprocess_sonar_image(image)
         nadir_x = nadir_info["nadir_center"]
         
-        if geotagger is None:
-            geotagger = SonarGeotagger.generate_synthetic_trackline(num_pings=max(1024, h))
+        # Sensor altitude resolution
+        if altitude_m is None and geotagger is not None:
+            altitude_m = getattr(geotagger, "altitude_m", 15.0)
+        if altitude_m is None or altitude_m <= 0:
+            altitude_m = 15.0
 
-        # 2. Tiling
+        if geotagger is None:
+            geotagger = SonarGeotagger.generate_synthetic_trackline(
+                num_pings=max(1024, h),
+                altitude_m=altitude_m
+            )
+        else:
+            geotagger.set_altitude(altitude_m)
+
+        # 2. Tiling & Inference
         tiles = create_image_tiles(processed_img, tile_size=640, overlap=0.20)
         
         raw_detections = []
@@ -186,7 +207,6 @@ class SonarDetector:
                 
                 # Filter out boxes that fall entirely inside nadir gap
                 if gx + gw > nadir_info["nadir_left"] and gx < nadir_info["nadir_right"]:
-                    # Spans water column; verify if it has valid highlight outside
                     pass
                     
                 raw_detections.append({
@@ -199,18 +219,19 @@ class SonarDetector:
         # 3. Non-Maximum Suppression across tiles
         merged_detections = apply_cross_tile_nms(raw_detections, iou_threshold=0.35)
 
-        # 4. Confidence filter + Geotagging + Thumbnails
+        # 4. Confidence filter + Geotagging + SRR Physical Sizing + U-Net Segmentation
         final_detections = []
         for idx, det in enumerate(merged_detections):
             bbox = det["bbox"]
             gx, gy, gw, gh = bbox
             
-            # Confidence evaluation
+            # Confidence evaluation with Seabed Geological Interference Suppression
             conf_res = evaluate_detection_confidence(
                 processed_img,
                 (gx, gy, gw, gh),
                 det["yolo_confidence"],
-                nadir_x
+                nadir_x,
+                seabed_classifier=self.seabed_classifier
             )
             
             # Geotag center of detection
@@ -218,17 +239,32 @@ class SonarDetector:
             center_y = gy + gh // 2
             geo_info = geotagger.geotag_pixel(center_x, center_y, w, h, nadir_x)
             
-            # Real world size estimate in meters
-            m_per_px = geo_info["meters_per_pixel"]
-            real_w_m = round(gw * m_per_px, 2)
-            real_h_m = round(gh * m_per_px, 2)
+            # True Slant-to-Ground Range (SRR) physical dimension calculation
+            dim_info = geotagger.calculate_physical_dimensions(gw, gh, center_x, w, nadir_x)
+            real_w_m = dim_info.get("physical_width_m", dim_info.get("width_meters", round(gw * 0.1, 2)))
+            real_h_m = dim_info.get("physical_height_m", dim_info.get("length_meters", round(gh * 0.1, 2)))
             size_str = f"{real_w_m}m x {real_h_m}m"
+
+            # Dedicated U-Net Ghost Net Semantic Segmentation
+            segmentation_info = None
+            if det["class_name"] == "ghost_net":
+                patch = image[gy:gy+gh, gx:gx+gw]
+                m_px = dim_info.get("effective_m_per_px_x", geo_info["meters_per_pixel"])
+                seg_res = self.unet_segmenter.segment_patch(patch, meters_per_pixel=m_px)
+                segmentation_info = {
+                    "entangled_area_m2": seg_res["entangled_area_m2"],
+                    "perimeter_m": seg_res["perimeter_m"],
+                    "filament_density": seg_res["filament_density"],
+                    "is_filamentous": seg_res["is_filamentous"],
+                    "polygon": seg_res["polygon"]
+                }
+                if seg_res["entangled_area_m2"] > 0:
+                    size_str += f" (Net Area: {seg_res['entangled_area_m2']}m²)"
 
             # Crop thumbnail
             thumb_rel_path = None
             if thumbnails_dir and survey_id:
                 os.makedirs(thumbnails_dir, exist_ok=True)
-                # Add context padding to crop
                 pad = 16
                 cx1 = max(0, gx - pad)
                 cy1 = max(0, gy - pad)
@@ -240,6 +276,15 @@ class SonarDetector:
                 thumb_path = os.path.join(thumbnails_dir, thumb_filename)
                 cv2.imwrite(thumb_path, crop_img)
                 thumb_rel_path = f"/static/thumbnails/{thumb_filename}"
+
+            filter_details = {
+                **conf_res.details,
+                "physical_dimensions": dim_info,
+                "segmentation": segmentation_info,
+                "entangled_area_m2": segmentation_info["entangled_area_m2"] if segmentation_info else None,
+                "srr_corrected": apply_srr,
+                "sensor_altitude_m": altitude_m
+            }
 
             det_record = {
                 "id": f"{survey_id or 'det'}_{idx+1:03d}",
@@ -264,12 +309,20 @@ class SonarDetector:
                 "shadow_detected": conf_res.shadow_detected,
                 "timestamp": geo_info["timestamp"],
                 "thumbnail_url": thumb_rel_path,
-                "filter_details": conf_res.details
+                "filter_details": filter_details
             }
             final_detections.append(det_record)
+
+        # Overall Survey Seabed Facies Summary
+        sample_y = min(h, 512)
+        sample_patch = processed_img[:sample_y, :]
+        facies_summary = self.seabed_classifier.classify_facies(sample_patch)
 
         return {
             "nadir_info": nadir_info,
             "total_detections": len(final_detections),
-            "detections": final_detections
+            "detections": final_detections,
+            "seafloor_facies": facies_summary,
+            "sensor_altitude_m": altitude_m,
+            "srr_applied": apply_srr
         }

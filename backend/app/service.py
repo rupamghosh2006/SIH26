@@ -16,6 +16,7 @@ from . import crud, models
 from ai_pipeline.synthetic_generator import SyntheticSonarGenerator
 from ai_pipeline.detection import SonarDetector
 from ai_pipeline.geotagging import SonarGeotagger
+from ai_pipeline.sonar_format_reader import SonarFormatReader
 
 # Global detector instance cache
 _detector_instance = None
@@ -45,26 +46,53 @@ def run_survey_pipeline(db: Session, survey_id: str) -> None:
     try:
         crud.update_survey_status(db, survey_id, status="processing")
         
-        # 1. Read Image
+        # 1. Read Image or Raw Hydrographic File (.xtf, .jsf, .sdf)
         if not os.path.exists(survey.image_path):
-            raise FileNotFoundError(f"Sonar image file not found at: {survey.image_path}")
-            
-        image = cv2.imread(survey.image_path, cv2.IMREAD_GRAYSCALE)
-        if image is None:
-            raise ValueError(f"Could not decode image at {survey.image_path}")
+            raise FileNotFoundError(f"Sonar file not found at: {survey.image_path}")
+
+        file_ext = os.path.splitext(survey.image_path)[1].lower()
+        altitude_m = 15.0
+        sonar_pings = None
+
+        if file_ext in [".xtf", ".jsf", ".sdf"]:
+            print(f"[SeaGuard AI] Parsing raw hydrographic sonar stream: {survey.image_path}")
+            sonar_data = SonarFormatReader.read_sonar_file(survey.image_path)
+            image = sonar_data.waterfall_image
+            if sonar_data.sensor_altitude_m > 0:
+                altitude_m = sonar_data.sensor_altitude_m
+            sonar_pings = sonar_data.ping_records
+
+            # Save normalized waterfall image preview so UI can render it
+            preview_filename = f"{survey.id}_waterfall.png"
+            preview_path = str(settings.UPLOADS_DIR / preview_filename)
+            cv2.imwrite(preview_path, image)
+            survey.image_path = preview_path
+            db.commit()
+        else:
+            image = cv2.imread(survey.image_path, cv2.IMREAD_GRAYSCALE)
+            if image is None:
+                raise ValueError(f"Could not decode image at {survey.image_path}")
 
         h, w = image.shape[:2]
 
-        # 2. Setup Geotagger
+        # 2. Setup Geotagger with Sensor Altitude
         if survey.metadata_path and os.path.exists(survey.metadata_path):
             geotagger = SonarGeotagger.from_csv_or_json(
                 survey.metadata_path,
-                slant_range_m=survey.slant_range_m
+                slant_range_m=survey.slant_range_m,
+                altitude_m=altitude_m
+            )
+        elif sonar_pings and len(sonar_pings) > 0:
+            geotagger = SonarGeotagger.from_ping_records(
+                sonar_pings,
+                slant_range_m=survey.slant_range_m,
+                altitude_m=altitude_m
             )
         else:
             geotagger = SonarGeotagger.generate_synthetic_trackline(
                 num_pings=max(1024, h),
-                slant_range_m=survey.slant_range_m
+                slant_range_m=survey.slant_range_m,
+                altitude_m=altitude_m
             )
 
         # 3. Detection & Confidence Filtering
@@ -73,7 +101,9 @@ def run_survey_pipeline(db: Session, survey_id: str) -> None:
             image=image,
             geotagger=geotagger,
             thumbnails_dir=str(settings.THUMBNAILS_DIR),
-            survey_id=survey_id
+            survey_id=survey_id,
+            altitude_m=altitude_m,
+            apply_srr=True
         )
 
         nadir_x = results["nadir_info"]["nadir_center"]
