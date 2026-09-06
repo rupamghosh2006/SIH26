@@ -3,13 +3,10 @@
 import type React from "react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Radar,
   AlertTriangle,
   Eye,
   Map,
   Settings,
-  Shield,
-  Lock,
   Camera,
   Wifi,
   WifiOff,
@@ -79,82 +76,38 @@ export default function CommandCenter() {
     <div className="relative w-full min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-950 overflow-hidden">
       <SonarGridBackground />
 
-      <div className="relative z-10 pt-28">
-        {/* Top navigation bar */}
-        <nav className="border-b border-cyan-500/20 bg-slate-900/80 backdrop-blur-xl">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-cyan-500 rounded-lg opacity-20 blur-lg" />
-                  <div className="relative bg-gradient-to-br from-cyan-500 to-blue-600 p-2 rounded-lg border border-cyan-400/50 shadow-lg shadow-cyan-500/30">
-                    <Radar className="w-6 h-6 text-white" />
-                  </div>
+      <div className="relative z-10 pt-16">
+        <section className="border-b border-cyan-400/15 bg-slate-950/60 backdrop-blur-md">
+          <div className="mx-auto max-w-[1600px] px-4 py-5 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+              <div>
+                <div className="mb-2 flex items-center gap-2 text-[10px] font-space-mono font-bold uppercase tracking-[0.16em] text-cyan-300/75">
+                  <span className="h-1.5 w-1.5 rounded-full bg-cyan-300" />
+                  Operations / Sonar intelligence
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold font-orbitron tracking-wider text-cyan-300 text-glow-cyan">
-                    VARUNA AI
+                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                  <h1 className="font-orbitron text-2xl font-bold tracking-tight text-slate-100 sm:text-3xl">
+                    Detection workspace
                   </h1>
-                  <p className="text-xs font-space-mono text-slate-400">
-                    Underwater Sonar Debris Intelligence Platform
-                  </p>
-                </div>
-                <div className="ml-4 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-emerald-400" />
-                  <span className="text-[9px] font-space-mono text-emerald-400/80 uppercase tracking-wider">
-                    Acoustic Telemetry
+                  <span className="flex items-center gap-1.5 text-xs font-space-mono uppercase tracking-wide text-emerald-300">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                    System {systemStatus.toLowerCase()}
                   </span>
                 </div>
+                <p className="mt-2 max-w-2xl text-sm text-slate-400">
+                  Review side-scan sonar data, map detections, and monitor field activity in one place.
+                </p>
               </div>
 
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <div className="absolute inset-0 w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping opacity-40" />
-                  </div>
-                  <span className="text-xs font-space-mono text-emerald-400 font-bold">
-                    SYSTEM {systemStatus}
-                  </span>
-                </div>
-                <div className="h-8 w-px bg-cyan-500/20" />
-
-                <div className="flex gap-8">
-                  <div className="text-center">
-                    <div className="text-sm font-space-mono text-cyan-300 font-orbitron">
-                      {detectionResults.length}
-                    </div>
-                    <p className="text-xs text-slate-500 font-space-mono">
-                      Surveys
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <div
-                      className={`text-sm font-space-mono font-orbitron ${totalThreats > 0 ? "text-amber-400" : "text-emerald-400"}`}
-                    >
-                      {totalThreats}
-                    </div>
-                    <p className="text-xs text-slate-500 font-space-mono">
-                      Debris Found
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-sm font-space-mono text-emerald-400">
-                      {avgAccuracy || 95}%
-                    </div>
-                    <p className="text-xs text-slate-500">Confidence</p>
-                  </div>
-                </div>
+              <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-cyan-300/15 bg-slate-900/60 divide-x divide-cyan-300/10">
+                <Metric value={detectionResults.length} label="Surveys" color="text-cyan-200" />
+                <Metric value={totalThreats} label="Detected" color={totalThreats > 0 ? "text-amber-300" : "text-emerald-300"} />
+                <Metric value={`${avgAccuracy || 95}%`} label="Confidence" color="text-emerald-300" />
               </div>
-
-              <button className="p-2 hover:bg-cyan-500/10 rounded-lg transition-colors">
-                <Settings className="w-5 h-5 text-slate-400 hover:text-cyan-400" />
-              </button>
             </div>
-          </div>
 
-          {/* Tab navigation */}
-          <div className="flex border-t border-cyan-500/10 px-6">
+            <div className="mt-5 flex items-center justify-between gap-3">
+              <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-xl border border-cyan-300/10 bg-slate-900/60 p-1">
             <TabButton
               active={activeTab === "detection"}
               onClick={() => setActiveTab("detection")}
@@ -181,11 +134,15 @@ export default function CommandCenter() {
               icon={<Camera className="w-4 h-4" />}
               label="Sonar Stream"
             />
+              </div>
+              <button aria-label="Detection settings" className="shrink-0 rounded-lg border border-cyan-300/15 p-2.5 text-slate-400 transition-colors hover:bg-cyan-400/10 hover:text-cyan-200">
+                <Settings className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-        </nav>
+        </section>
 
-        {/* Main content area */}
-        <main className="p-6 space-y-6 animate-ambient-hum">
+        <main className="mx-auto max-w-[1600px] space-y-6 p-4 sm:p-6 lg:p-8 animate-ambient-hum">
           {activeTab === "detection" && (
             <DetectionView onResultsUpdate={handleDetectionComplete} />
           )}
@@ -217,20 +174,29 @@ function TabButton({ active, onClick, icon, label, badge }: TabButtonProps) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-3 text-sm font-space-mono font-medium border-b-2 transition-all relative ${
+      className={`relative flex shrink-0 items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-medium transition-all ${
         active
-          ? "border-cyan-400 text-cyan-300"
-          : "border-transparent text-slate-500 hover:text-slate-300"
+          ? "bg-cyan-400/15 text-cyan-200 shadow-sm"
+          : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
       }`}
     >
       {icon}
       {label}
       {badge !== undefined && (
-        <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold">
+        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-xs font-bold text-white shadow-sm shadow-rose-500/30">
           {badge > 9 ? "9+" : badge}
         </span>
       )}
     </button>
+  );
+}
+
+function Metric({ value, label, color }: { value: string | number; label: string; color: string }) {
+  return (
+    <div className="min-w-[88px] px-3 py-3 text-center sm:min-w-[105px]">
+      <div className={`font-orbitron text-base font-bold ${color}`}>{value}</div>
+      <div className="mt-1 text-[9px] font-space-mono uppercase tracking-wide text-slate-500">{label}</div>
+    </div>
   );
 }
 

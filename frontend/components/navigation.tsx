@@ -1,285 +1,128 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { BubbleButton } from "@/components/bubble-button";
-import {
-  Menu,
-  X,
-  User,
-  LogOut,
-  ChevronDown,
-  Radar,
-  Shield,
-  Brain,
-  Target,
-  BarChart3,
-  Home,
-  MessageSquare,
-  Globe,
-  Map,
-  Activity,
-  Radio,
-} from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { usePathname } from "next/navigation";
+import { Menu, X, Home, Radar, Upload, CircleHelp, Radio } from "lucide-react";
+
+const navItems = [
+  { href: "/", label: "Overview", icon: Home },
+  { href: "/detection", label: "Detection", icon: Radar },
+];
 
 export function Navigation() {
-  const { user: userData, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [avatar, setAvatar] = useState<string>("");
-  const [scrolled, setScrolled] = useState(false);
-  const [activeIndicator, setActiveIndicator] = useState({ left: 0, width: 0 });
-  const navRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-  const router = useRouter();
-  const navItems = [
-    { href: "/", label: "Home", icon: Home },
-    { href: "/detection", label: "Sonar Debris AI & Map", icon: Target },
-  ];
-
-  const visibleNavItems = navItems;
-
-  // Scroll-aware navbar
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Update active indicator position
-  useEffect(() => {
-    if (!navRef.current) return;
-    const activeLink = navRef.current.querySelector(
-      '[data-active="true"]',
-    ) as HTMLElement;
-    if (activeLink) {
-      const navRect = navRef.current.getBoundingClientRect();
-      const linkRect = activeLink.getBoundingClientRect();
-      setActiveIndicator({
-        left: linkRect.left - navRect.left,
-        width: linkRect.width,
-      });
-    }
-  }, [pathname]);
-
-  useEffect(() => {
-    if (userData?.avatar) {
-      setAvatar(userData.avatar);
-    }
-  }, [userData]);
-
-  const handleLogout = async () => {
-    await logout();
-    router.push("/try");
-  };
 
   return (
-    <>
-      <nav
-        className={`fixed top-[52px] left-0 right-0 z-[60] transition-all duration-500 ${
-          scrolled
-            ? "bg-slate-950/80 backdrop-blur-2xl border-b border-cyan-500/30 shadow-lg shadow-cyan-500/10 py-0"
-            : "bg-transparent backdrop-blur-sm border-b border-transparent py-1"
-        }`}
-      >
-        {/* Animated top border line */}
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
+    <header className="fixed inset-x-0 top-0 z-[60] border-b border-cyan-400/15 bg-slate-950/85 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <Link
+          href="/"
+          className="no-underline flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+          aria-label="Varuna AI home"
+        >
+          <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-xl border border-cyan-300/35 bg-cyan-400/10 shadow-[0_0_24px_rgba(34,211,238,0.12)]">
+            <img src="/logos/varuna-logo.png" alt="" className="h-full w-full object-cover" />
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate font-orbitron text-sm font-bold tracking-[0.12em] text-slate-100">
+              VARUNA<span className="text-cyan-300">.AI</span>
+            </span>
+            <span className="hidden text-[10px] font-space-mono uppercase tracking-[0.12em] text-slate-500 sm:block">
+              Ocean intelligence platform
+            </span>
+          </span>
+        </Link>
 
-        <div className="w-full px-2 sm:px-4 lg:px-6">
-          <div className="flex items-center justify-between h-14 lg:h-16 relative w-full gap-2">
-            {/* Logo and Brand */}
-            <Link href="/" className="flex items-center flex-shrink-0 group">
-              <div className="flex items-center space-x-3">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-cyan-500/30 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <div className="relative w-9 h-9 rounded-full overflow-hidden border border-cyan-400/60 shadow-lg shadow-cyan-500/20 group-hover:border-cyan-300 transition-all duration-300 group-hover:scale-105 bg-slate-900 flex items-center justify-center">
-                    <img
-                      src="/logos/varuna-logo.png"
-                      alt="Varuna AI Logo"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-                <div className="hidden min-[1100px]:flex flex-col leading-tight">
-                  <span className="text-sm font-orbitron font-black tracking-wider text-cyan-400 group-hover:text-cyan-300 transition-colors text-glow-cyan">
-                    VARUNA AI
-                  </span>
-                  <span className="text-[8px] font-space-mono text-cyan-300/70 font-bold tracking-[0.2em] uppercase">
-                    SONAR DEBRIS INTELLIGENCE
-                  </span>
-                </div>
-              </div>
-            </Link>
-
-            {/* Navigation Links - Improved Responsiveness */}
-            <div className="hidden lg:flex items-center flex-1 justify-center min-w-0">
-              <div
-                ref={navRef}
-                className="relative flex items-center gap-0.5 bg-slate-900/50 backdrop-blur-xl rounded-full p-1 border border-cyan-500/15 hover:border-cyan-400/30 transition-all duration-500 overflow-x-auto no-scrollbar max-w-full"
+        <nav className="hidden items-center gap-1 rounded-xl border border-white/5 bg-slate-900/60 p-1 md:flex" aria-label="Primary navigation">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`no-underline flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+                  isActive
+                    ? "bg-cyan-400/15 text-cyan-200 shadow-sm ring-1 ring-cyan-300/20"
+                    : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
+                }`}
               >
-                {/* Animated active indicator */}
-                <div
-                  className="absolute top-1 h-[calc(100%-8px)] bg-gradient-to-r from-cyan-500/25 to-blue-500/25 rounded-full border border-cyan-400/40 shadow-lg shadow-cyan-500/20 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
-                  style={{
-                    left: `${activeIndicator.left}px`,
-                    width: `${activeIndicator.width}px`,
-                    opacity: activeIndicator.width > 0 ? 1 : 0,
-                  }}
-                />
-
-                {visibleNavItems.map((item) => {
-                  const isActive = pathname === item.href;
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      data-active={isActive}
-                      className={`relative flex items-center space-x-1 px-2 xl:px-3 py-1.5 rounded-full text-[9px] xl:text-[10px] font-space-mono font-bold uppercase tracking-wider transition-all duration-300 group/link flex-shrink-0 ${
-                        isActive
-                          ? "text-cyan-100"
-                          : "text-cyan-300/70 hover:text-cyan-100"
-                      }`}
-                    >
-                      <Icon
-                        className={`w-3 h-3 xl:w-3.5 xl:h-3.5 transition-all duration-300 ${
-                          isActive
-                            ? "text-cyan-300 scale-110"
-                            : "text-cyan-400/50 group-hover/link:text-cyan-300 group-hover/link:scale-110"
-                        }`}
-                      />
-                      <span className="hidden xl:inline-block">{item.label}</span>
-                      <span className="xl:hidden inline-block">{item.label.substring(0, 5)}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Right Side Controls */}
-            <div className="flex items-center gap-1 xl:gap-2 flex-shrink-0">
-              {/* Status Indicator */}
-              <div className="hidden min-[1400px]:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                <div className="w-1 h-1 bg-emerald-400 rounded-full animate-pulse" />
-                <span className="text-[8px] font-space-mono text-emerald-300/80 font-bold uppercase tracking-wider">
-                  Online
-                </span>
-              </div>
-
-              {/* Quick Action - Upload Sonar Log */}
-              <Link href="/detection" className="hidden sm:block">
-                <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-400/40 text-xs font-space-mono font-bold text-cyan-200 hover:text-white hover:border-cyan-300 transition-all shadow-md shadow-cyan-500/10 cursor-pointer">
-                  <Target className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>UPLOAD SONAR LOG</span>
-                </button>
+                <Icon className="h-3.5 w-3.5" />
+                {item.label}
               </Link>
+            );
+          })}
+        </nav>
 
-              {/* Contact Button */}
-              <Link href="/contact" className="hidden sm:block">
-                <button className="relative px-4 py-2 rounded-full bg-gradient-to-r from-cyan-500/15 to-emerald-500/15 border border-cyan-400/25 hover:border-cyan-300/50 text-[10px] font-space-mono font-bold uppercase tracking-wider text-cyan-200 hover:text-cyan-100 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/15 hover:scale-105 overflow-hidden group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                  <span className="relative flex items-center gap-1.5">
-                    <MessageSquare className="w-3 h-3" />
-                    CONTACT
-                  </span>
-                </button>
-              </Link>
-
-              {/* Mobile menu button */}
-              <div className="lg:hidden ml-2">
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="relative p-2 rounded-lg text-cyan-300 hover:bg-cyan-500/10 hover:text-cyan-100 transition-all duration-300 border border-cyan-500/15 hover:border-cyan-400/30"
-                >
-                  <div
-                    className={`transition-all duration-300 ${isMenuOpen ? "rotate-90 scale-110" : ""}`}
-                  >
-                    {isMenuOpen ? (
-                      <X className="h-5 w-5" />
-                    ) : (
-                      <Menu className="h-5 w-5" />
-                    )}
-                  </div>
-                </button>
-              </div>
-            </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="hidden items-center gap-2 rounded-full border border-emerald-400/15 bg-emerald-400/[0.07] px-3 py-1.5 text-[10px] font-space-mono font-bold uppercase tracking-wide text-emerald-300 lg:flex">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            </span>
+            Live system
           </div>
-
-          {/* Enhanced Mobile Navigation with slide animation */}
-          <div
-            className={`lg:hidden overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
-              isMenuOpen ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
-            }`}
+          <Link
+            href="/detection"
+            className="no-underline hidden items-center gap-2 rounded-lg bg-cyan-300 px-3.5 py-2 text-xs font-semibold text-slate-950 transition-colors hover:bg-cyan-200 sm:flex"
           >
-            <div className="px-3 pt-3 pb-5 space-y-1 border-t border-cyan-500/10">
-              {visibleNavItems.map((item, index) => {
-                const isActive = pathname === item.href;
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center space-x-3 px-4 py-2.5 text-xs font-space-mono font-bold rounded-xl transition-all duration-300 uppercase tracking-wider ${
-                      isActive
-                        ? "text-cyan-100 bg-cyan-500/15 border border-cyan-400/30 shadow-lg shadow-cyan-500/10"
-                        : "text-cyan-300/70 hover:text-cyan-100 hover:bg-cyan-500/5"
-                    }`}
-                    style={{ transitionDelay: `${index * 50}ms` }}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Icon
-                      className={`w-4 h-4 ${isActive ? "text-cyan-300" : "text-cyan-400/50"}`}
-                    />
-                    <span>{item.label}</span>
-                    {isActive && (
-                      <div className="ml-auto w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
-                    )}
-                  </Link>
-                );
-              })}
-
-              {/* Quick Upload in Mobile Menu */}
-              <div className="pt-2">
-                <Link
-                  href="/detection"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="block"
-                >
-                  <button className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-400/30 text-xs font-space-mono font-bold uppercase tracking-wider text-cyan-100 flex items-center justify-center gap-2">
-                    <Target className="w-3.5 h-3.5 text-cyan-400" />
-                    Upload Sonar Log
-                  </button>
-                </Link>
-              </div>
-
-              <div className="pt-2">
-                <Link
-                  href="/contact"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="block"
-                >
-                  <button className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-cyan-500/10 to-emerald-500/10 border border-cyan-400/20 hover:border-cyan-300/40 text-xs font-space-mono font-bold uppercase tracking-wider text-cyan-200 hover:text-cyan-100 transition-all duration-300 flex items-center justify-center gap-2">
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    Contact Us
-                  </button>
-                </Link>
-              </div>
-            </div>
-          </div>
+            <Upload className="h-3.5 w-3.5" />
+            Upload sonar
+          </Link>
+          <Link
+            href="/contact"
+            aria-label="Contact Varuna AI"
+            className="no-underline hidden rounded-lg p-2 text-slate-400 transition-colors hover:bg-white/5 hover:text-cyan-200 lg:block"
+          >
+            <CircleHelp className="h-4 w-4" />
+          </Link>
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen((open) => !open)}
+            className="rounded-lg border border-cyan-300/15 p-2 text-cyan-200 transition-colors hover:bg-cyan-400/10 md:hidden"
+            aria-label={isMenuOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={isMenuOpen}
+          >
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
-      </nav>
+      </div>
 
-      {/* Click outside to close */}
-      {isProfileOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsProfileOpen(false)}
-        />
-      )}
-    </>
+      <div className={`overflow-hidden border-t border-white/5 transition-[max-height,opacity] duration-300 md:hidden ${isMenuOpen ? "max-h-72 opacity-100" : "max-h-0 opacity-0"}`}>
+        <nav className="space-y-1 bg-slate-950/95 px-4 py-3" aria-label="Mobile navigation">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsMenuOpen(false)}
+                className={`no-underline flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium ${
+                  isActive ? "bg-cyan-400/10 text-cyan-200" : "text-slate-300 hover:bg-white/5"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            );
+          })}
+          <Link
+            href="/detection"
+            onClick={() => setIsMenuOpen(false)}
+            className="no-underline mt-2 flex items-center justify-center gap-2 rounded-lg bg-cyan-300 px-3 py-3 text-sm font-semibold text-slate-950"
+          >
+            <Upload className="h-4 w-4" />
+            Upload sonar log
+          </Link>
+          <div className="flex items-center gap-2 px-3 py-2 text-[10px] font-space-mono uppercase tracking-wide text-emerald-300">
+            <Radio className="h-3.5 w-3.5" />
+            Live system online
+          </div>
+        </nav>
+      </div>
+    </header>
   );
 }

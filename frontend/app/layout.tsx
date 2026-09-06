@@ -6,7 +6,6 @@ import { Orbitron, Space_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Suspense } from "react";
 import { ConditionalNavigation } from "@/components/conditional-navigation";
-import { ConditionalSecurityBar } from "@/components/conditional-security-bar";
 import { Chatbot } from "@/components/chatbot";
 import { PageTransition } from "@/components/page-transition";
 import { Toaster } from "sonner";
@@ -66,7 +65,6 @@ export default function RootLayout({
       <body
         className={`font-body ${GeistSans.variable} ${GeistMono.variable} ${orbitron.variable} ${spaceMono.variable}`}
       >
-        <ConditionalSecurityBar />
         <ConditionalNavigation />
         <Suspense
           fallback={
