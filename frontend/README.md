@@ -149,7 +149,9 @@ VARUNA AI incorporates specialized acoustic intelligence models trained and eval
 ### A. YOLOv8 Side-Scan Sonar (SSS) Crab Pot & Derelict Gear Model
 Trained on the **PING Ecosystem SSS Crab Pot Dataset** ([Hugging Face: `PINGEcosystem/sss-crab-pot-detection-ds`](https://huggingface.co/datasets/PINGEcosystem/sss-crab-pot-detection-ds)) containing 6,674 Side-Scan Sonar acoustic captures with axis-aligned bounding box annotations for derelict crab pots ("ghost pots" / ALDFG):
 
-- **Ingestion & Normalizer:** [`backend/ai_pipeline/datasets/download_crab_pot_dataset.py`](backend/ai_pipeline/datasets/download_crab_pot_dataset.py)
+- **Ready-to-Test Images Directory:** [`public/sample-sonar/`](public/sample-sonar/) *(Contains 29 curated real SSS waterfall captures ready for upload in `/cnn` and `/detection`)*
+- **YOLOv8 Structured Dataset:** [`backend/data/crab_pot_yolo/`](backend/data/crab_pot_yolo/) (`data.yaml`, `images/train/`, `labels/train/`, `images/val/`, `labels/val/`)
+- **Ingestion & Normalizer Script:** [`backend/ai_pipeline/datasets/download_crab_pot_dataset.py`](backend/ai_pipeline/datasets/download_crab_pot_dataset.py)
 - **Training Script:** [`backend/ai_pipeline/train_crab_pot_yolo.py`](backend/ai_pipeline/train_crab_pot_yolo.py)
 - **Primary Checkpoints:** `backend/models/yolov8_crab_pot.pt`, `backend/models/yolov8_varuna.pt`, `best.pt`
 
