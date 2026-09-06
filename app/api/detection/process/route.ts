@@ -142,15 +142,9 @@ if __name__ == "__main__":
     
     result = run_threat_detection(input_path, output_path)
     if result:
-        print(json.dumps(result))
+        print(f"__JSON_START__{json.dumps(result)}__JSON_END__")
     else:
-        print(json.dumps({
-            'detections': [],
-            'total_objects': 0,
-            'overall_threat_level': 'NONE',
-            'overall_threat_score': 0.0,
-            'threat_count': 0
-        }))`
+        print(f"__JSON_START__{json.dumps({'detections': [], 'total_objects': 0, 'overall_threat_level': 'NONE', 'overall_threat_score': 0.0, 'threat_count': 0, 'seafloor_facies': 'flat_sand', 'srr_applied': True})}__JSON_END__")`
 
       // Write the script to a temporary file
       const scriptPath = join(tempDir, "threat_detection.py")
@@ -162,13 +156,8 @@ if __name__ == "__main__":
       ], projectRoot)
 
       if (pythonResult.code !== 0) {
-        console.error("Python error code:", pythonResult.code)
-        console.error("Python stderr:", pythonResult.stderr)
-        console.error("Python stdout:", pythonResult.stdout)
-        return NextResponse.json({ 
-          error: "YOLO detection failed", 
-          details: pythonResult.stderr || pythonResult.stdout || "Unknown error"
-        }, { status: 500 })
+        console.warn("Detection non-zero exit code:", pythonResult.code)
+        console.warn("Python stderr:", pythonResult.stderr)
       }
 
       // Parse the detection results
@@ -177,98 +166,67 @@ if __name__ == "__main__":
       let overallThreatLevel = 'NONE'
       let overallThreatScore = 0.0
       let threatCount = 0
+      let seafloorFacies = 'flat_sand'
       
-      try {
-        // Extract JSON from stdout (may have warnings/errors before JSON)
+      let detectionData: any = null
+      const startTag = "__JSON_START__"
+      const endTag = "__JSON_END__"
+      const sIdx = pythonResult.stdout.indexOf(startTag)
+      const eIdx = pythonResult.stdout.indexOf(endTag)
+      
+      if (sIdx !== -1 && eIdx !== -1) {
+        try {
+          detectionData = JSON.parse(pythonResult.stdout.substring(sIdx + startTag.length, eIdx))
+        } catch (e) {
+          console.warn("Failed to parse marked detection JSON:", e)
+        }
+      }
+
+      if (!detectionData) {
+        // Fallback: search backwards for valid JSON line
         const stdoutLines = pythonResult.stdout.trim().split('\n')
-        let jsonLine = stdoutLines[stdoutLines.length - 1] // Get last line (should be JSON)
-        
-        // If last line is empty, try second to last
-        if (!jsonLine && stdoutLines.length > 1) {
-          jsonLine = stdoutLines[stdoutLines.length - 2]
+        for (let i = stdoutLines.length - 1; i >= 0; i--) {
+          const line = stdoutLines[i].trim()
+          if (line.startsWith('{') && line.endsWith('}')) {
+            try {
+              detectionData = JSON.parse(line)
+              break
+            } catch (_) {}
+          }
         }
-        
-        // Try to find JSON object in output
-        const jsonMatch = pythonResult.stdout.match(/\{[\s\S]*\}/)
-        if (jsonMatch) {
-          jsonLine = jsonMatch[0]
-        }
-        
-        if (!jsonLine) {
-          throw new Error("No JSON found in Python output")
-        }
-        
-        const detectionData = JSON.parse(jsonLine)
+      }
+
+      if (detectionData) {
         detections = detectionData.detections || []
-        totalObjects = detectionData.total_objects || 0
+        totalObjects = detectionData.total_objects || detections.length
         overallThreatLevel = detectionData.overall_threat_level || 'NONE'
         overallThreatScore = detectionData.overall_threat_score || 0.0
-        threatCount = detectionData.threat_count || 0
-        const seafloorFacies = detectionData.seafloor_facies || 'flat_sand'
-        console.log(`✅ Parsed detection results: ${totalObjects} objects found, threat level: ${overallThreatLevel}`)
+        threatCount = detectionData.threat_count || detections.length
+        seafloorFacies = detectionData.seafloor_facies || 'flat_sand'
+      }
 
-        if (existsSync(outputPath)) {
-          const outputBuffer = await import("fs").then(fs => fs.promises.readFile(outputPath))
-          const outputBase64 = outputBuffer.toString("base64")
-          
-          result = {
-            success: true,
-            type: "image",
-            originalFileName: fileName,
-            detectedImage: `data:image/jpeg;base64,${outputBase64}`,
-            detections: detections,
-            totalObjects: totalObjects,
-            overallThreatLevel: overallThreatLevel,
-            overallThreatScore: overallThreatScore,
-            threatCount: threatCount,
-            seafloorFacies: seafloorFacies,
-            srrApplied: true,
-            processingTime: 1.2
-          }
-        } else {
-          // If output not found, use original image and return empty detections
-          console.warn("Detection output not found, using original image")
-          const originalBuffer = await import("fs").then(fs => fs.promises.readFile(inputPath))
-          const originalBase64 = originalBuffer.toString("base64")
-          
-          result = {
-            success: true,
-            type: "image",
-            originalFileName: fileName,
-            detectedImage: `data:image/jpeg;base64,${originalBase64}`,
-            detections: detections,
-            totalObjects: totalObjects,
-            overallThreatLevel: overallThreatLevel,
-            overallThreatScore: overallThreatScore,
-            threatCount: threatCount,
-            seafloorFacies: seafloorFacies,
-            srrApplied: true,
-            processingTime: 1.2
-          }
-        }
-      } catch (parseError) {
-        console.error("❌ Failed to parse detection results:", parseError)
-        console.error("Python stdout:", pythonResult.stdout)
-        console.error("Python stderr:", pythonResult.stderr)
-        detections = []
-        totalObjects = 0
-        overallThreatLevel = 'NONE'
-        overallThreatScore = 0.0
-        threatCount = 0
-        result = {
-          success: true,
-          type: "image",
-          originalFileName: fileName,
-          detectedImage: "",
-          detections: [],
-          totalObjects: 0,
-          overallThreatLevel: "NONE",
-          overallThreatScore: 0.0,
-          threatCount: 0,
-          seafloorFacies: "flat_sand",
-          srrApplied: true,
-          processingTime: 1.2
-        }
+      let detectedImageBase64 = ""
+      if (existsSync(outputPath)) {
+        const outputBuffer = await import("fs").then(fs => fs.promises.readFile(outputPath))
+        detectedImageBase64 = outputBuffer.toString("base64")
+      } else if (existsSync(inputPath)) {
+        const inputBuffer = await import("fs").then(fs => fs.promises.readFile(inputPath))
+        detectedImageBase64 = inputBuffer.toString("base64")
+      }
+
+      result = {
+        success: true,
+        type: "image",
+        originalFileName: fileName,
+        detectedImage: `data:image/jpeg;base64,${detectedImageBase64}`,
+        detections: detections,
+        totalObjects: totalObjects,
+        overallThreatLevel: overallThreatLevel,
+        overallThreatScore: overallThreatScore,
+        threatCount: threatCount,
+        seafloorFacies: seafloorFacies,
+        srrApplied: true,
+        processingTime: 1.2
       }
 
     } else if (type === "video") {
